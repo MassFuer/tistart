@@ -1,0 +1,79 @@
+.location-display {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.location-display.horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.location-display.vertical {
+  flex-direction: column;
+}
+
+.location-display.empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-color);
+  opacity: 0.6;
+  padding: 1rem;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+}
+
+.location-display .address-text {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.location-display .address-text .icon {
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.location-display .address-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.location-display .venue {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.location-display .line {
+  color: var(--text-color);
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+.location-display .map-wrapper {
+  flex: 1;
+  min-width: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .location-display.horizontal {
+    flex-direction: column;
+  }
+
+  .location-display .address-text {
+    min-width: auto;
+  }
+
+  .location-display .map-wrapper {
+    min-width: auto;
+    width: 100%;
+  }
+}

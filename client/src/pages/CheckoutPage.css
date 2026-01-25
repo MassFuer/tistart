@@ -1,0 +1,297 @@
+.checkout-page {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ===== Progress Indicator ===== */
+.checkout-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  color: var(--text-light);
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.progress-step.completed {
+  background: #27ae60;
+  color: white;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.step-label {
+  font-weight: 500;
+}
+
+.progress-line {
+  width: 60px;
+  height: 3px;
+  background: var(--border-color);
+}
+
+.checkout-container {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.shipping-form, .order-summary {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.payment-mock {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.mock-card {
+  background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1rem 0;
+  width: 100%;
+  max-width: 300px;
+}
+
+.card-chip {
+  width: 40px;
+  height: 30px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.card-number {
+  font-family: monospace;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.mock-note {
+  font-size: 0.8rem;
+  color: #e67e22;
+  font-style: italic;
+}
+
+/* ===== Payment Section ===== */
+.payment-section {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.payment-section h2 {
+  margin-bottom: 1rem;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--secondary-color);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-back:hover {
+  text-decoration: underline;
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 1rem 0;
+}
+
+.total-amount {
+  color: var(--secondary-color);
+}
+
+.summary-items {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.pay-btn {
+  background: #27ae60;
+}
+
+.pay-btn:hover {
+  background: #219150;
+}
+
+/* Payment Methods Section */
+.payment-methods {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.payment-methods-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.card-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.card-icon:hover {
+  transform: scale(1.15);
+}
+
+.card-icon.visa {
+  color: #1a1f71;
+}
+
+.card-icon.mastercard {
+  color: #eb001b;
+}
+
+.card-icon.amex {
+  color: #006fcf;
+}
+
+.card-icon.paypal {
+  color: #003087;
+}
+
+.card-icon.applepay {
+  color: #000000;
+}
+
+.lock-icon {
+  color: #27ae60;
+  font-size: 0.9rem;
+}
+
+.secure-payment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.secure-payment svg {
+  color: #27ae60;
+}
+
+/* Dark mode adjustments for payment section */
+[data-theme="dark"] .card-icon.visa {
+  color: #5c6bc0;
+}
+
+[data-theme="dark"] .card-icon.applepay {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .payment-methods-label,
+[data-theme="dark"] .secure-payment {
+  color: var(--medium-gray);
+}
+
+@media (max-width: 768px) {
+  .checkout-container {
+    grid-template-columns: 1fr;
+  }
+
+  .card-logos {
+    gap: 0.75rem;
+  }
+
+  .card-icon {
+    font-size: 2rem;
+  }
+}

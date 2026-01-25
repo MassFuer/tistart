@@ -1,0 +1,116 @@
+/* ===== Events Page ===== */
+.events-page {
+  width: 100%;
+}
+
+.events-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.events-page .page-header-content h1 {
+  margin-bottom: 0.5rem;
+}
+
+.events-page .page-header-content p {
+  color: var(--text-light);
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.view-toggle .view-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.view-toggle .view-btn svg {
+  font-size: 1rem;
+}
+
+/* Filters */
+.events-page .filters {
+  margin-bottom: 1.5rem;
+}
+
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text-primary);
+  font-size: 1rem;
+  min-width: 200px;
+}
+
+/* Event Grid */
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Calendar Container */
+.calendar-container {
+  background: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+/* Map View Container */
+.map-view-container {
+  margin-bottom: 2rem;
+}
+
+/* Pagination */
+.events-page .pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .events-page .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .events-page .page-header .btn {
+    align-self: flex-start;
+  }
+
+  .view-toggle {
+    flex-wrap: wrap;
+  }
+
+  .view-toggle .view-btn span {
+    display: none;
+  }
+
+  .view-toggle .view-btn {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-view-container {
+    margin-left: -1rem;
+    margin-right: -1rem;
+  }
+}

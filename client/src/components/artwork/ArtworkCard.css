@@ -1,0 +1,198 @@
+/* ===== Artwork Card ===== */
+.artwork-card {
+  position: relative;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.artwork-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* ===== Favorite Button ===== */
+.favorite-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.favorite-btn:hover {
+  transform: scale(1.1);
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.favorite-btn:active {
+  transform: scale(0.95);
+}
+
+.favorite-btn:disabled {
+  cursor: wait;
+}
+
+.favorite-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #999;
+  transition: all 0.2s ease;
+}
+
+.favorite-btn:hover svg {
+  color: #e74c3c;
+}
+
+.favorite-btn.is-favorite svg {
+  color: #e74c3c;
+}
+
+.favorite-btn.is-favorite:hover svg {
+  color: #c0392b;
+}
+
+/* Favorite button spinner */
+.favorite-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ddd;
+  border-top-color: #e74c3c;
+  border-radius: 50%;
+  animation: favorite-spin 0.6s linear infinite;
+}
+
+@keyframes favorite-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .favorite-btn {
+  background: rgba(30, 30, 30, 0.9);
+}
+
+[data-theme="dark"] .favorite-btn:hover {
+  background: rgba(40, 40, 40, 1);
+}
+
+[data-theme="dark"] .favorite-btn svg {
+  color: #bbb;
+}
+
+[data-theme="dark"] .favorite-spinner {
+  border-color: #555;
+  border-top-color: #e74c3c;
+}
+
+.artwork-card a,
+.artwork-card a:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.artwork-image {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  background: var(--medium-gray);
+}
+
+.artwork-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dark-gray);
+  font-size: 1rem;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--accent-color);
+  color: var(--white);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.artwork-info {
+  padding: 1.25rem;
+}
+
+.artwork-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.artwork-artist {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.artwork-category {
+  display: inline-block;
+  background: var(--light-gray);
+  color: var(--dark-gray);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  margin-bottom: 0.75rem;
+}
+
+.artwork-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.artwork-price .original-price {
+  font-size: 0.9rem;
+  color: var(--dark-gray);
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+}
+
+.not-for-sale {
+  color: var(--dark-gray);
+  font-style: italic;
+}
+
+.artwork-rating {
+  color: var(--warning-color);
+  margin-top: 0.5rem;
+}
+
+.artwork-actions {
+  padding: 0 1.25rem 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+}

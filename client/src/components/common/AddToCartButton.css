@@ -1,0 +1,284 @@
+.add-to-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.add-to-cart-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  background: linear-gradient(135deg, #2980b9 0%, var(--secondary-color) 100%);
+}
+
+.add-to-cart-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.add-to-cart-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.add-to-cart-btn .cart-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.add-to-cart-btn .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sold Out Button */
+.add-to-cart-btn.sold-out {
+  background: var(--medium-gray);
+  color: var(--dark-gray);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.add-to-cart-btn.sold-out:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Compact variant for cards */
+.add-to-cart-btn.compact {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.add-to-cart-btn.compact .cart-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Full width variant */
+.add-to-cart-btn.full-width {
+  width: 100%;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .add-to-cart-btn {
+  background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+  box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+[data-theme="dark"] .add-to-cart-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(93, 173, 226, 0.4);
+}
+
+[data-theme="dark"] .add-to-cart-btn.sold-out {
+  background: var(--dark-gray);
+  color: var(--medium-gray);
+}
+
+/* ===== Quantity Controls Wrapper ===== */
+.quantity-controls-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ===== Quantity Controls ===== */
+.quantity-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+  overflow: hidden;
+}
+
+.quantity-controls .quantity-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.quantity-controls .quantity-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke: #ffffff;
+}
+
+.quantity-controls .quantity-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.quantity-controls .quantity-btn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.quantity-controls .quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-controls .quantity-btn.minus {
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quantity-controls .quantity-btn.plus {
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quantity-display {
+  min-width: 40px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  padding: 0 0.5rem;
+}
+
+/* Trash button */
+.quantity-trash-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #e74c3c;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+.quantity-trash-btn:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.quantity-trash-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.quantity-trash-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-trash-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Small spinner for quantity buttons */
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Compact variant for quantity controls */
+.quantity-controls-wrapper.compact {
+  gap: 0.35rem;
+}
+
+.quantity-controls-wrapper.compact .quantity-controls {
+  border-radius: 6px;
+}
+
+.quantity-controls-wrapper.compact .quantity-controls .quantity-btn {
+  width: 32px;
+  height: 32px;
+}
+
+.quantity-controls-wrapper.compact .quantity-controls .quantity-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.quantity-controls-wrapper.compact .quantity-display {
+  min-width: 28px;
+  font-size: 0.875rem;
+}
+
+.quantity-controls-wrapper.compact .quantity-trash-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+}
+
+.quantity-controls-wrapper.compact .quantity-trash-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.quantity-controls-wrapper.compact .spinner-small {
+  width: 12px;
+  height: 12px;
+}
+
+/* Full width variant for quantity controls */
+.quantity-controls-wrapper.full-width {
+  width: 100%;
+}
+
+.quantity-controls-wrapper.full-width .quantity-controls {
+  flex: 1;
+  justify-content: space-between;
+}
+
+.quantity-controls-wrapper.full-width .quantity-controls .quantity-btn {
+  flex: 0 0 auto;
+}
+
+.quantity-controls-wrapper.full-width .quantity-display {
+  flex: 1;
+}
+
+/* Dark mode for quantity controls */
+[data-theme="dark"] .quantity-controls {
+  background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+  box-shadow: 0 2px 8px rgba(93, 173, 226, 0.3);
+}
+
+[data-theme="dark"] .quantity-trash-btn {
+  background: #e74c3c;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+[data-theme="dark"] .quantity-trash-btn:hover:not(:disabled) {
+  background: #c0392b;
+}

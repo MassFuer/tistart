@@ -1,0 +1,75 @@
+/* ===== Payment Form ===== */
+.payment-form {
+  width: 100%;
+}
+
+.payment-element-container {
+  padding: 1rem;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+}
+
+.payment-error {
+  padding: 1rem;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid #e74c3c;
+  border-radius: var(--radius);
+  color: #c0392b;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.pay-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.pay-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pay-button .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.payment-secure-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.payment-secure-notice svg {
+  color: #27ae60;
+}
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .payment-element-container {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .payment-error {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}

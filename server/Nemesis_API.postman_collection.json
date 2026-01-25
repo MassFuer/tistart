@@ -1,0 +1,514 @@
+{
+  "info": {
+    "_postman_id": "nemesis-api-v1",
+    "name": "Nemesis API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"userName\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nemesis.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Apply as Artist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"My Art Studio\",\n  \"tagline\": \"Creating beauty since 2020\",\n  \"description\": \"I am a passionate artist specializing in modern art.\",\n  \"type\": \"individual\",\n  \"address\": {\n    \"street\": \"Art Street\",\n    \"city\": \"Paris\",\n    \"country\": \"France\"\n  }\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["auth", "apply-artist"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Artworks",
+      "item": [
+        {
+          "name": "Get All Artworks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "artworks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Artwork",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Create Artwork",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sunset Dreams\",\n  \"description\": \"A beautiful oil painting of a sunset\",\n  \"price\": 1200,\n  \"category\": \"painting\",\n  \"isForSale\": true,\n  \"totalInStock\": 1\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "artworks"]
+            }
+          }
+        },
+        {
+          "name": "Update Artwork",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"price\": 1100\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Artwork",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "events"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Event",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "events", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Art Exhibition 2025\",\n  \"description\": \"Annual art exhibition\",\n  \"startDateTime\": \"2025-06-01T10:00:00Z\",\n  \"endDateTime\": \"2025-06-01T18:00:00Z\",\n  \"category\": \"exhibition\",\n  \"price\": 0,\n  \"maxCapacity\": 100\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "events"]
+            }
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Event Title\",\n  \"maxCapacity\": 150\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "events", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "events", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get My Favorites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "favorites"]
+            }
+          }
+        },
+        {
+          "name": "Add to Favorites",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "favorites", ":artworkId"]
+            }
+          }
+        },
+        {
+          "name": "Remove from Favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "favorites", ":artworkId"]
+            }
+          }
+        },
+        {
+          "name": "Get All Verified Artists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "artists", "all"]
+            }
+          }
+        },
+        {
+          "name": "Get Artist Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", "artist", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Update Artist Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", ":id", "artist-status"]
+            }
+          }
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"artist\"\n}"
+            },
+            "url": {
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5005",
+              "path": ["api", "users", ":id", "role"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

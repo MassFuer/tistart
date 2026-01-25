@@ -1,0 +1,120 @@
+/* ===== Artist Profile Page ===== */
+.artist-profile-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.artist-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.artist-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--medium-gray);
+}
+
+.artist-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.artist-info h1 {
+  margin-bottom: 0.25rem;
+}
+
+.artist-info .tagline {
+  color: var(--text-light);
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.artist-info .location {
+  color: var(--dark-gray);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.social-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.social-link {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light-gray);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.social-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.social-link svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-light);
+  transition: color 0.2s ease;
+}
+
+.social-link:hover svg {
+  color: var(--secondary-color);
+}
+
+/* Dark mode */
+[data-theme="dark"] .social-link {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .social-link svg {
+  color: var(--text-secondary);
+}
+
+.artist-section {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+
+.artist-section h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+/* Location Display in Artist Profile */
+.artist-section .location-display {
+  margin-top: 0.5rem;
+}
+
+.empty-message {
+  color: var(--text-light);
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .artist-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
