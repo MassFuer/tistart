@@ -1,36 +1,47 @@
-import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { artworksAPI } from "../services/api";
 import ArtworkCard from "../components/artwork/ArtworkCard";
 import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
+import Pagination from "../components/common/Pagination";
+import SearchBar from "../components/common/SearchBar";
 import toast from "react-hot-toast";
-import { FaSearch } from "react-icons/fa";
+import { useListing } from "../hooks/useListing";
 import "./GalleryPage.css";
 
 const GalleryPage = () => {
-  const [artworks, setArtworks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({});
+  const {
+    data: artworks,
+    loading: isLoading,
+    error,
+    pagination,
+    filters,
+    updateFilter,
+    updateFilters,
+    setPage,
+    sort,
+    setSort,
+    refresh
+  } = useListing({
+    apiFetcher: artworksAPI.getAll,
+    initialFilters: {
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      artist: "",
+      isForSale: false,
+      materials: "",
+      colors: "",
+      search: "",
+    },
+    initialSort: "-createdAt",
+  });
+
   const [artists, setArtists] = useState([]);
   const [materialsOptions, setMaterialsOptions] = useState([]);
   const [colorsOptions, setColorsOptions] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    page: 1,
-    limit: 12,
-    category: "",
-    minPrice: "",
-    maxPrice: "",
-    artist: "",
-    isForSale: false,
-    materials: "",
-    colors: "",
-    search: "",
-  });
-  const [sort, setSort] = useState("-createdAt");
 
   const sortOptions = [
     { value: "-createdAt", label: "Newest" },
@@ -41,7 +52,6 @@ const GalleryPage = () => {
     { value: "-numOfReviews", label: "Most Reviewed" },
     { value: "-averageRating", label: "Highest Rated" },
   ];
-  const searchTimeoutRef = useRef(null);
 
   const categories = [
     "painting",
@@ -52,75 +62,25 @@ const GalleryPage = () => {
     "video",
     "other",
   ];
-  const sizes = ["small", "medium", "large", "extra-large"];
 
+  // Derived state effects
   useEffect(() => {
-    // Debounce search
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setFilters((prevFilters) => ({ ...prevFilters, page: 1 }));
-      fetchArtworks();
-    }, 300);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [filters.search]);
-
-  useEffect(() => {
-    fetchArtworks();
-  }, [
-    filters.page,
-    filters.category,
-    filters.artist,
-    filters.isForSale,
-    filters.materials,
-    filters.colors,
-    sort,
-  ]);
-
-  const fetchArtworks = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const params = {
-        page: filters.page,
-        limit: filters.limit,
-        sort: sort,
-      };
-      if (filters.category) params.category = filters.category;
-      if (filters.minPrice) params.minPrice = filters.minPrice;
-      if (filters.maxPrice) params.maxPrice = filters.maxPrice;
-      if (filters.search) params.search = filters.search;
-      if (filters.artist) params.artist = filters.artist;
-      if (filters.isForSale) params.isForSale = filters.isForSale;
-      if (filters.materials) params.materials = filters.materials;
-      if (filters.colors) params.colors = filters.colors;
-
-      const response = await artworksAPI.getAll(params);
-      setArtworks(response.data.data);
-      setPagination(response.data.pagination);
-
-      // Extract unique artists from results
+    if (artworks.length > 0) {
+      // Extract unique artists
       const uniqueArtists = {};
-      response.data.data.forEach((artwork) => {
+      artworks.forEach((artwork) => {
         if (artwork.artist && artwork.artist._id) {
           uniqueArtists[artwork.artist._id] =
             artwork.artist.firstName + " " + artwork.artist.lastName;
         }
       });
       setArtists(
-        Object.entries(uniqueArtists).map(([id, name]) => ({ id, name })),
+        Object.entries(uniqueArtists).map(([id, name]) => ({ id, name }))
       );
 
-      // Extract unique materials from results
+      // Extract unique materials
       const uniqueMaterials = new Set();
-      response.data.data.forEach((artwork) => {
+      artworks.forEach((artwork) => {
         if (artwork.materialsUsed && Array.isArray(artwork.materialsUsed)) {
           artwork.materialsUsed.forEach((material) => {
             uniqueMaterials.add(material);
@@ -129,9 +89,9 @@ const GalleryPage = () => {
       });
       setMaterialsOptions(Array.from(uniqueMaterials).sort());
 
-      // Extract unique colors from results
+      // Extract unique colors
       const uniqueColors = new Set();
-      response.data.data.forEach((artwork) => {
+      artworks.forEach((artwork) => {
         if (artwork.colors && Array.isArray(artwork.colors)) {
           artwork.colors.forEach((color) => {
             uniqueColors.add(color);
@@ -139,30 +99,17 @@ const GalleryPage = () => {
         }
       });
       setColorsOptions(Array.from(uniqueColors).sort());
-    } catch (error) {
-      console.error(error);
-      const msg =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to load artworks";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [artworks]);
 
   const handleFilterChange = (e) => {
     const { name, type, value, checked } = e.target;
     const filterValue = type === "checkbox" ? checked : value;
-    setFilters({ ...filters, [name]: filterValue, page: 1 });
+    updateFilter(name, filterValue);
   };
 
   const resetFilters = () => {
-    setFilters({
-      page: 1,
-      limit: 12,
+    updateFilters({
       category: "",
       minPrice: "",
       maxPrice: "",
@@ -177,13 +124,9 @@ const GalleryPage = () => {
   };
 
   const removeFilter = (filterKey) => {
-    if (filterKey === "minPrice" || filterKey === "maxPrice") {
-      setFilters({ ...filters, [filterKey]: "", page: 1 });
-    } else if (filterKey === "isForSale") {
-      setFilters({ ...filters, [filterKey]: false, page: 1 });
-    } else {
-      setFilters({ ...filters, [filterKey]: "", page: 1 });
-    }
+    let value = "";
+    if (filterKey === "isForSale") value = false;
+    updateFilter(filterKey, value);
     toast.success(`${filterKey} filter removed`);
   };
 
@@ -193,7 +136,7 @@ const GalleryPage = () => {
       active.push({ key: "search", label: "Search", value: filters.search });
     if (filters.category) {
       const categoryLabel = categories.find((c) => c === filters.category);
-      active.push({ key: "category", label: "Category", value: categoryLabel });
+      active.push({ key: "category", label: "Category", value: categoryLabel || filters.category });
     }
     if (filters.artist) {
       const artist = artists.find((a) => a.id === filters.artist);
@@ -244,17 +187,11 @@ const GalleryPage = () => {
       <div className="gallery-controls">
         <div className="search-sort-bar">
           <div className="search-form">
-            <div className="search-input-wrapper">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                name="search"
+            <SearchBar
                 value={filters.search}
-                onChange={handleFilterChange}
+                onSearch={(val) => updateFilter("search", val)}
                 placeholder="Search artworks by title..."
-                className="search-input"
-              />
-            </div>
+            />
           </div>
 
           <div className="sort-container">
@@ -355,7 +292,7 @@ const GalleryPage = () => {
               <input
                 type="checkbox"
                 name="isForSale"
-                checked={filters.isForSale}
+                checked={filters.isForSale === true || filters.isForSale === "true"}
                 onChange={handleFilterChange}
               />
               <span>For Sale Only</span>
@@ -414,7 +351,7 @@ const GalleryPage = () => {
           </div>
 
           <div className="filter-actions">
-            <button onClick={fetchArtworks} className="btn btn-secondary">
+            <button onClick={refresh} className="btn btn-secondary">
               Apply Filters
             </button>
             <button onClick={resetFilters} className="btn btn-outline">
@@ -427,7 +364,7 @@ const GalleryPage = () => {
           {isLoading ? (
             <Loading message="Loading artworks..." />
           ) : error ? (
-            <ErrorMessage message={error} onRetry={fetchArtworks} />
+            <ErrorMessage message={error} onRetry={refresh} />
           ) : artworks.length === 0 ? (
             <EmptyState
               message="No artworks found matching your criteria"
@@ -441,31 +378,11 @@ const GalleryPage = () => {
                 ))}
               </div>
 
-              {pagination.pages > 1 && (
-                <div className="pagination">
-                  <button
-                    onClick={() =>
-                      setFilters({ ...filters, page: filters.page - 1 })
-                    }
-                    disabled={filters.page === 1}
-                    className="btn btn-secondary"
-                  >
-                    Previous
-                  </button>
-                  <span>
-                    Page {pagination.page} of {pagination.pages}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setFilters({ ...filters, page: filters.page + 1 })
-                    }
-                    disabled={filters.page >= pagination.pages}
-                    className="btn btn-secondary"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.pages}
+                onPageChange={setPage}
+              />
             </>
           )}
         </main>
