@@ -215,8 +215,10 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
 
       // Delete removed images from R2
       const artistId = artwork.artist.toString();
-      for (const imageUrl of removedImages) {
-        await deleteFile(imageUrl, artistId);
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < removedImages.length; i += BATCH_SIZE) {
+        const chunk = removedImages.slice(i, i + BATCH_SIZE);
+        await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
       }
     }
 
@@ -268,8 +270,10 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
 
     // Delete associated files from R2 and update storage
     const artistId = artwork.artist.toString();
-    for (const imageUrl of artwork.images) {
-      await deleteFile(imageUrl, artistId);
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < artwork.images.length; i += BATCH_SIZE) {
+      const chunk = artwork.images.slice(i, i + BATCH_SIZE);
+      await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
     }
 
     // Delete video files if any
