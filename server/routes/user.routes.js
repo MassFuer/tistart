@@ -272,12 +272,19 @@ router.patch("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
     const targetUserRole = targetUser.role;
 
     // Admin can't edit other admins or superAdmins
-    if (currentUserRole === "admin" && (targetUserRole === "admin" || targetUserRole === "superAdmin")) {
+    if (
+      currentUserRole === "admin" &&
+      (targetUserRole === "admin" || targetUserRole === "superAdmin")
+    ) {
       return res.status(403).json({ error: "Admins cannot edit other admin accounts." });
     }
 
     // SuperAdmin can't edit other superAdmins (only themselves via /profile)
-    if (currentUserRole === "superAdmin" && targetUserRole === "superAdmin" && req.params.id !== req.payload._id) {
+    if (
+      currentUserRole === "superAdmin" &&
+      targetUserRole === "superAdmin" &&
+      req.params.id !== req.payload._id
+    ) {
       return res.status(403).json({ error: "Cannot edit other superAdmin accounts." });
     }
 
@@ -300,7 +307,10 @@ router.patch("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
         if (field === "role") {
           const newRole = req.body[field];
           // Only superAdmin can assign admin or superAdmin roles
-          if ((newRole === "admin" || newRole === "superAdmin") && currentUserRole !== "superAdmin") {
+          if (
+            (newRole === "admin" || newRole === "superAdmin") &&
+            currentUserRole !== "superAdmin"
+          ) {
             continue; // Skip this field
           }
         }
@@ -365,7 +375,10 @@ router.delete("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
     }
 
     // Admin can't delete other admins or superAdmins
-    if (currentUserRole === "admin" && (targetUserRole === "admin" || targetUserRole === "superAdmin")) {
+    if (
+      currentUserRole === "admin" &&
+      (targetUserRole === "admin" || targetUserRole === "superAdmin")
+    ) {
       return res.status(403).json({ error: "Admins cannot delete admin accounts." });
     }
 

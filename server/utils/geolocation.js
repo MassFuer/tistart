@@ -41,7 +41,7 @@ const nominatimRequest = (path) => {
       method: "GET",
       headers: {
         "User-Agent": "NemesisArtPlatform/1.0",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
     };
 
@@ -154,9 +154,9 @@ const calculateDistance = (point1, point2, unit = "km") => {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRadians(point1.lat)) *
-    Math.cos(toRadians(point2.lat)) *
-    Math.sin(dLng / 2) *
-    Math.sin(dLng / 2);
+      Math.cos(toRadians(point2.lat)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -184,7 +184,7 @@ const findWithinRadius = (items, center, radiusKm) => {
       const distance = calculateDistance(center, { lat, lng });
 
       if (distance <= radiusKm) {
-        return { ...item.toObject ? item.toObject() : item, distance };
+        return { ...(item.toObject ? item.toObject() : item), distance };
       }
 
       return null;

@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { generateNGrams } = require("../utils/ngram");
 
 const dimensionsSchema = new Schema(
   {
@@ -101,11 +102,26 @@ const artworkSchema = new Schema(
       type: Number,
       default: 0,
     },
+    // Optimization for substring search
+    searchKeywords: {
+      type: [String],
+      select: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Pre-save hook to populate searchKeywords
+artworkSchema.pre("save", function (next) {
+  if (this.isModified("title") || this.isModified("description") || this.isNew) {
+    const titleGrams = generateNGrams(this.title);
+    const descGrams = generateNGrams(this.description);
+    this.searchKeywords = [...new Set([...titleGrams, ...descGrams])];
+  }
+  next();
+});
 
 // Indexes for efficient queries
 artworkSchema.index({ artist: 1 });
@@ -114,7 +130,10 @@ artworkSchema.index({ price: 1 });
 artworkSchema.index({ isForSale: 1 });
 artworkSchema.index({ createdAt: -1 });
 
-// Text index for search
+// Index for n-gram search optimization
+artworkSchema.index({ searchKeywords: 1 });
+
+// Text index for search (keeping it for legacy or alternative use)
 artworkSchema.index({ title: "text", description: "text" });
 
 const Artwork = model("Artwork", artworkSchema);

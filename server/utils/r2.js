@@ -1,4 +1,10 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const multer = require("multer");
 const path = require("path");
@@ -181,11 +187,17 @@ const createFileFilter = (type) => (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
 
   if (!config.allowedMimes.includes(file.mimetype)) {
-    return cb(new Error(`Invalid file type. Allowed: ${config.allowedExtensions.join(", ")}`), false);
+    return cb(
+      new Error(`Invalid file type. Allowed: ${config.allowedExtensions.join(", ")}`),
+      false
+    );
   }
 
   if (!config.allowedExtensions.includes(ext)) {
-    return cb(new Error(`Invalid file extension. Allowed: ${config.allowedExtensions.join(", ")}`), false);
+    return cb(
+      new Error(`Invalid file extension. Allowed: ${config.allowedExtensions.join(", ")}`),
+      false
+    );
   }
 
   cb(null, true);
@@ -453,7 +465,8 @@ const deleteFile = async (url, userId) => {
 
       // Update storage if user provided
       if (userId) {
-        const type = key.includes("video") || fileInfo.contentType?.startsWith("video") ? "video" : "image";
+        const type =
+          key.includes("video") || fileInfo.contentType?.startsWith("video") ? "video" : "image";
         await decreaseUserStorage(userId, fileInfo.size, type);
       }
     }

@@ -23,7 +23,7 @@ router.get("/", isAuthenticated, async (req, res, next) => {
 
     // Filter out any null artworks (deleted items)
     const validCart = user.cart.filter((item) => item.artwork);
-    
+
     // If we filtered out items, save the user
     if (validCart.length !== user.cart.length) {
       user.cart = validCart;
@@ -59,21 +59,19 @@ router.post("/add", isAuthenticated, cartLimiter, async (req, res, next) => {
     }
 
     const user = await User.findById(req.payload._id);
-    
+
     // Check if item already in cart
-    const existingItemIndex = user.cart.findIndex(
-      (item) => item.artwork.toString() === artworkId
-    );
+    const existingItemIndex = user.cart.findIndex((item) => item.artwork.toString() === artworkId);
 
     if (existingItemIndex > -1) {
       // Update quantity
       const newQuantity = user.cart[existingItemIndex].quantity + Number(quantity);
-      
+
       // Check stock limit for total quantity
       if (newQuantity > artwork.totalInStock) {
         return res.status(400).json({ error: "Cannot add more than available stock." });
       }
-      
+
       user.cart[existingItemIndex].quantity = newQuantity;
     } else {
       // Add new item
@@ -81,7 +79,7 @@ router.post("/add", isAuthenticated, cartLimiter, async (req, res, next) => {
     }
 
     await user.save();
-    
+
     // Return updated cart with artist populated
     const updatedUser = await User.findById(req.payload._id).populate({
       path: "cart.artwork",
@@ -94,7 +92,7 @@ router.post("/add", isAuthenticated, cartLimiter, async (req, res, next) => {
 
     res.status(200).json({
       message: "Item added to cart",
-      data: updatedUser.cart
+      data: updatedUser.cart,
     });
   } catch (error) {
     next(error);
@@ -125,9 +123,7 @@ router.patch("/update", isAuthenticated, cartLimiter, async (req, res, next) => 
     }
 
     const user = await User.findById(req.payload._id);
-    const itemIndex = user.cart.findIndex(
-      (item) => item.artwork.toString() === artworkId
-    );
+    const itemIndex = user.cart.findIndex((item) => item.artwork.toString() === artworkId);
 
     if (itemIndex === -1) {
       return res.status(404).json({ error: "Item not found in cart." });
@@ -148,7 +144,7 @@ router.patch("/update", isAuthenticated, cartLimiter, async (req, res, next) => 
 
     res.status(200).json({
       message: "Cart updated",
-      data: updatedUser.cart
+      data: updatedUser.cart,
     });
   } catch (error) {
     next(error);
@@ -160,9 +156,7 @@ router.delete("/remove/:artworkId", isAuthenticated, cartLimiter, async (req, re
   try {
     const user = await User.findById(req.payload._id);
 
-    user.cart = user.cart.filter(
-      (item) => item.artwork.toString() !== req.params.artworkId
-    );
+    user.cart = user.cart.filter((item) => item.artwork.toString() !== req.params.artworkId);
 
     await user.save();
 
@@ -178,7 +172,7 @@ router.delete("/remove/:artworkId", isAuthenticated, cartLimiter, async (req, re
 
     res.status(200).json({
       message: "Item removed from cart",
-      data: updatedUser.cart
+      data: updatedUser.cart,
     });
   } catch (error) {
     next(error);

@@ -376,7 +376,9 @@ router.patch("/storage/:userId", isAuthenticated, isSuperAdmin, async (req, res,
 
       // Auto-update quota based on tier
       const settings = await PlatformSettings.getSettings();
-      const tier = settings.subscriptionTiers.find((t) => t.name.toLowerCase() === subscriptionTier);
+      const tier = settings.subscriptionTiers.find(
+        (t) => t.name.toLowerCase() === subscriptionTier
+      );
       if (tier) {
         updateObj["storage.quotaBytes"] = tier.storageQuotaBytes;
       }

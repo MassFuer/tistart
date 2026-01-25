@@ -1092,11 +1092,7 @@
                   },
                   "enum": {
                     "type": "array",
-                    "example": [
-                      "user",
-                      "artist",
-                      "admin"
-                    ],
+                    "example": ["user", "artist", "admin"],
                     "items": {
                       "type": "string"
                     }
@@ -1112,13 +1108,7 @@
                   },
                   "enum": {
                     "type": "array",
-                    "example": [
-                      "none",
-                      "pending",
-                      "incomplete",
-                      "verified",
-                      "suspended"
-                    ],
+                    "example": ["none", "pending", "incomplete", "verified", "suspended"],
                     "items": {
                       "type": "string"
                     }
@@ -1332,13 +1322,7 @@
                   },
                   "enum": {
                     "type": "array",
-                    "example": [
-                      "exhibition",
-                      "concert",
-                      "workshop",
-                      "meetup",
-                      "other"
-                    ],
+                    "example": ["exhibition", "concert", "workshop", "meetup", "other"],
                     "items": {
                       "type": "string"
                     }

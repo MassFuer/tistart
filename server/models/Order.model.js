@@ -78,7 +78,7 @@ const orderSchema = new Schema(
     },
     platformFeeRate: {
       type: Number,
-      default: 0.20, // 20% default
+      default: 0.2, // 20% default
     },
     // For refunds
     refundedAt: Date,

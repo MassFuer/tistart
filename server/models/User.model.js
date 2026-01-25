@@ -66,7 +66,6 @@ const storageSchema = new Schema(
   { _id: false }
 );
 
-
 const artistInfoSchema = new Schema(
   {
     companyName: { type: String, trim: true },
