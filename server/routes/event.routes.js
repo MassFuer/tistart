@@ -27,6 +27,7 @@ router.get("/", async (req, res, next) => {
       isPublic = "true",
       upcoming = "false",
       sort = "startDateTime",
+      search,
     } = req.query;
 
     // Build filter object
@@ -50,6 +51,10 @@ router.get("/", async (req, res, next) => {
       filter.startDateTime = {};
       if (startDate) filter.startDateTime.$gte = new Date(startDate);
       if (endDate) filter.startDateTime.$lte = new Date(endDate);
+    }
+    // Search filter on title (case-insensitive)
+    if (search) {
+      filter.title = { $regex: search, $options: "i" };
     }
 
     // Show only upcoming events
@@ -87,7 +92,7 @@ router.get("/", async (req, res, next) => {
 // GET /api/events/calendar - Get events for calendar view (public)
 router.get("/calendar", async (req, res, next) => {
   try {
-    const { start, end, artist } = req.query;
+    const { start, end, artist, search } = req.query;
 
     if (!start || !end) {
       return res.status(400).json({ error: "Start and end dates are required." });
@@ -95,12 +100,16 @@ router.get("/calendar", async (req, res, next) => {
 
     const filter = {
       isPublic: true,
-      startDateTime: { $gte: new Date(start) },
-      endDateTime: { $lte: new Date(end) },
+      startDateTime: { $lt: new Date(end) },
+      endDateTime: { $gt: new Date(start) },
     };
 
     if (artist) {
       filter.artist = artist;
+    }
+
+    if (search) {
+      filter.title = { $regex: search, $options: "i" };
     }
 
     const events = await Event.find(filter)
