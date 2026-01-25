@@ -52,6 +52,53 @@
   min-width: 200px;
 }
 
+/* Events Filter Bar */
+.events-filter-bar {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.events-filter-bar select,
+.events-filter-bar input[type="date"] {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.events-filter-bar input[type="date"] {
+  min-width: 150px;
+}
+
+/* Search Input */
+.search-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+  min-width: 250px;
+  margin-bottom: 1rem;
+}
+
+.search-input::placeholder {
+  color: var(--text-light);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
 /* Event Grid */
 .event-grid {
   display: grid;

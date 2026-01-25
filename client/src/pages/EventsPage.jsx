@@ -11,6 +11,8 @@ import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { FaList, FaCalendarAlt, FaMapMarkedAlt } from "react-icons/fa";
+import FilterBar from "../components/events/FilterBar";
+import SearchBar from "../components/events/SearchBar";
 import toast from "react-hot-toast";
 import "./EventsPage.css";
 
@@ -28,13 +30,17 @@ const EventsPage = () => {
     limit: 12,
     category: "",
   });
+  // Additional filter state
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [pagination, setPagination] = useState({});
 
   const categories = ["exhibition", "concert", "workshop", "meetup", "other"];
 
   useEffect(() => {
     fetchEvents();
-  }, [filters.page, filters.category]);
+  }, [filters.page, filters.category, startDate, endDate, searchQuery]);
 
   useEffect(() => {
     if (viewMode === "calendar") {
@@ -42,7 +48,7 @@ const EventsPage = () => {
     } else if (viewMode === "map") {
       fetchAllEventsForMap();
     }
-  }, [viewMode, filters.category]);
+  }, [viewMode, filters.category, startDate, endDate, searchQuery]);
 
   const fetchEvents = async () => {
     setIsLoading(true);
@@ -53,6 +59,9 @@ const EventsPage = () => {
         limit: filters.limit,
       };
       if (filters.category) params.category = filters.category;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (searchQuery) params.search = searchQuery;
 
       const response = await eventsAPI.getAll(params);
       setEvents(response.data.data);
@@ -77,6 +86,7 @@ const EventsPage = () => {
         start: start.toISOString(),
         end: end.toISOString(),
         ...(filters.category && { category: filters.category }),
+        ...(searchQuery && { search: searchQuery }),
       });
 
       const formattedEvents = response.data.data.map((event) => ({
@@ -99,6 +109,9 @@ const EventsPage = () => {
     try {
       const params = { limit: 200 }; // Get more events for map
       if (filters.category) params.category = filters.category;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+      if (searchQuery) params.search = searchQuery;
 
       const response = await eventsAPI.getAll(params);
       setAllEventsForMap(response.data.data);
@@ -124,6 +137,21 @@ const EventsPage = () => {
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value, page: 1 });
+  };
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+    setFilters({ ...filters, page: 1 });
+  };
+
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
+    setFilters({ ...filters, page: 1 });
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setFilters({ ...filters, page: 1 });
   };
 
   return (
@@ -166,21 +194,17 @@ const EventsPage = () => {
 
       {viewMode === "grid" && (
         <>
-          <div className="filters">
-            <select
-              name="category"
-              value={filters.category}
-              onChange={handleFilterChange}
-              className="filter-select"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          <>
+            <FilterBar
+              category={filters.category}
+              startDate={startDate}
+              endDate={endDate}
+              onCategoryChange={handleFilterChange}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
+            />
+            <SearchBar value={searchQuery} onSearch={handleSearchChange} />
+          </>
 
           {isLoading ? (
             <Loading message="Loading events..." />
@@ -223,42 +247,49 @@ const EventsPage = () => {
       )}
 
       {viewMode === "calendar" && (
-        <div className="calendar-container">
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek",
-            }}
-            events={calendarEvents}
-            eventClick={(info) => {
-              info.jsEvent.preventDefault();
-              window.location.href = info.event.url;
-            }}
-            height="auto"
+        <>
+          <FilterBar
+            category={filters.category}
+            startDate={startDate}
+            endDate={endDate}
+            onCategoryChange={handleFilterChange}
+            onStartDateChange={handleStartDateChange}
+            onEndDateChange={handleEndDateChange}
           />
-        </div>
+          <SearchBar value={searchQuery} onSearch={handleSearchChange} />
+          <div className="calendar-container">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin]}
+              initialView="dayGridMonth"
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek",
+              }}
+              events={calendarEvents}
+              eventClick={(info) => {
+                info.jsEvent.preventDefault();
+                window.location.href = info.event.url;
+              }}
+              height="auto"
+            />
+          </div>
+        </>
       )}
 
       {viewMode === "map" && (
         <>
-          <div className="filters">
-            <select
-              name="category"
-              value={filters.category}
-              onChange={handleFilterChange}
-              className="filter-select"
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          <>
+            <FilterBar
+              category={filters.category}
+              startDate={startDate}
+              endDate={endDate}
+              onCategoryChange={handleFilterChange}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
+            />
+            <SearchBar value={searchQuery} onSearch={handleSearchChange} />
+          </>
 
           <div className="map-view-container">
             <EventsMap
