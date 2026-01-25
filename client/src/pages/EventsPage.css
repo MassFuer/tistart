@@ -114,3 +114,90 @@
     margin-right: -1rem;
   }
 }
+
+/* ===== FullCalendar Styling ===== */
+.fc .fc-toolbar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.fc .fc-button {
+  background: var(--secondary-color);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  color: white;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.fc .fc-button:hover {
+  background: #2980b9;
+}
+
+.fc .fc-button-active {
+  background: var(--primary-color) !important;
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--text-color);
+  padding: 0.5rem;
+}
+
+.fc .fc-event {
+  border-radius: var(--radius);
+  border: none;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.fc .fc-event:hover {
+  opacity: 0.8;
+}
+
+.fc .fc-col-header-cell {
+  background: var(--bg-color);
+  border-color: var(--border-color);
+  color: var(--text-color);
+  font-weight: 600;
+  padding: 0.75rem 0.5rem;
+}
+
+.fc .fc-daygrid-day {
+  background: var(--white);
+  border-color: var(--border-color);
+}
+
+.fc .fc-scrollgrid {
+  border-color: var(--border-color);
+}
+
+/* Dark mode */
+[data-theme="dark"] .calendar-container {
+  background: var(--card-bg);
+}
+
+[data-theme="dark"] .fc .fc-toolbar-title {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .fc .fc-daygrid-day {
+  background: var(--card-bg);
+  border-color: #333;
+}
+
+[data-theme="dark"] .fc .fc-daygrid-day-number {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .fc .fc-col-header-cell {
+  background: var(--bg-color);
+  border-color: #333;
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .fc .fc-scrollgrid {
+  border-color: #333;
+}
+

@@ -4,6 +4,7 @@ import { eventsAPI, geocodeAPI } from "../services/api";
 import toast from "react-hot-toast";
 import AddressForm from "../components/map/AddressForm";
 import LocationMap from "../components/map/LocationMap";
+import MarkdownEditor from "../components/common/MarkdownEditor";
 import "./EventFormPage.css";
 
 const EventFormPage = () => {
@@ -457,14 +458,10 @@ const EventFormPage = () => {
 
             <div className="form-group">
               <label htmlFor="description">Description *</label>
-              <textarea
-                id="description"
-                name="description"
+              <MarkdownEditor
                 value={formData.description}
-                onChange={handleChange}
-                required
-                rows="4"
-                placeholder="Describe your event"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Describe your event... (Markdown supported)"
               />
             </div>
 

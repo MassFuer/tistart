@@ -68,17 +68,29 @@ const EventsPage = () => {
 
   const fetchCalendarEvents = async () => {
     try {
-      const response = await eventsAPI.getCalendar();
+      // Get date range for calendar (current month ± 1 month for buffer)
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 12, 0);
+
+      const response = await eventsAPI.getCalendar({
+        start: start.toISOString(),
+        end: end.toISOString(),
+        ...(filters.category && { category: filters.category }),
+      });
+
       const formattedEvents = response.data.data.map((event) => ({
-        id: event._id,
+        id: event.id,
         title: event.title,
-        start: event.startDateTime,
-        end: event.endDateTime,
-        url: `/events/${event._id}`,
-        backgroundColor: getCategoryColor(event.category),
+        start: event.start,
+        end: event.end,
+        url: `/events/${event.id}`,
+        backgroundColor: getCategoryColor(event.extendedProps?.category),
       }));
       setCalendarEvents(formattedEvents);
+      console.log('Calendar events loaded:', formattedEvents.length);
     } catch (error) {
+      console.error('Calendar fetch error:', error);
       toast.error("Failed to load calendar events");
     }
   };

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import toast from "react-hot-toast";
+import MarkdownEditor from "../components/common/MarkdownEditor";
 import "./ArtworkFormPage.css";
 
 const ArtworkFormPage = () => {
@@ -334,14 +335,10 @@ const ArtworkFormPage = () => {
 
             <div className="form-group">
               <label htmlFor="description">Description *</label>
-              <textarea
-                id="description"
-                name="description"
+              <MarkdownEditor
                 value={formData.description}
-                onChange={handleChange}
-                required
-                rows="4"
-                placeholder="Describe your artwork"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Describe your artwork... (Markdown supported)"
               />
             </div>
 

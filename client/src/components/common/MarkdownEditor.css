@@ -1,0 +1,152 @@
+/* ===== Markdown Editor Customization ===== */
+.CodeMirror {
+  border: 1.5px solid #c0c0c0;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 1rem;
+  min-height: 200px;
+  background: var(--white);
+  color: var(--text-color);
+}
+
+.CodeMirror:hover {
+  border-color: #a0a0a0;
+}
+
+.CodeMirror-focused {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.editor-toolbar {
+  border: 1.5px solid #c0c0c0;
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--bg-color);
+  opacity: 1;
+}
+
+.editor-toolbar button {
+  color: var(--text-color) !important;
+  border: none !important;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar button.active {
+  background: var(--secondary-color) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+.editor-toolbar i.separator {
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+.CodeMirror-cursor {
+  border-left-color: var(--text-color);
+}
+
+.cm-header {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.cm-strong {
+  font-weight: 700;
+}
+
+.cm-em {
+  font-style: italic;
+}
+
+.cm-link {
+  color: var(--secondary-color);
+  text-decoration: underline;
+}
+
+.cm-quote {
+  color: #666;
+  font-style: italic;
+}
+
+/* Dark mode */
+[data-theme="dark"] .CodeMirror {
+  background: var(--card-bg);
+  border-color: #444;
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .CodeMirror:hover {
+  border-color: #555;
+}
+
+[data-theme="dark"] .CodeMirror-focused {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.2);
+}
+
+[data-theme="dark"] .editor-toolbar {
+  background: var(--bg-color);
+  border-color: #444;
+}
+
+[data-theme="dark"] .editor-toolbar button {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .editor-toolbar i.separator {
+  border-left-color: #555;
+  border-right-color: #555;
+}
+
+[data-theme="dark"] .CodeMirror-cursor {
+  border-left-color: var(--text-color);
+}
+
+[data-theme="dark"] .cm-quote {
+  color: #999;
+}
+
+/* Preview mode */
+.editor-preview,
+.editor-preview-side {
+  background: var(--white);
+  padding: 1rem;
+  font-family: inherit;
+}
+
+[data-theme="dark"] .editor-preview,
+[data-theme="dark"] .editor-preview-side {
+  background: var(--card-bg);
+  color: var(--text-color);
+}
+
+.editor-preview h1,
+.editor-preview h2,
+.editor-preview h3,
+.editor-preview-side h1,
+.editor-preview-side h2,
+.editor-preview-side h3 {
+  color: var(--primary-color);
+}
+
+.editor-preview a,
+.editor-preview-side a {
+  color: var(--secondary-color);
+}
+
+.editor-preview code,
+.editor-preview-side code {
+  background: var(--bg-color);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius);
+}
+
+.editor-preview pre,
+.editor-preview-side pre {
+  background: var(--bg-color);
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
