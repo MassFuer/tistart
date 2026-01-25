@@ -37,8 +37,17 @@
 }
 
 .footer-section ul li {
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
   color: var(--text-light);
+}
+
+.footer-icon {
+  font-size: 1rem;
+  color: var(--secondary-color);
+  flex-shrink: 0;
 }
 
 .footer-section ul li a,
@@ -76,19 +85,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   background: var(--medium-gray);
   border-radius: 50%;
   color: var(--text-color);
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: var(--transition);
+  font-size: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .social-links a:hover {
   background: var(--secondary-color);
   color: var(--white);
+  transform: translateY(-3px) scale(1.1);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
   text-decoration: none;
 }
 

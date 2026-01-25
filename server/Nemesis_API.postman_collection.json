@@ -1,9 +1,16 @@
 {
   "info": {
-    "_postman_id": "nemesis-api-v1",
+    "_postman_id": "nemesis-api-collection",
     "name": "Nemesis API",
+    "description": "Artists platform API - Manage artworks, events, and artist profiles",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5005"
+    }
+  ],
   "item": [
     {
       "name": "Auth",
@@ -23,11 +30,10 @@
               "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"userName\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/signup",
               "path": ["auth", "signup"]
-            }
+            },
+            "description": "Register a new user"
           }
         },
         {
@@ -45,11 +51,10 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/login",
               "path": ["auth", "login"]
-            }
+            },
+            "description": "Login user - sets HTTP-only cookie"
           }
         },
         {
@@ -67,11 +72,10 @@
               "raw": "{\n  \"email\": \"admin@nemesis.com\",\n  \"password\": \"Admin123!\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/login",
               "path": ["auth", "login"]
-            }
+            },
+            "description": "Login as admin user"
           }
         },
         {
@@ -80,11 +84,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/verify",
               "path": ["auth", "verify"]
-            }
+            },
+            "description": "Verify JWT token and get user data"
           }
         },
         {
@@ -93,11 +96,10 @@
             "method": "POST",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/logout",
               "path": ["auth", "logout"]
-            }
+            },
+            "description": "Logout user - clears cookie"
           }
         },
         {
@@ -112,14 +114,34 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"companyName\": \"My Art Studio\",\n  \"tagline\": \"Creating beauty since 2020\",\n  \"description\": \"I am a passionate artist specializing in modern art.\",\n  \"type\": \"individual\",\n  \"address\": {\n    \"street\": \"Art Street\",\n    \"city\": \"Paris\",\n    \"country\": \"France\"\n  }\n}"
+              "raw": "{\n  \"companyName\": \"My Art Studio\",\n  \"tagline\": \"Creating beauty since 2020\",\n  \"description\": \"I am a passionate artist specializing in modern art.\",\n  \"type\": \"individual\",\n  \"taxId\": \"123456789\",\n  \"vatNumber\": \"EU123456789\",\n  \"address\": {\n    \"street\": \"Art Street\",\n    \"streetNum\": \"42\",\n    \"zipCode\": \"75001\",\n    \"city\": \"Paris\",\n    \"country\": \"France\"\n  },\n  \"socialMedia\": {\n    \"instagram\": \"https://instagram.com/myart\",\n    \"website\": \"https://myart.com\"\n  }\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/auth/apply-artist",
               "path": ["auth", "apply-artist"]
-            }
+            },
+            "description": "Submit artist application (requires auth)"
+          }
+        },
+        {
+          "name": "Update Artist Info",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tagline\": \"Updated tagline\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/update-artist-info",
+              "path": ["auth", "update-artist-info"]
+            },
+            "description": "Update artist profile info (requires artist role)"
           }
         }
       ]
@@ -133,9 +155,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/artworks?page=1&limit=12",
               "path": ["api", "artworks"],
               "query": [
                 {
@@ -145,9 +165,35 @@
                 {
                   "key": "limit",
                   "value": "12"
+                },
+                {
+                  "key": "category",
+                  "value": "painting",
+                  "disabled": true
+                },
+                {
+                  "key": "minPrice",
+                  "value": "100",
+                  "disabled": true
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "5000",
+                  "disabled": true
+                },
+                {
+                  "key": "isForSale",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "sunset",
+                  "disabled": true
                 }
               ]
-            }
+            },
+            "description": "Get all artworks with optional filters"
           }
         },
         {
@@ -156,11 +202,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "artworks", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "path": ["api", "artworks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ARTWORK_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single artwork by ID"
           }
         },
         {
@@ -175,14 +226,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Sunset Dreams\",\n  \"description\": \"A beautiful oil painting of a sunset\",\n  \"price\": 1200,\n  \"category\": \"painting\",\n  \"isForSale\": true,\n  \"totalInStock\": 1\n}"
+              "raw": "{\n  \"title\": \"Sunset Dreams\",\n  \"description\": \"A beautiful oil painting of a sunset over the ocean\",\n  \"price\": 1200,\n  \"originalPrice\": 1500,\n  \"category\": \"painting\",\n  \"isForSale\": true,\n  \"materialsUsed\": [\"oil\", \"canvas\"],\n  \"colors\": [\"orange\", \"red\", \"yellow\"],\n  \"dimensions\": {\n    \"width\": 100,\n    \"height\": 80,\n    \"depth\": 3,\n    \"unit\": \"cm\"\n  },\n  \"totalInStock\": 1\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/artworks",
               "path": ["api", "artworks"]
-            }
+            },
+            "description": "Create new artwork (verified artists only)"
           }
         },
         {
@@ -200,11 +250,16 @@
               "raw": "{\n  \"title\": \"Updated Title\",\n  \"price\": 1100\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "artworks", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "path": ["api", "artworks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ARTWORK_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update artwork (owner only)"
           }
         },
         {
@@ -213,11 +268,34 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "artworks", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "path": ["api", "artworks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ARTWORK_ID_HERE"
+                }
+              ]
+            },
+            "description": "Delete artwork (owner only)"
+          }
+        },
+        {
+          "name": "Get Artworks by Artist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/artist/:artistId",
+              "path": ["api", "artworks", "artist", ":artistId"],
+              "variable": [
+                {
+                  "key": "artistId",
+                  "value": "ARTIST_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get all artworks by a specific artist"
           }
         }
       ]
@@ -231,9 +309,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/events?page=1&limit=12",
               "path": ["api", "events"],
               "query": [
                 {
@@ -243,9 +319,42 @@
                 {
                   "key": "limit",
                   "value": "12"
+                },
+                {
+                  "key": "category",
+                  "value": "exhibition",
+                  "disabled": true
+                },
+                {
+                  "key": "upcoming",
+                  "value": "true",
+                  "disabled": true
                 }
               ]
-            }
+            },
+            "description": "Get all events with optional filters"
+          }
+        },
+        {
+          "name": "Get Events for Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/events/calendar?start=2025-01-01&end=2025-12-31",
+              "path": ["api", "events", "calendar"],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "end",
+                  "value": "2025-12-31"
+                }
+              ]
+            },
+            "description": "Get events formatted for FullCalendar"
           }
         },
         {
@@ -254,11 +363,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "events", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/events/:id",
+              "path": ["api", "events", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "EVENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single event by ID"
           }
         },
         {
@@ -273,14 +387,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Art Exhibition 2025\",\n  \"description\": \"Annual art exhibition\",\n  \"startDateTime\": \"2025-06-01T10:00:00Z\",\n  \"endDateTime\": \"2025-06-01T18:00:00Z\",\n  \"category\": \"exhibition\",\n  \"price\": 0,\n  \"maxCapacity\": 100\n}"
+              "raw": "{\n  \"title\": \"Art Exhibition 2025\",\n  \"description\": \"Annual art exhibition featuring local artists\",\n  \"startDateTime\": \"2025-06-01T10:00:00Z\",\n  \"endDateTime\": \"2025-06-01T18:00:00Z\",\n  \"category\": \"exhibition\",\n  \"location\": {\n    \"venue\": \"City Art Gallery\",\n    \"address\": \"123 Gallery Street\",\n    \"city\": \"Paris\",\n    \"country\": \"France\",\n    \"isOnline\": false\n  },\n  \"price\": 0,\n  \"maxCapacity\": 100,\n  \"isPublic\": true\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/events",
               "path": ["api", "events"]
-            }
+            },
+            "description": "Create new event (verified artists only)"
           }
         },
         {
@@ -298,11 +411,16 @@
               "raw": "{\n  \"title\": \"Updated Event Title\",\n  \"maxCapacity\": 150\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "events", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/events/:id",
+              "path": ["api", "events", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "EVENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update event (owner only)"
           }
         },
         {
@@ -311,11 +429,16 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "events", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/events/:id",
+              "path": ["api", "events", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "EVENT_ID_HERE"
+                }
+              ]
+            },
+            "description": "Delete event (owner only)"
           }
         }
       ]
@@ -329,11 +452,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/users/profile",
               "path": ["api", "users", "profile"]
-            }
+            },
+            "description": "Get current user's profile"
           }
         },
         {
@@ -351,11 +473,10 @@
               "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"Name\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/users/profile",
               "path": ["api", "users", "profile"]
-            }
+            },
+            "description": "Update current user's profile"
           }
         },
         {
@@ -364,11 +485,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/users/favorites",
               "path": ["api", "users", "favorites"]
-            }
+            },
+            "description": "Get user's favorite artworks"
           }
         },
         {
@@ -377,11 +497,16 @@
             "method": "POST",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", "favorites", ":artworkId"]
-            }
+              "raw": "{{baseUrl}}/api/users/favorites/:artworkId",
+              "path": ["api", "users", "favorites", ":artworkId"],
+              "variable": [
+                {
+                  "key": "artworkId",
+                  "value": "ARTWORK_ID_HERE"
+                }
+              ]
+            },
+            "description": "Add artwork to favorites"
           }
         },
         {
@@ -390,11 +515,16 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", "favorites", ":artworkId"]
-            }
+              "raw": "{{baseUrl}}/api/users/favorites/:artworkId",
+              "path": ["api", "users", "favorites", ":artworkId"],
+              "variable": [
+                {
+                  "key": "artworkId",
+                  "value": "ARTWORK_ID_HERE"
+                }
+              ]
+            },
+            "description": "Remove artwork from favorites"
           }
         },
         {
@@ -403,11 +533,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/users/artists/all",
               "path": ["api", "users", "artists", "all"]
-            }
+            },
+            "description": "Get all verified artists (public)"
           }
         },
         {
@@ -416,11 +545,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", "artist", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/users/artist/:id",
+              "path": ["api", "users", "artist", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ARTIST_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get public artist profile"
           }
         }
       ]
@@ -434,9 +568,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
+              "raw": "{{baseUrl}}/api/users?page=1&limit=20",
               "path": ["api", "users"],
               "query": [
                 {
@@ -446,9 +578,25 @@
                 {
                   "key": "limit",
                   "value": "20"
+                },
+                {
+                  "key": "role",
+                  "value": "artist",
+                  "disabled": true
+                },
+                {
+                  "key": "artistStatus",
+                  "value": "pending",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "john",
+                  "disabled": true
                 }
               ]
-            }
+            },
+            "description": "Get all users (admin only)"
           }
         },
         {
@@ -457,11 +605,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", ":id"]
-            }
+              "raw": "{{baseUrl}}/api/users/:id",
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            },
+            "description": "Get single user by ID (admin only)"
           }
         },
         {
@@ -479,11 +632,16 @@
               "raw": "{\n  \"status\": \"verified\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", ":id", "artist-status"]
-            }
+              "raw": "{{baseUrl}}/api/users/:id/artist-status",
+              "path": ["api", "users", ":id", "artist-status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update artist status (admin only). Values: none, pending, incomplete, verified, suspended"
           }
         },
         {
@@ -501,11 +659,16 @@
               "raw": "{\n  \"role\": \"artist\"\n}"
             },
             "url": {
-              "protocol": "http",
-              "host": ["localhost"],
-              "port": "5005",
-              "path": ["api", "users", ":id", "role"]
-            }
+              "raw": "{{baseUrl}}/api/users/:id/role",
+              "path": ["api", "users", ":id", "role"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            },
+            "description": "Update user role (admin only). Values: user, artist, admin"
           }
         }
       ]

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -14,8 +15,20 @@ const Navbar = () => {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const profileRef = useRef(null);
   const navigate = useNavigate();
+  const { scrollY } = useScroll();
+
+  // Hide navbar on scroll down, show on scroll up
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious();
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -55,7 +68,15 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
+    <motion.nav
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: "-100%" }
+      }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className="navbar"
+    >
       <div className="navbar-header">
         <div className="navbar-brand">
           <NavLink to="/" onClick={closeMenu}>
@@ -70,7 +91,15 @@ const Navbar = () => {
           {isAuthenticated && (
             <NavLink to="/cart" className="cart-icon-link" onClick={closeMenu}>
               <FaShoppingCart />
-              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              {cartCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="cart-badge"
+                >
+                  {cartCount}
+                </motion.span>
+              )}
             </NavLink>
           )}
           <button
@@ -105,7 +134,15 @@ const Navbar = () => {
             {/* Cart Icon - Desktop */}
             <NavLink to="/cart" className="cart-icon-link desktop-only" onClick={closeMenu}>
               <FaShoppingCart />
-              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              {cartCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="cart-badge"
+                >
+                  {cartCount}
+                </motion.span>
+              )}
             </NavLink>
 
             {/* Profile Dropdown */}
@@ -191,7 +228,7 @@ const Navbar = () => {
           </div>
         )}
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

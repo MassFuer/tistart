@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FaFacebook, FaInstagram, FaTwitter, FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import "./Footer.css";
 
 const Footer = () => {
@@ -33,9 +34,18 @@ const Footer = () => {
         <div className="footer-section">
           <h4>Contact</h4>
           <ul>
-            <li>Email: mass@fuer.fr</li>
-            <li>Phone: +33(6)03774172</li>
-            <li>Address: Fuer Street - 13000 Marseille</li>
+            <li>
+              <FaEnvelope className="footer-icon" />
+              <span>mass@fuer.fr</span>
+            </li>
+            <li>
+              <FaPhone className="footer-icon" />
+              <span>+33(6)03774172</span>
+            </li>
+            <li>
+              <FaMapMarkerAlt className="footer-icon" />
+              <span>Fuer Street - 13000 Marseille</span>
+            </li>
           </ul>
         </div>
 
@@ -64,7 +74,7 @@ const Footer = () => {
             rel="noopener noreferrer"
             aria-label="Facebook"
           >
-            FB
+            <FaFacebook />
           </a>
           <a
             href="https://instagram.com"
@@ -72,7 +82,7 @@ const Footer = () => {
             rel="noopener noreferrer"
             aria-label="Instagram"
           >
-            IG
+            <FaInstagram />
           </a>
           <a
             href="https://twitter.com"
@@ -80,7 +90,7 @@ const Footer = () => {
             rel="noopener noreferrer"
             aria-label="Twitter"
           >
-            X
+            <FaTwitter />
           </a>
         </div>
       </div>
