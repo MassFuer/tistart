@@ -31,9 +31,9 @@ router.post(
     body("userName").notEmpty().withMessage("Username is required"),
     body("email").isEmail().withMessage("Please provide a valid email address"),
     body("password")
-      .matches(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/)
+      .matches(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/)
       .withMessage(
-        "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter."
+        "Password must have at least 8 characters and contain at least one number, one lowercase and one uppercase letter."
       ),
     validate,
   ],

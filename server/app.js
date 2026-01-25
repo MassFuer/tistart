@@ -21,6 +21,10 @@ app.use("/api/payments/webhook", stripeWebhook);
 // ℹ️ This function is getting exported from the config folder. It runs most pieces of middleware
 require("./config")(app);
 
+// Rate limiting for API routes
+const { apiLimiter } = require("./middleware/rateLimit.middleware");
+app.use("/api", apiLimiter);
+
 // 🏥 Health check route
 app.get("/", (req, res) => {
   res.json({
