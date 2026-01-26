@@ -251,7 +251,7 @@ const GalleryPage = () => {
                 name="search"
                 value={filters.search}
                 onChange={handleFilterChange}
-                placeholder="Search artworks by title..."
+                placeholder="Search by title, artist or company..."
                 className="search-input"
               />
             </div>

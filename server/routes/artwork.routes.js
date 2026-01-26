@@ -81,7 +81,8 @@ router.get("/", async (req, res, next) => {
 
         if (hasSmallTokens) {
           const searchRegex = new RegExp(search, "i");
-          filter.$or = [{ title: searchRegex }, { description: searchRegex }];
+          // Use the pre-computed search string which includes title, desc, and artist
+          filter.searchString = { $regex: searchRegex };
         } else {
           // Use n-gram index for fast substring search
           // $all ensures that for "blue sky", we find docs with "blue" AND "sky"

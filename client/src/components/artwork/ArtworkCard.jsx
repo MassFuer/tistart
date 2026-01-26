@@ -90,9 +90,14 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
 
         <div className="artwork-info">
           <h3 className="artwork-title">{artwork.title}</h3>
-          <p className="artwork-artist">
-            by {artwork.artist?.artistInfo?.companyName || `${artwork.artist?.firstName} ${artwork.artist?.lastName}`}
-          </p>
+          <div className="artwork-artist">
+            {artwork.artist?.artistInfo?.companyName && (
+              <div className="artist-company">{artwork.artist.artistInfo.companyName}</div>
+            )}
+            <div className="artist-name">
+              {artwork.artist?.firstName} {artwork.artist?.lastName}
+            </div>
+          </div>
           <span className="artwork-category">{artwork.category}</span>
 
           <div className="artwork-price">

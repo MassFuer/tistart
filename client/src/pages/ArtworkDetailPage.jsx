@@ -167,7 +167,12 @@ const ArtworkDetailPage = () => {
           </div>
 
           <Link to={`/artists/${artwork.artist?._id}`} className="artist-link">
-            by {artwork.artist?.artistInfo?.companyName || `${artwork.artist?.firstName} ${artwork.artist?.lastName}`}
+            {artwork.artist?.artistInfo?.companyName && (
+              <span className="artist-company">{artwork.artist.artistInfo.companyName}</span>
+            )}
+            <span className="artist-name">
+              by {artwork.artist?.firstName} {artwork.artist?.lastName}
+            </span>
           </Link>
 
           <div className="price-section">

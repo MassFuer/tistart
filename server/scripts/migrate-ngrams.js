@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Artwork = require("../models/Artwork.model");
+require("../models/User.model"); // Register User model for populate
 const { generateNGrams } = require("../utils/ngram");
 require("dotenv").config();
 
@@ -10,18 +11,37 @@ const migrate = async () => {
     await mongoose.connect(MONGODB_URI);
     console.log("Connected to MongoDB");
 
-    const artworks = await Artwork.find({});
+    const artworks = await Artwork.find({}).populate("artist", "firstName lastName artistInfo");
     console.log(`Found ${artworks.length} artworks to migrate.`);
 
     const operations = artworks.map((artwork) => {
       const titleGrams = generateNGrams(artwork.title || "");
-      const descGrams = generateNGrams(artwork.description || "");
-      const searchKeywords = [...new Set([...titleGrams, ...descGrams])];
+      // Removed description from search as requested
+      
+      let artistGrams = [];
+      let artistName = "";
+      
+      if (artwork.artist) {
+        const firstName = artwork.artist.firstName || "";
+        const lastName = artwork.artist.lastName || "";
+        const companyName = artwork.artist.artistInfo?.companyName || "";
+        
+        artistName = `${firstName} ${lastName} ${companyName}`.trim();
+        
+        const firstNameGrams = generateNGrams(firstName);
+        const lastNameGrams = generateNGrams(lastName);
+        const companyGrams = generateNGrams(companyName);
+        
+        artistGrams = [...firstNameGrams, ...lastNameGrams, ...companyGrams];
+      }
+
+      const searchKeywords = [...new Set([...titleGrams, ...artistGrams])];
+      const searchString = `${artwork.title || ""} ${artistName}`.toLowerCase();
 
       return {
         updateOne: {
           filter: { _id: artwork._id },
-          update: { $set: { searchKeywords } },
+          update: { $set: { searchKeywords, searchString } },
         },
       };
     });
