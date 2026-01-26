@@ -4,6 +4,8 @@ A comprehensive platform for artists to showcase and sell their work, manage eve
 
 ![Nemesis Banner](https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg)
 
+_Image by [freepik.com](https://fr.freepik.com/photos-vecteurs-libre/picasso) on Freepik_
+
 ## 🎨 Overview
 
 Nemesis is a full-stack art marketplace and community platform where:
@@ -102,7 +104,7 @@ Nemesis is a full-stack art marketplace and community platform where:
 2.  **For Collectors**: A secure, transparent platform to discover art via advanced search (including n-gram partial matching), view high-quality media (images/video), and purchase with confidence via Stripe.
 3.  **For Community**: An event-driven architecture that brings people together through physical and digital events, fostering a vibrant art ecosystem.
 
-The project demonstrates a robust implementation of the MERN stack (MongoDB, Express, React, Node) with enterprise-grade features like Role-Based Access Control (RBAC), secure file storage (Cloudflare R2), and geolocation services.
+The project demonstrates a robust implementation of the MERN stack (MongoDB, Express, React, Node) with enterprise-grade features like Authentication (JWT), Role-Based Access Control (RBAC), secure file storage (Cloudflare R2), and geolocation services.
 
 ## 👥 Authors
 
@@ -111,3 +113,12 @@ The project demonstrates a robust implementation of the MERN stack (MongoDB, Exp
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+## Links
+
+> [!CAUTION]
+> project not deployed yet  
+
+- [Frontend](https://tistart.netlify.app/)
+- [Backend](https://tistart.onrender.com/)
+- [Database](https://www.mongodb.com/cloud/atlas)   
