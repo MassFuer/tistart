@@ -3,7 +3,7 @@ const logger = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const helmet = require("helmet");
-const mongoSanitize = require("express-mongo-sanitize");
+// Note: express-mongo-sanitize removed due to Express 5 incompatibility (req.query is read-only)
 const { sanitizeInput } = require("../utils/sanitize");
 
 const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
@@ -31,7 +31,25 @@ module.exports = (app) => {
   app.use(express.urlencoded({ extended: false }));
 
   // Data sanitization against NoSQL query injection
-  app.use(mongoSanitize());
+  // Note: express-mongo-sanitize@2.2.0 is incompatible with Express 5 (req.query is read-only)
+  // Using custom sanitization for req.body instead
+  const sanitizeObject = (obj) => {
+    if (obj && typeof obj === 'object') {
+      for (const key in obj) {
+        if (key.startsWith('$') || key.includes('.')) {
+          delete obj[key];
+        } else if (typeof obj[key] === 'object') {
+          sanitizeObject(obj[key]);
+        }
+      }
+    }
+    return obj;
+  };
+  
+  app.use((req, res, next) => {
+    if (req.body) sanitizeObject(req.body);
+    next();
+  });
 
   // Sanitize input (XSS protection)
   app.use(sanitizeInput);
