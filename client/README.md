@@ -71,3 +71,6 @@ Access the app at `http://localhost:5173`.
 - **Admin Dashboard**: Comprehensive stats, data tables, and management tools.
 - **Artist Onboarding**: Dedicated application flow with status tracking.
 - **Event Discovery**: Advanced filtering and map integration.
+- **Direct Messaging**: Internal chat system between collectors and artists.
+- **Custom Video Player**: Simplified, elegant video playback experience.
+- **Unified Dashboards**: Dedicated views for Artists (Sales, Analytics) and Collectors (Purchases, Favorites).

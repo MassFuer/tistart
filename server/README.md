@@ -87,6 +87,7 @@ npm run seed
 | **Admin** | `/api/admin` | Dashboard Stats, User Management |
 | **Platform** | `/api/platform` | Settings, Stats, Storage |
 | **Reviews** | `/api/reviews` | CRUD Reviews |
+| **Conversations** | `/api/conversations` | Internal messaging & chat |
 | **Geocode** | `/api/geocode` | Address to Coordinates, Reverse Geocoding |
 
 ## 🧪 Scripts

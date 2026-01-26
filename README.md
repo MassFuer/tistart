@@ -19,6 +19,8 @@ Nemesis is a full-stack art marketplace and community platform where:
 - **Video Streaming**: Pay-per-view video content with secure streaming.
 - **Geolocation**: Find events and artists near you.
 - **Advanced Search**: N-gram search by title, artist, or company name.
+- **Internal Messaging**: Secure chat system for collectors to inquire about artworks directly with artists.
+- **Unified Dashboards**: Tailored experiences for Artists (Analytics, Sales) and Collectors (Orders, Favorites).
 - **Role-Based Access**: User, Artist (verified), Admin, and SuperAdmin roles.
 
 ## 🛠️ Tech Stack
