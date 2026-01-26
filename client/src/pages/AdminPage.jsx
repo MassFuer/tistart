@@ -1,27 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { adminAPI, apiOrders, platformAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import OrderDetailModal from "../components/admin/OrderDetailModal";
 import toast from "react-hot-toast";
+import { useListing } from "../hooks/useListing";
+import Pagination from "../components/common/Pagination";
+import Loading from "../components/common/Loading";
 import "./AdminPage.css";
 
 const AdminPage = () => {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilter] = useState("all");
+
+  // Stats State
   const [stats, setStats] = useState(null);
   const [statsPeriod, setStatsPeriod] = useState("all");
   const [statsLoading, setStatsLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState("stats");
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   const isSuperAdmin = currentUser?.role === "superAdmin";
   const artistStatuses = ["none", "pending", "incomplete", "verified", "suspended"];
   const roles = isSuperAdmin ? ["user", "artist", "admin", "superAdmin"] : ["user", "artist", "admin"];
 
-
-
+  // --- STATS LOGIC ---
   const fetchStats = async () => {
     setStatsLoading(true);
     try {
@@ -34,37 +38,73 @@ const AdminPage = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const params = { limit: 50 };
-      if (filter !== "all") {
-        params.artistStatus = filter;
-      }
-
-      const response = await adminAPI.getAllUsers(params);
-      setUsers(response.data.data);
-    } catch (error) {
-      toast.error("Failed to load users");
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (activeTab === "stats") {
+      fetchStats();
     }
-  };
+  }, [statsPeriod, activeTab]);
+
+  // --- USERS LISTING ---
+  const fetchUsersWrapper = useCallback((params) => {
+    const p = { ...params };
+    if (p.artistStatus === "all") delete p.artistStatus;
+    return adminAPI.getAllUsers(p);
+  }, []);
+
+  const {
+    data: users,
+    loading: usersLoading,
+    pagination: usersPagination,
+    filters: usersFilters,
+    updateFilter: updateUserFilter,
+    setPage: setUsersPage,
+    refresh: refreshUsers
+  } = useListing({
+    apiFetcher: fetchUsersWrapper,
+    initialFilters: { artistStatus: "all", limit: 50 },
+    enabled: activeTab === "users",
+  });
 
   const handleStatusChange = async (userId, newStatus) => {
     try {
       await adminAPI.updateArtistStatus(userId, newStatus);
       toast.success("Artist status updated");
-      fetchUsers();
+      refreshUsers();
     } catch (error) {
       toast.error("Failed to update status");
     }
   };
 
-  const [activeTab, setActiveTab] = useState("stats");
-  const [orders, setOrders] = useState([]);
-  const [ordersFilter, setOrdersFilter] = useState("all");
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await adminAPI.updateUserRole(userId, newRole);
+      toast.success("User role updated");
+      refreshUsers();
+    } catch (error) {
+      toast.error("Failed to update role");
+    }
+  };
+
+  // --- ORDERS LISTING ---
+  const fetchOrdersWrapper = useCallback((params) => {
+      const p = { ...params };
+      if (p.status === "all") delete p.status;
+      return apiOrders.getAll(p);
+  }, []);
+
+  const {
+      data: orders,
+      loading: ordersLoading,
+      pagination: ordersPagination,
+      filters: ordersFilters,
+      updateFilter: updateOrderFilter,
+      setPage: setOrdersPage,
+      refresh: refreshOrders
+  } = useListing({
+      apiFetcher: fetchOrdersWrapper,
+      initialFilters: { status: "all", limit: 50 },
+      enabled: activeTab === "orders",
+  });
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -82,46 +122,6 @@ const AdminPage = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
-
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await adminAPI.updateUserRole(userId, newRole);
-      toast.success("User role updated");
-      fetchUsers();
-    } catch (error) {
-      toast.error("Failed to update role");
-    }
-  };
-
-
-
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    try {
-        const params = { limit: 50 };
-        if (ordersFilter !== "all") {
-            params.status = ordersFilter;
-        }
-        const response = await apiOrders.getAll(params);
-        setOrders(response.data.data);
-    } catch (error) {
-        toast.error("Failed to load orders");
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, [statsPeriod]);
-
-  useEffect(() => {
-    if (activeTab === "users") {
-        fetchUsers();
-    } else if (activeTab === "orders") {
-        fetchOrders();
-    }
-  }, [activeTab, filter, ordersFilter]);
 
   const getStatusBadgeClass = (status) => {
     const classes = {
@@ -183,7 +183,7 @@ const AdminPage = () => {
           </div>
 
           {statsLoading ? (
-            <div className="loading">Loading stats...</div>
+            <Loading message="Loading stats..." />
           ) : stats ? (
             <>
               {/* KPI Cards Row */}
@@ -417,13 +417,17 @@ const AdminPage = () => {
 
       {activeTab === "users" && (
       <>
-      {isLoading ? (
-        <div className="loading">Loading users...</div>
+      {usersLoading ? (
+        <Loading message="Loading users..." />
       ) : (
       <>
       <div className="admin-filters">
         <label>Filter by artist status:</label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
+        <select
+          value={usersFilters.artistStatus}
+          onChange={(e) => updateUserFilter("artistStatus", e.target.value)}
+          className="filter-select"
+        >
           <option value="all">All Users</option>
           {artistStatuses.map((status) => (
             <option key={status} value={status}>
@@ -526,6 +530,11 @@ const AdminPage = () => {
           <p>No users found</p>
         </div>
       )}
+      <Pagination
+        currentPage={usersPagination.page}
+        totalPages={usersPagination.pages}
+        onPageChange={setUsersPage}
+      />
       </>
       )}
       </>
@@ -533,9 +542,17 @@ const AdminPage = () => {
 
       {activeTab === "orders" && (
         <>
+        {ordersLoading ? (
+            <Loading message="Loading orders..." />
+        ) : (
+        <>
             <div className="admin-filters">
                 <label>Filter by order status:</label>
-                <select value={ordersFilter} onChange={(e) => setOrdersFilter(e.target.value)} className="filter-select">
+                <select
+                  value={ordersFilters.status}
+                  onChange={(e) => updateOrderFilter("status", e.target.value)}
+                  className="filter-select"
+                >
                     <option value="all">All Orders</option>
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
@@ -588,6 +605,13 @@ const AdminPage = () => {
                 <p>No orders found</p>
                 </div>
             )}
+            <Pagination
+                currentPage={ordersPagination.page}
+                totalPages={ordersPagination.pages}
+                onPageChange={setOrdersPage}
+            />
+        </>
+        )}
         </>
       )}
 
@@ -596,8 +620,8 @@ const AdminPage = () => {
         <UserDetailModal
           userId={selectedUserId}
           onClose={() => setSelectedUserId(null)}
-          onUpdate={() => fetchUsers()}
-          onDelete={() => fetchUsers()}
+          onUpdate={() => refreshUsers()}
+          onDelete={() => refreshUsers()}
         />
       )}
 
@@ -606,7 +630,7 @@ const AdminPage = () => {
         <OrderDetailModal
           orderId={selectedOrderId}
           onClose={() => setSelectedOrderId(null)}
-          onUpdate={() => fetchOrders()}
+          onUpdate={() => refreshOrders()}
         />
       )}
     </div>

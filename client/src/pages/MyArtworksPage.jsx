@@ -1,34 +1,28 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import ArtworkCard from "../components/artwork/ArtworkCard";
+import Pagination from "../components/common/Pagination";
+import Loading from "../components/common/Loading";
+import ErrorMessage from "../components/common/ErrorMessage";
 import toast from "react-hot-toast";
+import { useListing } from "../hooks/useListing";
 import "./MyArtworksPage.css";
 
 const MyArtworksPage = () => {
   const { user, isAdmin } = useAuth();
-  const [artworks, setArtworks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMyArtworks();
-  }, []);
-
-  const fetchMyArtworks = async () => {
-    try {
-      const response = await artworksAPI.getAll({ limit: 100 });
-      // If admin, show all. If artist, filter by ID.
-      const filteredArtworks = isAdmin
-        ? response.data.data
-        : response.data.data.filter((a) => a.artist?._id === user._id);
-      setArtworks(filteredArtworks);
-    } catch (error) {
-      toast.error("Failed to load artworks");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: artworks,
+    loading: isLoading,
+    error,
+    pagination,
+    setPage,
+    refresh
+  } = useListing({
+    apiFetcher: artworksAPI.getAll,
+    initialFilters: isAdmin ? {} : { artist: user._id },
+  });
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this artwork?")) {
@@ -37,15 +31,19 @@ const MyArtworksPage = () => {
 
     try {
       await artworksAPI.delete(id);
-      setArtworks(artworks.filter((a) => a._id !== id));
       toast.success("Artwork deleted successfully");
+      refresh(); // Reload list to respect pagination
     } catch (error) {
       toast.error("Failed to delete artwork");
     }
   };
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return <Loading message="Loading artworks..." />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error} onRetry={refresh} />;
   }
 
   return (
@@ -68,16 +66,23 @@ const MyArtworksPage = () => {
           </Link>
         </div>
       ) : (
-        <div className="artwork-grid">
-          {artworks.map((artwork) => (
-            <ArtworkCard
-              key={artwork._id}
-              artwork={artwork}
-              showActions={true}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <div className="artwork-grid">
+            {artworks.map((artwork) => (
+              <ArtworkCard
+                key={artwork._id}
+                artwork={artwork}
+                showActions={true}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.pages}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </div>
   );

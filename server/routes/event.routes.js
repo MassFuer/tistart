@@ -92,7 +92,7 @@ router.get("/", async (req, res, next) => {
 // GET /api/events/calendar - Get events for calendar view (public)
 router.get("/calendar", async (req, res, next) => {
   try {
-    const { start, end, artist, search } = req.query;
+    const { start, end, artist, search, category } = req.query;
 
     if (!start || !end) {
       return res.status(400).json({ error: "Start and end dates are required." });
@@ -103,6 +103,10 @@ router.get("/calendar", async (req, res, next) => {
       startDateTime: { $lt: new Date(end) },
       endDateTime: { $gt: new Date(start) },
     };
+
+    if (category) {
+      filter.category = category;
+    }
 
     if (artist) {
       filter.artist = artist;
