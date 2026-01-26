@@ -41,147 +41,8 @@ import {
   SheetFooter,
   SheetClose
 } from "@/components/ui/sheet";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationLink,
-  PaginationItem,
-  PaginationEllipsis
-} from "@/components/ui/pagination";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-
-// Extracted Filter Component
-const EventFilterContent = ({ filters, updateFilter, clearAllFilters, meta }) => {
-    const categories = ["exhibition", "concert", "workshop", "meetup", "other"];
-
-    return (
-        <div className="space-y-6">
-            <div className="space-y-2">
-                <Label>Search</Label>
-                <Input 
-                    placeholder="Search events..." 
-                    value={filters.search}
-                    onChange={(e) => updateFilter("search", e.target.value)}
-                />
-            </div>
-
-            <Accordion type="multiple" defaultValue={["category", "city", "company", "artist", "date"]} className="w-full">
-                <AccordionItem value="category">
-                    <AccordionTrigger>Category</AccordionTrigger>
-                    <AccordionContent>
-                         <Select 
-                            value={filters.category || "all"} 
-                            onValueChange={(val) => updateFilter("category", val === "all" ? "" : val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="All Categories" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Categories</SelectItem>
-                                {categories.map(cat => (
-                                    <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </AccordionContent>
-                </AccordionItem>
-                
-                 <AccordionItem value="city">
-                    <AccordionTrigger>City</AccordionTrigger>
-                    <AccordionContent>
-                        <Select 
-                            value={filters.city || "all"} 
-                            onValueChange={(val) => updateFilter("city", val === "all" ? "" : val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="All Cities" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Cities</SelectItem>
-                                {meta.cities?.map(city => (
-                                    <SelectItem key={city} value={city}>{city}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </AccordionContent>
-                </AccordionItem>
-
-                 <AccordionItem value="company">
-                    <AccordionTrigger>Company</AccordionTrigger>
-                    <AccordionContent>
-                        <Select 
-                            value={filters.company || "all"} 
-                            onValueChange={(val) => updateFilter("company", val === "all" ? "" : val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="All Companies" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Companies</SelectItem>
-                                {meta.companies?.map(comp => (
-                                    <SelectItem key={comp} value={comp}>{comp}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="artist">
-                    <AccordionTrigger>Artist</AccordionTrigger>
-                    <AccordionContent>
-                        <Select 
-                            value={filters.artist || "all"} 
-                            onValueChange={(val) => updateFilter("artist", val === "all" ? "" : val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="All Artists" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Artists</SelectItem>
-                                {meta.artists?.map(artist => (
-                                    <SelectItem key={artist._id} value={artist._id}>{artist.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="date">
-                    <AccordionTrigger>Date Range</AccordionTrigger>
-                    <AccordionContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">From</Label>
-                            <Input 
-                                type="date"
-                                value={filters.startDate}
-                                onChange={(e) => updateFilter("startDate", e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">To</Label>
-                            <Input 
-                                type="date"
-                                value={filters.endDate}
-                                onChange={(e) => updateFilter("endDate", e.target.value)}
-                            />
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-            
-            <Button variant="outline" className="w-full" onClick={clearAllFilters}>
-                Reset Filters
-            </Button>
-        </div>
-    );
-};
+import Pagination from "../components/common/Pagination";
+import EventFilters from "../components/event/EventFilters";
 
 const EventsPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
@@ -280,45 +141,6 @@ const EventsPage = () => {
       toast.success("Filters cleared");
   };
 
-  // Pagination Renderer
-   const renderPaginationItems = () => {
-      if (pagination.pages <= 1) return null;
-      const items = [];
-      const current = pagination.page;
-      const total = pagination.pages;
-
-      items.push(
-          <PaginationItem key="prev">
-              <PaginationPrevious 
-                onClick={() => current > 1 && setPage(current - 1)} 
-                className={current <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-          </PaginationItem>
-      );
-      for (let i = 1; i <= total; i++) {
-          if (i === 1 || i === total || (i >= current - 1 && i <= current + 1)) {
-            items.push(
-                <PaginationItem key={i}>
-                    <PaginationLink isActive={i === current} onClick={() => setPage(i)} className="cursor-pointer">
-                        {i}
-                    </PaginationLink>
-                </PaginationItem>
-            );
-          } else if (i === current - 2 || i === current + 2) {
-              items.push(<PaginationItem key={`ellipsis-${i}`}><PaginationEllipsis /></PaginationItem>);
-          }
-      }
-       items.push(
-          <PaginationItem key="next">
-              <PaginationNext 
-                onClick={() => current < total && setPage(current + 1)}
-                className={current >= total ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-          </PaginationItem>
-      );
-      return items;
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       {/* HEADER */}
@@ -339,7 +161,7 @@ const EventsPage = () => {
        <div className="flex flex-col lg:flex-row gap-8 relative items-start">
             {/* DESKTOP SIDEBAR */}
             <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm">
-                <EventFilterContent 
+                <EventFilters
                     filters={filters}
                     updateFilter={updateFilter}
                     clearAllFilters={clearAllFilters}
@@ -376,7 +198,7 @@ const EventsPage = () => {
                                     <SheetDescription>Refine your search</SheetDescription>
                                 </SheetHeader>
                                 <div className="py-4">
-                                    <EventFilterContent 
+                                    <EventFilters
                                         filters={filters}
                                         updateFilter={updateFilter}
                                         clearAllFilters={clearAllFilters}
@@ -408,11 +230,11 @@ const EventsPage = () => {
                                         <EventCard key={event._id} event={event} />
                                     ))}
                                 </div>
-                                <Pagination>
-                                    <PaginationContent>
-                                        {renderPaginationItems()}
-                                    </PaginationContent>
-                                </Pagination>
+                                <Pagination
+                                    currentPage={pagination.page}
+                                    totalPages={pagination.pages}
+                                    onPageChange={setPage}
+                                />
                             </>
                         )}
                     </TabsContent>
