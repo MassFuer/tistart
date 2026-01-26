@@ -2,7 +2,7 @@
 
 A comprehensive platform for artists to showcase and sell their work, manage events, and connect with art lovers.
 
-<img src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg" alt="nemesis banner" width="1000" height="667">
+<img src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg" alt="nemesis banner" width="500" height="334">
 
 ## 🎨 Overview
 
