@@ -2,9 +2,7 @@
 
 A comprehensive platform for artists to showcase and sell their work, manage events, and connect with art lovers.
 
-![Nemesis Banner](https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg)
-
-_Image by [freepik.com](https://fr.freepik.com/photos-vecteurs-libre/picasso) on Freepik_
+<img src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg" alt="nemesis banner" width="800" height="400">
 
 ## 🎨 Overview
 
