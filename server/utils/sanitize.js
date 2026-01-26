@@ -7,14 +7,22 @@ const xssOptions = {
   stripIgnoreTagBody: ["script", "style"], // Completely remove these tags and their content
 };
 
+const MAX_DEPTH = 10;
+
 /**
  * Recursively sanitize all string values in an object
  * @param {any} obj - The object to sanitize
+ * @param {number} depth - Current recursion depth
  * @returns {any} - The sanitized object
  */
-const sanitizeObject = (obj) => {
+const sanitizeObject = (obj, depth = 0) => {
   if (obj === null || obj === undefined) {
     return obj;
+  }
+
+  // Prevent stack overflow
+  if (depth > MAX_DEPTH) {
+    return null;
   }
 
   // Handle strings
@@ -24,14 +32,14 @@ const sanitizeObject = (obj) => {
 
   // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeObject(item));
+    return obj.map((item) => sanitizeObject(item, depth + 1));
   }
 
   // Handle objects (but not Date, Buffer, ObjectId, etc.)
   if (typeof obj === "object" && obj.constructor === Object) {
     const sanitized = {};
     for (const key of Object.keys(obj)) {
-      sanitized[key] = sanitizeObject(obj[key]);
+      sanitized[key] = sanitizeObject(obj[key], depth + 1);
     }
     return sanitized;
   }
