@@ -152,6 +152,13 @@ const platformSettingsSchema = new Schema(
       allowedIPs: [String], // IPs that can bypass maintenance mode
     },
 
+    // Theme Customization
+    theme: {
+      primary: { type: String, default: "240 5.9% 10%" },
+      radius: { type: String, default: "0.5rem" },
+      cssVars: { type: Map, of: String, default: {} }, // Allow arbitrary overrides
+    },
+
     // Last updated by
     lastUpdatedBy: {
       type: Schema.Types.ObjectId,

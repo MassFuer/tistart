@@ -4,6 +4,7 @@ import { adminAPI, ordersAPI, platformAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import OrderDetailModal from "../components/admin/OrderDetailModal";
+import ThemeEditor from "../components/admin/ThemeEditor";
 import { toast } from "sonner";
 import { useListing } from "../hooks/useListing";
 import Pagination from "../components/common/Pagination";
@@ -193,10 +194,11 @@ const AdminPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+        <TabsList className="grid w-full grid-cols-4 max-w-[800px]">
           <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
           <TabsTrigger value="users">Users & Artists</TabsTrigger>
           <TabsTrigger value="orders">Orders Management</TabsTrigger>
+          <TabsTrigger value="theme">Appearance</TabsTrigger>
         </TabsList>
 
         {/* --- STATS TAB --- */}
@@ -528,6 +530,13 @@ const AdminPage = () => {
                      )}
                  </Card>
              )}
+        </TabsContent>
+
+        {/* --- THEME TAB --- */}
+        <TabsContent value="theme">
+             <div className="max-w-2xl mx-auto">
+                 <ThemeEditor />
+             </div>
         </TabsContent>
 
         {/* --- ORDERS TAB --- */}
