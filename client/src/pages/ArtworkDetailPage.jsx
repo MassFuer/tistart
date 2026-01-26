@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { artworksAPI, usersAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Loading from "../components/common/Loading";
@@ -7,12 +7,39 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import AddToCartButton from "../components/common/AddToCartButton";
 import ReviewSection from "../components/review/ReviewSection";
 import VideoPlayer from "../components/video/VideoPlayer";
-import toast from "react-hot-toast";
-import "./ArtworkDetailPage.css";
+import StartConversationButton from "../components/messaging/StartConversationButton";
+import { toast } from "sonner";
+import {
+  Heart,
+  Share2,
+  ShoppingCart,
+  Tag,
+  Palette,
+  Ruler,
+  Box,
+  Info,
+  Edit,
+  Trash2,
+  ArrowLeft
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const ArtworkDetailPage = () => {
   const { id } = useParams();
   const { isAuthenticated, user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [artwork, setArtwork] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +52,7 @@ const ArtworkDetailPage = () => {
   );
 
   const isOwner = user?._id === artwork?.artist?._id;
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   useEffect(() => {
     fetchArtwork();
@@ -67,6 +95,18 @@ const ArtworkDetailPage = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this artwork? This action cannot be undone.")) {
+      try {
+        await artworksAPI.delete(id);
+        toast.success("Artwork deleted successfully");
+        navigate("/gallery");
+      } catch (error) {
+        toast.error("Failed to delete artwork");
+      }
+    }
+  };
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -88,186 +128,221 @@ const ArtworkDetailPage = () => {
   }
 
   return (
-    <div className="artwork-detail-page">
-      <div className="artwork-detail">
-        <div className="artwork-gallery">
-          {/* Video Player for video/music artworks - shows as main content */}
-          {artwork.video?.url && (
-            <VideoPlayer artwork={artwork} onPurchaseComplete={fetchArtwork} />
-          )}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl animate-in fade-in duration-500">
+      <Button variant="ghost" className="mb-6 pl-0 hover:bg-transparent hover:text-primary" asChild>
+        <Link to="/gallery" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" /> Back to Gallery
+        </Link>
+      </Button>
 
-          {/* Main Image - show if NO video, OR if video exists with images */}
-          {artwork.images?.length > 0 && (
-            <div className={`main-image ${artwork.video?.url ? "with-video" : ""}`}>
-              <img src={artwork.images[selectedImage]} alt={artwork.title} />
-            </div>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Left Column: Gallery */}
+        <div className="space-y-4">
+            <Card className="overflow-hidden border-0 shadow-none bg-transparent">
+                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/20 border shadow-sm">
+                     {artwork.video?.url ? (
+                        <div className="w-full h-full">
+                             <VideoPlayer artwork={artwork} onPurchaseComplete={fetchArtwork} />
+                        </div>
+                     ) : artwork.images?.length > 0 ? (
+                        <img
+                            src={artwork.images[selectedImage]}
+                            alt={artwork.title}
+                            className="w-full h-full object-contain"
+                        />
+                     ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            No Image Available
+                        </div>
+                     )}
+                </div>
+            </Card>
 
-          {/* Show "No Image" only when no video AND no images */}
-          {!artwork.video?.url && !artwork.images?.length && (
-            <div className="main-image">
-              <div className="no-image">No Image Available</div>
-            </div>
-          )}
-
-          {/* Thumbnails - show if multiple images exist */}
-          {artwork.images?.length > 1 && (
-            <div className="thumbnail-list">
-              {artwork.images.map((img, index) => (
-                <button
-                  key={index}
-                  className={`thumbnail ${index === selectedImage ? "active" : ""}`}
-                  onClick={() => setSelectedImage(index)}
-                >
-                  <img src={img} alt={`${artwork.title} ${index + 1}`} />
-                </button>
-              ))}
-            </div>
-          )}
+            {/* Thumbnails */}
+            {artwork.images?.length > 1 && (
+                <ScrollArea className="w-full whitespace-nowrap rounded-md border text-center">
+                    <div className="flex w-max space-x-4 p-4">
+                        {artwork.images.map((img, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setSelectedImage(index)}
+                                className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-md border-2 transition-all hover:opacity-100 ${
+                                    selectedImage === index ? "border-primary ring-2 ring-primary/20 opacity-100" : "border-transparent opacity-70"
+                                }`}
+                            >
+                                <img
+                                    src={img}
+                                    alt={`${artwork.title} ${index + 1}`}
+                                    className="aspect-square h-full w-full object-cover"
+                                />
+                            </button>
+                        ))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            )}
         </div>
 
-        <div className="artwork-info">
-          <div className="info-header">
+        {/* Right Column: Details */}
+        <div className="space-y-6">
             <div>
-              <div className="badges">
-                <span className="category-badge">{artwork.category}</span>
-                {artwork.video?.url && (
-                  <span className={`video-badge ${artwork.video.isPaid ? "paid" : "free"}`}>
-                    {artwork.video.isPaid ? "Premium Video" : "Free Video"}
-                  </span>
-                )}
-              </div>
-              <h1>{artwork.title}</h1>
-            </div>
-            {/* Favorite heart button */}
-            {isAuthenticated && !isOwner && (
-              <button
-                onClick={handleFavorite}
-                disabled={favoriteLoading}
-                className={`detail-favorite-btn ${isFavorite ? "is-favorite" : ""}`}
-                title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              >
-                {favoriteLoading ? (
-                  <span className="favorite-spinner"></span>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill={isFavorite ? "currentColor" : "none"}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                )}
-              </button>
-            )}
-          </div>
-
-          <Link to={`/artists/${artwork.artist?._id}`} className="artist-link">
-            {artwork.artist?.artistInfo?.companyName && (
-              <span className="artist-company">{artwork.artist.artistInfo.companyName}</span>
-            )}
-            <span className="artist-name">
-              by {artwork.artist?.firstName} {artwork.artist?.lastName}
-            </span>
-          </Link>
-
-          <div className="price-section">
-            {artwork.isForSale ? (
-              <>
-                <span className="price">{formatPrice(artwork.price)}</span>
-                {artwork.originalPrice && artwork.price < artwork.originalPrice && (
-                  <span className="original-price">{formatPrice(artwork.originalPrice)}</span>
-                )}
-              </>
-            ) : (
-              <span className="not-for-sale">Not for sale</span>
-            )}
-          </div>
-
-          {artwork.averageRating > 0 && (
-            <div className="rating">
-              {"★".repeat(Math.round(artwork.averageRating))}
-              <span className="rating-count">({artwork.numOfReviews} reviews)</span>
-            </div>
-          )}
-
-          <div className="description">
-            <h3>Description</h3>
-            <p>{artwork.description}</p>
-          </div>
-
-          <div className="details">
-            {artwork.dimensions && (
-              <div className="detail-item">
-                <strong>Dimensions:</strong>
-                <span>
-                  {artwork.dimensions.width} x {artwork.dimensions.height}
-                  {artwork.dimensions.depth ? ` x ${artwork.dimensions.depth}` : ""} {artwork.dimensions.unit}
-                </span>
-              </div>
-            )}
-
-            {artwork.materialsUsed?.length > 0 && (
-              <div className="detail-item">
-                <strong>Materials:</strong>
-                <span>{artwork.materialsUsed.join(", ")}</span>
-              </div>
-            )}
-
-            {artwork.colors?.length > 0 && (
-              <div className="detail-item">
-                <strong>Colors:</strong>
-                <div className="color-list">
-                  {artwork.colors.map((color, index) => (
-                    <span key={index} className="color-tag">
-                      {color}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge variant="secondary" className="text-sm px-3 py-1 capitalize">
+                        {artwork.category}
+                    </Badge>
+                     {artwork.video?.url && (
+                        <Badge variant={artwork.video.isPaid ? "default" : "outline"} className="text-sm px-3 py-1">
+                            {artwork.video.isPaid ? "Premium Video" : "Free Video"}
+                        </Badge>
+                    )}
+                    {!artwork.isForSale && (
+                        <Badge variant="destructive">Sold Out / Not For Sale</Badge>
+                    )}
                 </div>
-              </div>
-            )}
 
-            <div className="detail-item">
-              <strong>Stock:</strong>
-              <span>{artwork.totalInStock > 0 ? `${artwork.totalInStock} available` : "Out of stock"}</span>
+                <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-2">{artwork.title}</h1>
+
+                <div className="flex items-center gap-2 text-muted-foreground mb-6">
+                    <span className="text-lg">by</span>
+                    <Link to={`/artists/${artwork.artist?._id}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                        <Avatar className="h-8 w-8">
+                             <AvatarImage src={artwork.artist?.profilePicture} alt={artwork.artist?.firstName} />
+                             <AvatarFallback>{artwork.artist?.firstName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-lg border-b border-transparent hover:border-primary">
+                            {artwork.artist?.artistInfo?.companyName || `${artwork.artist?.firstName} ${artwork.artist?.lastName}`}
+                        </span>
+                    </Link>
+                </div>
+
+                <div className="flex items-center justify-between">
+                     <div className="flex items-end gap-3">
+                        <span className="text-3xl font-bold text-primary">
+                            {artwork.isForSale ? formatPrice(artwork.price) : "N/A"}
+                        </span>
+                         {artwork.isForSale && artwork.originalPrice && artwork.price < artwork.originalPrice && (
+                            <span className="text-xl text-muted-foreground line-through decoration-destructive/50 decoration-2">
+                                {formatPrice(artwork.originalPrice)}
+                            </span>
+                        )}
+                     </div>
+
+                     {/* Action Buttons */}
+                     <div className="flex gap-2">
+                         {isAuthenticated && !isOwner && (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={handleFavorite}
+                                disabled={favoriteLoading}
+                                className={isFavorite ? "text-red-500 hover:text-red-600 border-red-200 bg-red-50 hover:bg-red-100" : ""}
+                            >
+                                <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
+                            </Button>
+                         )}
+                         <Button variant="outline" size="icon" onClick={() => {
+                             navigator.clipboard.writeText(window.location.href);
+                             toast.success("Link copied to clipboard");
+                         }}>
+                             <Share2 className="h-5 w-5" />
+                         </Button>
+                     </div>
+                </div>
             </div>
-          </div>
 
-          <div className="actions">
-            {isAuthenticated && (user?.role === "admin" || isOwner) ? (
-              <div className="owner-actions">
-                <Link to={`/artworks/${id}/edit`} className="btn btn-secondary">
-                  Edit
-                </Link>
-                <button
-                  onClick={async () => {
-                    if (window.confirm("Are you sure you want to delete this artwork?")) {
-                      try {
-                        await artworksAPI.delete(id);
-                        toast.success("Artwork deleted successfully");
-                        window.location.href = "/gallery";
-                      } catch (error) {
-                        toast.error("Failed to delete artwork");
-                      }
-                    }
-                  }}
-                  className="btn btn-danger"
-                >
-                  Delete
-                </button>
-              </div>
-            ) : (
-              <div className="buyer-actions">
-                <AddToCartButton artwork={artwork} />
-              </div>
-            )}
-          </div>
+            <Separator />
+
+            {/* Description */}
+            <div className="space-y-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Info className="h-4 w-4" /> About the Artwork
+                </h3>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {artwork.description}
+                </p>
+            </div>
+
+            {/* Attributes Grid */}
+            <div className="grid grid-cols-2 gap-4 py-4">
+                 {artwork.dimensions && (
+                    <div className="bg-muted/30 p-3 rounded-lg border">
+                        <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                            <Ruler className="h-3 w-3" /> Dimensions
+                        </span>
+                        <p className="font-medium">
+                            {artwork.dimensions.width} x {artwork.dimensions.height}
+                            {artwork.dimensions.depth ? ` x ${artwork.dimensions.depth}` : ""} {artwork.dimensions.unit}
+                        </p>
+                    </div>
+                 )}
+                 {artwork.materialsUsed?.length > 0 && (
+                     <div className="bg-muted/30 p-3 rounded-lg border">
+                         <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                            <Box className="h-3 w-3" /> Materials
+                        </span>
+                        <p className="font-medium truncate" title={artwork.materialsUsed.join(", ")}>
+                            {artwork.materialsUsed.join(", ")}
+                        </p>
+                     </div>
+                 )}
+                  {artwork.colors?.length > 0 && (
+                     <div className="bg-muted/30 p-3 rounded-lg border col-span-2">
+                        <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                            <Palette className="h-3 w-3" /> Palette
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                            {artwork.colors.map((color, i) => (
+                                <Badge key={i} variant="outline" className="bg-background">
+                                    <span
+                                        className="h-2 w-2 rounded-full mr-2 border shadow-sm"
+                                        style={{ backgroundColor: color.toLowerCase() }}
+                                    />
+                                    {color}
+                                </Badge>
+                            ))}
+                        </div>
+                     </div>
+                 )}
+            </div>
+
+            <Separator />
+
+            {/* Primary Actions */}
+            <div className="flex flex-col gap-4">
+                 {isAuthenticated && (isAdmin || isOwner) ? (
+                     <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" onClick={() => navigate(`/artworks/${id}/edit`)} className="w-full">
+                            <Edit className="mr-2 h-4 w-4" /> Edit Artwork
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete} className="w-full">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Artwork
+                        </Button>
+                     </div>
+                 ) : (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {artwork.isForSale && (
+                             <AddToCartButton artwork={artwork}/>
+                        )}
+                        <StartConversationButton
+                          artistId={artwork.artist?._id}
+                          artworkId={artwork._id}
+                          artworkTitle={artwork.title}
+                          variant="outline"
+                          className="w-full"
+                        />
+                     </div>
+                 )}
+            </div>
+
+            {/* Stock Indicator */}
+            <div className="flex items-center justify-center text-xs text-muted-foreground gap-2">
+                <Box className="h-3 w-3" />
+                <span>{artwork.totalInStock > 0 ? `${artwork.totalInStock} units in stock` : "Currently out of stock"}</span>
+            </div>
         </div>
       </div>
+
+      <Separator className="my-12" />
 
       {/* Reviews Section */}
       <ReviewSection artworkId={artwork._id} artistId={artwork.artist?._id} />

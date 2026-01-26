@@ -4,7 +4,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import { Link } from "react-router-dom";
 import L from "leaflet";
 import { format } from "date-fns";
-import "./EventsMap.css";
+import { useTheme } from "../../context/ThemeContext";
 
 // Category colors for markers
 const categoryColors = {
@@ -47,6 +47,8 @@ const createClusterCustomIcon = (cluster) => {
 };
 
 const EventsMap = ({ events = [], height = "500px", onEventClick }) => {
+  const { isDarkMode } = useTheme();
+
   // Filter events with valid coordinates
   const eventsWithCoordinates = useMemo(() => {
     return events.filter(
@@ -93,6 +95,14 @@ const EventsMap = ({ events = [], height = "500px", onEventClick }) => {
     );
   }
 
+  const tileLayerUrl = isDarkMode 
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  const attribution = isDarkMode
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
   return (
     <div className="events-map-container" style={{ height }}>
       {/* Legend */}
@@ -113,8 +123,8 @@ const EventsMap = ({ events = [], height = "500px", onEventClick }) => {
         scrollWheelZoom={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={attribution}
+          url={tileLayerUrl}
         />
 
         <MarkerClusterGroup

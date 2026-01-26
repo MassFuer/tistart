@@ -2,7 +2,9 @@ import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { GeoSearchControl, OpenStreetMapProvider } from "leaflet-geosearch";
 import L from "leaflet";
+import "leaflet-geosearch/dist/geosearch.css";
 import "./LocationMap.css";
+import { useTheme } from "../../context/ThemeContext";
 
 // Fix for default marker icon in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -95,6 +97,8 @@ const LocationMap = ({
   showSearch = true,
   zoom = 13,
 }) => {
+  const { isDarkMode } = useTheme();
+
   // Default center (Paris)
   const defaultCenter = [48.8566, 2.3522];
 
@@ -103,6 +107,14 @@ const LocationMap = ({
     : defaultCenter;
 
   const hasValidCoordinates = coordinates?.lat && coordinates?.lng;
+
+  const tileLayerUrl = isDarkMode 
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  const attribution = isDarkMode
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <div className="location-map-container" style={{ height }}>
@@ -113,8 +125,8 @@ const LocationMap = ({
         scrollWheelZoom={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={attribution}
+          url={tileLayerUrl}
         />
 
         {hasValidCoordinates && (

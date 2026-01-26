@@ -1,23 +1,36 @@
 import { useState, useEffect, useCallback } from "react";
-import { adminAPI, apiOrders, platformAPI } from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+import { adminAPI, ordersAPI, platformAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import OrderDetailModal from "../components/admin/OrderDetailModal";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { useListing } from "../hooks/useListing";
 import Pagination from "../components/common/Pagination";
 import Loading from "../components/common/Loading";
-import "./AdminPage.css";
+
+// UI Components
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Search, DollarSign, Users, Package, Palette, HardDrive, Filter } from "lucide-react";
 
 const AdminPage = () => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
 
   // Stats State
   const [stats, setStats] = useState(null);
   const [statsPeriod, setStatsPeriod] = useState("all");
   const [statsLoading, setStatsLoading] = useState(true);
 
+  // Tab State - synced with Shadcn Tabs
   const [activeTab, setActiveTab] = useState("stats");
+  
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
 
@@ -33,6 +46,7 @@ const AdminPage = () => {
       setStats(response.data.data);
     } catch (error) {
       console.error("Failed to load stats:", error);
+      toast.error("Failed to load statistics");
     } finally {
       setStatsLoading(false);
     }
@@ -61,7 +75,7 @@ const AdminPage = () => {
     refresh: refreshUsers
   } = useListing({
     apiFetcher: fetchUsersWrapper,
-    initialFilters: { artistStatus: "all", limit: 50 },
+    initialFilters: { artistStatus: "all", limit: 20 },
     enabled: activeTab === "users",
   });
 
@@ -89,7 +103,7 @@ const AdminPage = () => {
   const fetchOrdersWrapper = useCallback((params) => {
       const p = { ...params };
       if (p.status === "all") delete p.status;
-      return apiOrders.getAll(p);
+      return ordersAPI.getAll(p);
   }, []);
 
   const {
@@ -102,7 +116,7 @@ const AdminPage = () => {
       refresh: refreshOrders
   } = useListing({
       apiFetcher: fetchOrdersWrapper,
-      initialFilters: { status: "all", limit: 50 },
+      initialFilters: { status: "all", limit: 20 },
       enabled: activeTab === "orders",
   });
 
@@ -123,497 +137,485 @@ const AdminPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getStatusBadgeClass = (status) => {
-    const classes = {
-      none: "status-none",
-      pending: "status-pending",
-      incomplete: "status-incomplete",
-      verified: "status-verified",
-      suspended: "status-suspended",
-      paid: "status-verified", // Reuse for orders
-      shipped: "status-verified",
-      delivered: "status-verified",
-      cancelled: "status-suspended",
+  const getStatusBadgeVariant = (status) => {
+    const variants = {
+      none: "secondary",
+      pending: "warning", // You might need to add warning variant or use default/secondary with classes
+      incomplete: "secondary",
+      verified: "success", // Need success variant or use default
+      suspended: "destructive",
+      paid: "default", 
+      shipped: "default",
+      delivered: "success",
+      cancelled: "destructive",
     };
-    return classes[status] || "status-none";
+    // Map to standard shadcn badge variants: default, secondary, destructive, outline
+    const mapToStandard = {
+        pending: "secondary", // fallback
+        verified: "default", // fallback
+        paid: "default",
+        shipped: "secondary",
+        delivered: "default",
+        success: "outline", // simplified
+        warning: "secondary"
+    };
+    return mapToStandard[status] || variants[status] || "outline";
   };
+  
+  const getStatusColorClass = (status) => {
+      // Helper for custom colors if Shadcn badge variants aren't enough
+      switch(status) {
+          case 'verified':
+          case 'delivered':
+          case 'paid':
+              return "bg-green-100 text-green-800 hover:bg-green-200 border-green-200";
+          case 'pending':
+              return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200";
+          case 'suspended':
+          case 'cancelled':
+              return "bg-red-100 text-red-800 hover:bg-red-200 border-red-200";
+          case 'shipped':
+              return "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200";
+          default:
+              return "";
+      }
+  }
 
   return (
-    <div className="admin-page">
-      <div className="page-header">
-        <h1>Admin Dashboard</h1>
-        <div className="admin-tabs">
-            <button
-                className={`tab-btn ${activeTab === "stats" ? "active" : ""}`}
-                onClick={() => setActiveTab("stats")}
-            >
-                Dashboard
-            </button>
-            <button
-                className={`tab-btn ${activeTab === "users" ? "active" : ""}`}
-                onClick={() => setActiveTab("users")}
-            >
-                Users & Artists
-            </button>
-            <button
-                className={`tab-btn ${activeTab === "orders" ? "active" : ""}`}
-                onClick={() => setActiveTab("orders")}
-            >
-                Orders
-            </button>
+    <div className="container mx-auto py-8 px-4 space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+                Manage users, artists, orders, and platform statistics.
+            </p>
         </div>
       </div>
 
-      {activeTab === "stats" && (
-        <div className="stats-dashboard">
-          {/* Period Selector */}
-          <div className="stats-period-selector">
-            <label>Time Period:</label>
-            <select
-              value={statsPeriod}
-              onChange={(e) => setStatsPeriod(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">Last 7 Days</option>
-              <option value="month">Last 30 Days</option>
-              <option value="year">Last Year</option>
-            </select>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+          <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
+          <TabsTrigger value="users">Users & Artists</TabsTrigger>
+          <TabsTrigger value="orders">Orders Management</TabsTrigger>
+        </TabsList>
+
+        {/* --- STATS TAB --- */}
+        <TabsContent value="stats" className="space-y-6">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Time Period:</span>
+                <Select value={statsPeriod} onValueChange={setStatsPeriod}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">Last 7 Days</SelectItem>
+                        <SelectItem value="month">Last 30 Days</SelectItem>
+                        <SelectItem value="year">Last Year</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
           </div>
 
           {statsLoading ? (
-            <Loading message="Loading stats..." />
+             <div className="py-20 flex justify-center"><Loading message="Loading stats..." /></div>
           ) : stats ? (
             <>
-              {/* KPI Cards Row */}
-              <div className="kpi-grid">
-                <div className="kpi-card kpi-revenue">
-                  <div className="kpi-icon">💰</div>
-                  <div className="kpi-content">
-                    <span className="kpi-label">Total Revenue</span>
-                    <span className="kpi-value">{formatCurrency(stats.commission?.totalRevenue)}</span>
-                  </div>
-                </div>
-
-                <div className="kpi-card kpi-commission">
-                  <div className="kpi-icon">📊</div>
-                  <div className="kpi-content">
-                    <span className="kpi-label">Platform Fees (20%)</span>
-                    <span className="kpi-value">{formatCurrency(stats.commission?.totalPlatformFees)}</span>
-                  </div>
-                </div>
-
-                <div className="kpi-card kpi-artists">
-                  <div className="kpi-icon">🎨</div>
-                  <div className="kpi-content">
-                    <span className="kpi-label">Artist Earnings</span>
-                    <span className="kpi-value">{formatCurrency(stats.commission?.totalArtistEarnings)}</span>
-                  </div>
-                </div>
-
-                <div className="kpi-card kpi-orders">
-                  <div className="kpi-icon">📦</div>
-                  <div className="kpi-content">
-                    <span className="kpi-label">Total Orders</span>
-                    <span className="kpi-value">{stats.orders?.total || 0}</span>
-                  </div>
-                </div>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(stats.commission?.totalRevenue)}</div>
+                    <p className="text-xs text-muted-foreground">Gross volume</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Platform Fees</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(stats.commission?.totalPlatformFees)}</div>
+                    <p className="text-xs text-muted-foreground">20% Commission</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Artist Earnings</CardTitle>
+                    <Palette className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(stats.commission?.totalArtistEarnings)}</div>
+                    <p className="text-xs text-muted-foreground">Paid to artists</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats.orders?.total || 0}</div>
+                    <p className="text-xs text-muted-foreground">Processed orders</p>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Secondary Stats */}
-              <div className="stats-grid">
-                {/* Users Stats */}
-                <div className="stats-card">
-                  <h3>👥 Users</h3>
-                  <div className="stats-card-content">
-                    <div className="stat-row">
-                      <span>Total Users</span>
-                      <strong>{stats.users?.total || 0}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>New Signups ({statsPeriod})</span>
-                      <strong>{stats.users?.recentSignups || 0}</strong>
-                    </div>
-                    <div className="stat-row-divider" />
-                    {stats.users?.byRole?.map((r) => (
-                      <div className="stat-row" key={r._id}>
-                        <span>{r._id}</span>
-                        <span className="stat-badge">{r.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {/* Detailed Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Users Stats */}
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/> User Demographics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <span>Total Users</span>
+                            <span className="font-bold">{stats.users?.total || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <span>New Signups ({statsPeriod})</span>
+                            <span className="font-bold">{stats.users?.recentSignups || 0}</span>
+                        </div>
+                        <div className="space-y-2 pt-2">
+                            {stats.users?.byRole?.map((r) => (
+                                <div key={r._id} className="flex justify-between items-center text-sm">
+                                    <span className="capitalize">{r._id}s</span>
+                                    <Badge variant="secondary">{r.count}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                 </Card>
 
-                {/* Artworks Stats */}
-                <div className="stats-card">
-                  <h3>🖼️ Artworks</h3>
-                  <div className="stats-card-content">
-                    <div className="stat-row">
-                      <span>Total Artworks</span>
-                      <strong>{stats.artworks?.total || 0}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>For Sale</span>
-                      <strong>{stats.artworks?.forSale || 0}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Total Value</span>
-                      <strong>{formatCurrency(stats.artworks?.totalValue)}</strong>
-                    </div>
-                    <div className="stat-row-divider" />
-                    {stats.artworks?.byCategory?.slice(0, 5).map((c) => (
-                      <div className="stat-row" key={c._id}>
-                        <span>{c._id}</span>
-                        <span className="stat-badge">{c.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Events Stats */}
-                <div className="stats-card">
-                  <h3>📅 Events</h3>
-                  <div className="stats-card-content">
-                    <div className="stat-row">
-                      <span>Total Events</span>
-                      <strong>{stats.events?.total || 0}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Upcoming</span>
-                      <strong>{stats.events?.upcoming || 0}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Total Attendees</span>
-                      <strong>{stats.events?.totalAttendees || 0}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Storage Stats */}
-                <div className="stats-card">
-                  <h3>💾 Storage</h3>
-                  <div className="stats-card-content">
-                    <div className="stat-row">
-                      <span>Total Used</span>
-                      <strong>{formatBytes(stats.storage?.totalStorageUsed)}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Images</span>
-                      <strong>{formatBytes(stats.storage?.totalImageBytes)}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Videos</span>
-                      <strong>{formatBytes(stats.storage?.totalVideoBytes)}</strong>
-                    </div>
-                    <div className="stat-row">
-                      <span>Total Files</span>
-                      <strong>{stats.storage?.totalFiles || 0}</strong>
-                    </div>
-                  </div>
-                </div>
+                 {/* Storage Stats */}
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><HardDrive className="h-5 w-5"/> Storage Usage</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center border-b pb-2">
+                            <span>Total Storage Used</span>
+                            <span className="font-bold">{formatBytes(stats.storage?.totalStorageUsed)}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">Images</span>
+                                <div className="font-medium">{formatBytes(stats.storage?.totalImageBytes)}</div>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">Videos</span>
+                                <div className="font-medium">{formatBytes(stats.storage?.totalVideoBytes)}</div>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground">Total Files</span>
+                                <div className="font-medium">{stats.storage?.totalFiles || 0}</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                 </Card>
+              </div>
+              
+              {/* Top Performers */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Top Selling Artists</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          {stats.topArtists?.length > 0 ? (
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead>Artist</TableHead>
+                                          <TableHead className="text-right">Sales</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {stats.topArtists.map((artist) => (
+                                          <TableRow 
+                                            key={artist.artistId}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => navigate(`/artists/${artist.artistId}`)}
+                                          >
+                                              <TableCell className="font-medium hover:underline hover:text-primary transition-colors">
+                                                  {artist.companyName || artist.artistName}
+                                              </TableCell>
+                                              <TableCell className="text-right">{formatCurrency(artist.totalSales)}</TableCell>
+                                          </TableRow>
+                                      ))}
+                                  </TableBody>
+                              </Table>
+                          ) : <p className="text-sm text-muted-foreground">No data available.</p>}
+                      </CardContent>
+                  </Card>
+                   <Card>
+                      <CardHeader>
+                          <CardTitle>Top Artworks</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                          {stats.topArtworks?.length > 0 ? (
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow>
+                                          <TableHead>Title</TableHead>
+                                          <TableHead className="text-right">Revenue</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                      {stats.topArtworks.map((artwork) => (
+                                          <TableRow 
+                                            key={artwork.artworkId}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => navigate(`/artworks/${artwork.artworkId}`)}
+                                          >
+                                              <TableCell className="font-medium truncate max-w-[150px] hover:underline hover:text-primary transition-colors">
+                                                  {artwork.title}
+                                              </TableCell>
+                                              <TableCell className="text-right">{formatCurrency(artwork.totalSales)}</TableCell>
+                                          </TableRow>
+                                      ))}
+                                  </TableBody>
+                              </Table>
+                          ) : <p className="text-sm text-muted-foreground">No data available.</p>}
+                      </CardContent>
+                  </Card>
               </div>
 
-              {/* Top Performers Section */}
-              <div className="top-performers">
-                {/* Top Artists */}
-                <div className="top-card">
-                  <h3>🏆 Top Selling Artists</h3>
-                  {stats.topArtists?.length > 0 ? (
-                    <table className="top-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Artist</th>
-                          <th>Sales</th>
-                          <th>Orders</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stats.topArtists.map((artist, index) => (
-                          <tr key={artist.artistId}>
-                            <td>{index + 1}</td>
-                            <td>{artist.companyName || artist.artistName}</td>
-                            <td>{formatCurrency(artist.totalSales)}</td>
-                            <td>{artist.orderCount}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p className="no-data">No sales data yet</p>
-                  )}
-                </div>
-
-                {/* Top Artworks */}
-                <div className="top-card">
-                  <h3>🎯 Top Selling Artworks</h3>
-                  {stats.topArtworks?.length > 0 ? (
-                    <table className="top-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Artwork</th>
-                          <th>Artist</th>
-                          <th>Units</th>
-                          <th>Revenue</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stats.topArtworks.map((artwork, index) => (
-                          <tr key={artwork.artworkId}>
-                            <td>{index + 1}</td>
-                            <td className="artwork-title">{artwork.title}</td>
-                            <td>{artwork.artistName}</td>
-                            <td>{artwork.unitsSold}</td>
-                            <td>{formatCurrency(artwork.totalSales)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p className="no-data">No sales data yet</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Revenue by Month */}
-              {stats.revenueByMonth?.length > 0 && (
-                <div className="revenue-history">
-                  <h3>📈 Revenue History (Last 12 Months)</h3>
-                  <table className="revenue-table">
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Orders</th>
-                        <th>Revenue</th>
-                        <th>Platform Fees</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.revenueByMonth.map((month) => (
-                        <tr key={`${month._id.year}-${month._id.month}`}>
-                          <td>
-                            {new Date(month._id.year, month._id.month - 1).toLocaleDateString("en-US", {
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </td>
-                          <td>{month.orderCount}</td>
-                          <td>{formatCurrency(month.revenue)}</td>
-                          <td>{formatCurrency(month.platformFees)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </>
           ) : (
-            <div className="no-data">Failed to load statistics</div>
+            <div className="text-center py-12 text-muted-foreground">Failed to load statistics</div>
           )}
-        </div>
-      )}
+        </TabsContent>
 
-      {activeTab === "users" && (
-      <>
-      {usersLoading ? (
-        <Loading message="Loading users..." />
-      ) : (
-      <>
-      <div className="admin-filters">
-        <label>Filter by artist status:</label>
-        <select
-          value={usersFilters.artistStatus}
-          onChange={(e) => updateUserFilter("artistStatus", e.target.value)}
-          className="filter-select"
-        >
-          <option value="all">All Users</option>
-          {artistStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </option>
-          ))}
-        </select>
-      </div>
+        {/* --- USERS TAB --- */}
+        <TabsContent value="users" className="space-y-4">
+             <div className="flex items-center gap-4 bg-background p-4 rounded-lg border">
+                 <Filter className="h-4 w-4 text-muted-foreground" />
+                 <span className="text-sm font-medium">Filter by Status:</span>
+                 <Select 
+                    value={usersFilters.artistStatus || "all"} 
+                    onValueChange={(val) => updateUserFilter("artistStatus", val)}
+                 >
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="All Users" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        {artistStatuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                 </Select>
+                 
+                 {users && (
+                     <div className="ml-auto text-sm text-muted-foreground">
+                         Showing {users.length} of {usersPagination.total} users
+                     </div>
+                 )}
+             </div>
 
-      <div className="stats-bar">
-        <span>Total: {users.length} users</span>
-        <span>Pending: {users.filter((u) => u.artistStatus === "pending").length}</span>
-        <span>Verified: {users.filter((u) => u.artistStatus === "verified").length}</span>
-      </div>
+             {usersLoading ? (
+                 <div className="py-20 flex justify-center"><Loading message="Loading users..." /></div>
+             ) : (
+                 <Card>
+                     <Table>
+                         <TableHeader>
+                             <TableRow>
+                                 <TableHead>User</TableHead>
+                                 <TableHead>Role</TableHead>
+                                 <TableHead>Status</TableHead>
+                                 <TableHead>Company</TableHead>
+                                 <TableHead>Actions</TableHead>
+                             </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                             {users.length === 0 ? (
+                                 <TableRow>
+                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                         No users found.
+                                     </TableCell>
+                                 </TableRow>
+                             ) : (
+                                 users.map((user) => (
+                                    <TableRow key={user._id}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                                    {user.profilePicture ? (
+                                                        <img src={user.profilePicture} alt="" className="h-full w-full object-cover"/>
+                                                    ) : (
+                                                        <span className="text-xs font-bold">
+                                                            {user.firstName?.[0]}{user.lastName?.[0]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span 
+                                                        className="font-medium hover:underline cursor-pointer"
+                                                        onClick={() => setSelectedUserId(user._id)}
+                                                    >
+                                                        {user.firstName} {user.lastName}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Select 
+                                                value={user.role} 
+                                                onValueChange={(val) => handleRoleChange(user._id, val)}
+                                            >
+                                                <SelectTrigger className="w-[110px] h-8">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {roles.map((role) => (
+                                                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={getStatusColorClass(user.artistStatus)}>
+                                                {user.artistStatus}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.artistInfo?.companyName || <span className="text-muted-foreground">-</span>}
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.role === "artist" || user.artistStatus !== "none" ? (
+                                                <Select 
+                                                    value={user.artistStatus} 
+                                                    onValueChange={(val) => handleStatusChange(user._id, val)}
+                                                >
+                                                    <SelectTrigger className="w-[120px] h-8">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {artistStatuses.map((status) => (
+                                                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            ) : (
+                                                <span className="text-muted-foreground text-sm">-</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                 ))
+                             )}
+                         </TableBody>
+                     </Table>
+                     
+                     {usersPagination.pages > 1 && (
+                         <div className="p-4 border-t">
+                            <Pagination
+                                currentPage={usersPagination.page}
+                                totalPages={usersPagination.pages}
+                                onPageChange={setUsersPage}
+                            />
+                         </div>
+                     )}
+                 </Card>
+             )}
+        </TabsContent>
 
-      <div className="users-table-container">
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Artist Status</th>
-              <th>Company</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user._id}>
-                <td>
-                  <button
-                    className="user-cell user-cell-link"
-                    onClick={() => setSelectedUserId(user._id)}
-                    title="Click to view/edit user details"
-                  >
-                    <div className="user-avatar-small">
-                      {user.profilePicture ? (
-                        <img src={user.profilePicture} alt={user.firstName} />
-                      ) : (
-                        <span>
-                          {user.firstName?.[0]}
-                          {user.lastName?.[0]}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="user-name">
-                        {user.firstName} {user.lastName}
-                      </span>
-                      <span className="user-username">@{user.userName}</span>
-                    </div>
-                  </button>
-                </td>
-                <td>{user.email}</td>
-                <td>
-                  <select
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                    className="role-select"
-                  >
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <span className={`status-badge ${getStatusBadgeClass(user.artistStatus)}`}>
-                    {user.artistStatus}
-                  </span>
-                </td>
-                <td>{user.artistInfo?.companyName || "-"}</td>
-                <td>
-                  {user.role === "artist" || user.artistStatus !== "none" ? (
-                    <select
-                      value={user.artistStatus}
-                      onChange={(e) => handleStatusChange(user._id, e.target.value)}
-                      className="status-select"
-                    >
-                      {artistStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="no-action">-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      {users.length === 0 && (
-        <div className="empty-state">
-          <p>No users found</p>
-        </div>
-      )}
-      <Pagination
-        currentPage={usersPagination.page}
-        totalPages={usersPagination.pages}
-        onPageChange={setUsersPage}
-      />
-      </>
-      )}
-      </>
-      )}
+        {/* --- ORDERS TAB --- */}
+        <TabsContent value="orders" className="space-y-4">
+             <div className="flex items-center gap-4 bg-background p-4 rounded-lg border">
+                 <Filter className="h-4 w-4 text-muted-foreground" />
+                 <span className="text-sm font-medium">Filter by Status:</span>
+                 <Select 
+                    value={ordersFilters.status || "all"} 
+                    onValueChange={(val) => updateOrderFilter("status", val)}
+                 >
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="All Orders" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Orders</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                 </Select>
+             </div>
 
-      {activeTab === "orders" && (
-        <>
-        {ordersLoading ? (
-            <Loading message="Loading orders..." />
-        ) : (
-        <>
-            <div className="admin-filters">
-                <label>Filter by order status:</label>
-                <select
-                  value={ordersFilters.status}
-                  onChange={(e) => updateOrderFilter("status", e.target.value)}
-                  className="filter-select"
-                >
-                    <option value="all">All Orders</option>
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            
-            <div className="users-table-container">
-            <table className="users-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Items</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.map(order => (
-                        <tr
-                          key={order._id}
-                          className="order-row-clickable"
-                          onClick={() => setSelectedOrderId(order._id)}
-                          title="Click to view order details"
-                        >
-                            <td className="font-mono">{order._id.slice(-6).toUpperCase()}</td>
-                            <td>
-                                <div>{order.user?.firstName} {order.user?.lastName}</div>
-                                <div className="text-sm text-gray-500">{order.user?.email}</div>
-                            </td>
-                            <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                            <td>
-                                <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                                    {order.status}
-                                </span>
-                            </td>
-                            <td>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(order.totalAmount)}</td>
-                            <td>{order.items.reduce((acc, item) => acc + item.quantity, 0)} items</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            </div>
-             {orders.length === 0 && (
-                <div className="empty-state">
-                <p>No orders found</p>
-                </div>
-            )}
-            <Pagination
-                currentPage={ordersPagination.page}
-                totalPages={ordersPagination.pages}
-                onPageChange={setOrdersPage}
-            />
-        </>
-        )}
-        </>
-      )}
+             {ordersLoading ? (
+                 <div className="py-20 flex justify-center"><Loading message="Loading orders..." /></div>
+             ) : (
+                 <Card>
+                     <Table>
+                         <TableHeader>
+                             <TableRow>
+                                 <TableHead>Order ID</TableHead>
+                                 <TableHead>Customer</TableHead>
+                                 <TableHead>Date</TableHead>
+                                 <TableHead>Status</TableHead>
+                                 <TableHead className="text-right">Total</TableHead>
+                             </TableRow>
+                         </TableHeader>
+                         <TableBody>
+                             {orders.length === 0 ? (
+                                 <TableRow>
+                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                         No orders found.
+                                     </TableCell>
+                                 </TableRow>
+                             ) : (
+                                 orders.map((order) => (
+                                     <TableRow 
+                                        key={order._id}
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={() => setSelectedOrderId(order._id)}
+                                     >
+                                         <TableCell className="font-mono text-xs">{order._id.slice(-6).toUpperCase()}</TableCell>
+                                         <TableCell>
+                                             <div className="flex flex-col">
+                                                 <span className="font-medium">{order.user?.firstName} {order.user?.lastName}</span>
+                                                 <span className="text-xs text-muted-foreground">{order.user?.email}</span>
+                                             </div>
+                                         </TableCell>
+                                         <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                                         <TableCell>
+                                             <Badge variant="outline" className={getStatusColorClass(order.status)}>
+                                                 {order.status}
+                                             </Badge>
+                                         </TableCell>
+                                         <TableCell className="text-right font-medium">
+                                             {formatCurrency(order.totalAmount)}
+                                         </TableCell>
+                                     </TableRow>
+                                 ))
+                             )}
+                         </TableBody>
+                     </Table>
+                     
+                     {ordersPagination.pages > 1 && (
+                         <div className="p-4 border-t">
+                            <Pagination
+                                currentPage={ordersPagination.page}
+                                totalPages={ordersPagination.pages}
+                                onPageChange={setOrdersPage}
+                            />
+                         </div>
+                     )}
+                 </Card>
+             )}
+        </TabsContent>
+      </Tabs>
 
       {/* User Detail Modal */}
       {selectedUserId && (

@@ -119,7 +119,7 @@ const artworkSchema = new Schema(
 );
 
 // Pre-save hook to populate searchKeywords and searchString
-artworkSchema.pre("save", async function (next) {
+artworkSchema.pre("save", async function () {
   if (this.isModified("title") || this.isModified("description") || this.isModified("artist") || this.isNew) {
     const title = this.title || "";
     const desc = this.description || "";
@@ -157,7 +157,6 @@ artworkSchema.pre("save", async function (next) {
     // Normalized search string for regex fallback
     this.searchString = `${title} ${artistName}`.toLowerCase();
   }
-  next();
 });
 
 // Indexes for efficient queries

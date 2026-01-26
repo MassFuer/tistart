@@ -8,8 +8,39 @@ const Order = require("../models/Order.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
+const mongoose = require("mongoose");
 
-// GET /api/artworks/:artworkId/reviews - Get all reviews for an artwork (public)
+// Helper to update artwork stats
+const updateArtworkStats = async (artworkId) => {
+  try {
+     const stats = await Review.aggregate([
+       { $match: { artwork: new mongoose.Types.ObjectId(artworkId) } },
+       {
+         $group: {
+           _id: "$artwork",
+           nRating: { $sum: 1 },
+           avgRating: { $avg: "$rating" }
+         }
+       }
+     ]);
+
+     if (stats.length > 0) {
+       await Artwork.findByIdAndUpdate(artworkId, {
+         numOfReviews: stats[0].nRating,
+         averageRating: stats[0].avgRating
+       });
+     } else {
+       await Artwork.findByIdAndUpdate(artworkId, {
+         numOfReviews: 0,
+         averageRating: 0
+       });
+     }
+  } catch(err) {
+      console.error("Error updating artwork stats:", err);
+  }
+};
+
+// GET /api/artworks/:artworkId/reviews - Get reviews for an artwork (public)
 router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
   try {
     const { artworkId } = req.params;
@@ -24,7 +55,7 @@ router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
 
     const [reviews, total] = await Promise.all([
       Review.find({ artwork: artworkId })
-        .populate("user", "firstName lastName profilePicture")
+        .populate("user", "firstName lastName profilePicture role")
         .sort(sort)
         .skip(skip)
         .limit(Number(limit)),
@@ -83,7 +114,7 @@ router.post(
         return res.status(403).json({ error: "You cannot review your own artwork." });
       }
 
-      // Check if user has purchased this artwork (for verified badge)
+      // Check if user has purchased this artwork
       const hasPurchased = await Order.exists({
         user: userId,
         "items.artwork": artworkId,
@@ -99,6 +130,9 @@ router.post(
         rating: Number(rating),
         isVerified: !!hasPurchased,
       });
+
+      // Update Artwork Stats
+      await updateArtworkStats(artworkId);
 
       // Populate user info for response
       await review.populate("user", "firstName lastName profilePicture");
@@ -117,7 +151,7 @@ router.post(
   }
 );
 
-// PATCH /api/reviews/:id - Update a review (owner only)
+// PATCH /api/reviews/:id - Update a review (Author, Admin, or Owner)
 router.patch(
   "/reviews/:id",
   isAuthenticated,
@@ -140,15 +174,21 @@ router.patch(
     try {
       const { id } = req.params;
       const userId = req.payload._id;
+      const userRole = req.payload.role;
 
-      const review = await Review.findById(id);
+      const review = await Review.findById(id).populate("artwork");
       if (!review) {
         return res.status(404).json({ error: "Review not found." });
       }
 
-      // Check ownership
-      if (review.user.toString() !== userId) {
-        return res.status(403).json({ error: "You can only update your own reviews." });
+      // Roles
+      const isReviewAuthor = review.user.toString() === userId;
+      const isAdmin = isAdminRole(userRole);
+      const isArtworkOwner = review.artwork.artist.toString() === userId;
+
+      // Permission Check: Author OR Admin OR Artwork Owner
+      if (!isReviewAuthor && !isAdmin && !isArtworkOwner) {
+        return res.status(403).json({ error: "Not authorized to update this review." });
       }
 
       // Update allowed fields
@@ -164,6 +204,9 @@ router.patch(
         new: true,
         runValidators: true,
       }).populate("user", "firstName lastName profilePicture");
+
+      // Update Stats (using artwork id from original review)
+      await updateArtworkStats(review.artwork._id);
 
       res.status(200).json({
         message: "Review updated successfully",
@@ -195,7 +238,11 @@ router.delete("/reviews/:id", isAuthenticated, async (req, res, next) => {
       return res.status(403).json({ error: "You can only delete your own reviews." });
     }
 
+    const artworkId = review.artwork;
     await Review.findByIdAndDelete(id);
+
+    // Update Stats
+    await updateArtworkStats(artworkId);
 
     res.status(200).json({
       message: "Review deleted successfully",

@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { usersAPI } from "../services/api";
 import ArtworkCard from "../components/artwork/ArtworkCard";
-import toast from "react-hot-toast";
-import "./FavoritesPage.css";
+import Loading from "../components/common/Loading";
+import { toast } from "sonner";
+import { Heart, ArrowRight, HeartOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const FavoritesPage = () => {
   const { user } = useAuth();
@@ -39,25 +42,46 @@ const FavoritesPage = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="favorites-page">
-      <div className="page-header">
-        <h1>My Favorites</h1>
-        <p>Artworks you&apos;ve saved for later</p>
+    <div className="container mx-auto px-4 py-8 min-h-screen">
+      <div className="flex flex-col md:flex-row items-center justify-between mb-8">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <Heart className="h-8 w-8 text-destructive fill-destructive" /> 
+              My Favorites
+           </h1>
+           <p className="text-muted-foreground mt-1">
+              Collection of artworks you've saved.
+           </p>
+        </div>
+        <div className="mt-4 md:mt-0">
+             <Button variant="outline" asChild>
+                <Link to="/gallery">Browse Gallery</Link>
+             </Button>
+        </div>
       </div>
 
       {favorites.length === 0 ? (
-        <div className="empty-state">
-          <p>You haven&apos;t added any favorites yet</p>
-          <a href="/gallery" className="btn btn-primary">
-            Browse Gallery
-          </a>
+        <div className="flex flex-col items-center justify-center py-20 bg-muted/30 rounded-xl border border-dashed">
+          <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-6">
+             <HeartOff className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">No favorites yet</h2>
+          <p className="text-muted-foreground mb-8 text-center max-w-md">
+            You haven't added any artworks to your favorites list yet. 
+            Explore the gallery to find pieces you love!
+          </p>
+          <Button asChild size="lg">
+            <Link to="/gallery">
+              Browse Gallery <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       ) : (
-        <div className="artwork-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {favorites.map((artwork) => (
             <ArtworkCard key={artwork._id} artwork={artwork} />
           ))}

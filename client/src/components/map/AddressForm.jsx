@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { FaMapMarkerAlt, FaSpinner, FaCheck, FaTimes } from "react-icons/fa";
+import { MapPin, Loader2, Check, X } from "lucide-react";
 import { geocodeAPI } from "../../services/api";
 import toast from "react-hot-toast";
-import "./AddressForm.css";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const AddressForm = ({
   address = {},
@@ -62,36 +64,36 @@ const AddressForm = ({
   };
 
   return (
-    <div className="address-form">
+    <div className="space-y-4">
       {showVenue && (
-        <div className="form-group">
-          <label htmlFor="venue">Venue Name</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="venue">Venue Name</Label>
+          <Input
             type="text"
             id="venue"
             value={address.venue || ""}
             onChange={(e) => handleChange("venue", e.target.value)}
-            placeholder="e.g., Gallery Modern Art"
+            placeholder="e.g., Vélodrome Stadium"
             disabled={disabled}
           />
         </div>
       )}
 
-      <div className="form-row">
-        <div className="form-group flex-2">
-          <label htmlFor="street">Street</label>
-          <input
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 space-y-2">
+          <Label htmlFor="street">Street</Label>
+          <Input
             type="text"
             id="street"
             value={address.street || ""}
             onChange={(e) => handleChange("street", e.target.value)}
-            placeholder="e.g., Rue de Rivoli"
+            placeholder="e.g., Boulevard Michelet"
             disabled={disabled}
           />
         </div>
-        <div className="form-group flex-1">
-          <label htmlFor="streetNum">Number</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="streetNum">Number</Label>
+          <Input
             type="text"
             id="streetNum"
             value={address.streetNum || ""}
@@ -102,34 +104,34 @@ const AddressForm = ({
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group flex-1">
-          <label htmlFor="zipCode">Zip Code</label>
-          <input
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="zipCode">Zip Code</Label>
+          <Input
             type="text"
             id="zipCode"
             value={address.zipCode || ""}
             onChange={(e) => handleChange("zipCode", e.target.value)}
-            placeholder="e.g., 75001"
+            placeholder="e.g., 13000"
             disabled={disabled}
           />
         </div>
-        <div className="form-group flex-2">
-          <label htmlFor="city">City</label>
-          <input
+        <div className="md:col-span-2 space-y-2">
+          <Label htmlFor="city">City</Label>
+          <Input
             type="text"
             id="city"
             value={address.city || ""}
             onChange={(e) => handleChange("city", e.target.value)}
-            placeholder="e.g., Paris"
+            placeholder="e.g., Marseille"
             disabled={disabled}
           />
         </div>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="country">Country</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="country">Country</Label>
+        <Input
           type="text"
           id="country"
           value={address.country || ""}
@@ -140,30 +142,31 @@ const AddressForm = ({
       </div>
 
       {!disabled && (
-        <button
+        <Button
           type="button"
-          className={`btn-geocode ${geocodeStatus === "error" ? "geocode-error" : geocodeStatus || ""}`}
+          variant={geocodeStatus === "success" ? "default" : geocodeStatus === "error" ? "destructive" : "secondary"}
+          className="w-full sm:w-auto"
           onClick={handleGeocode}
           disabled={isGeocoding || (!address.city && !address.country)}
         >
           {isGeocoding ? (
             <>
-              <FaSpinner className="spin" /> Finding location...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Finding location...
             </>
           ) : geocodeStatus === "success" ? (
             <>
-              <FaCheck /> Location found
+              <Check className="mr-2 h-4 w-4" /> Location found
             </>
           ) : geocodeStatus === "error" ? (
             <>
-              <FaTimes /> Try again
+              <X className="mr-2 h-4 w-4" /> Try again
             </>
           ) : (
             <>
-              <FaMapMarkerAlt /> Locate on Map
+              <MapPin className="mr-2 h-4 w-4" /> Locate on Map
             </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

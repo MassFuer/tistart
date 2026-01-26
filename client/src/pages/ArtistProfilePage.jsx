@@ -1,15 +1,40 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { usersAPI, artworksAPI } from "../services/api";
+import { usersAPI, artworksAPI, eventsAPI } from "../services/api";
 import ArtworkCard from "../components/artwork/ArtworkCard";
+import EventCard from "../components/event/EventCard";
 import LocationDisplay from "../components/map/LocationDisplay";
-import toast from "react-hot-toast";
-import "./ArtistProfilePage.css";
+import StartConversationButton from "../components/messaging/StartConversationButton";
+import { toast } from "sonner";
+import Loading from "../components/common/Loading";
+import { 
+    Globe, 
+    Instagram, 
+    Facebook, 
+    Twitter, 
+    MapPin, 
+    Calendar,
+    CheckCircle2,
+    Palette
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { 
+    Tabs, 
+    TabsContent, 
+    TabsList, 
+    TabsTrigger 
+} from "@/components/ui/tabs";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 
 const ArtistProfilePage = () => {
   const { id } = useParams();
   const [artist, setArtist] = useState(null);
   const [artworks, setArtworks] = useState([]);
+  const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,17 +43,22 @@ const ArtistProfilePage = () => {
 
   const fetchArtistData = async () => {
     try {
-      const [artistRes, artworksRes] = await Promise.all([
+      const [artistRes, artworksRes, eventsRes] = await Promise.all([
         usersAPI.getArtistProfile(id),
         artworksAPI.getAll({ limit: 50 }),
+        eventsAPI.getAll({ artist: id, upcoming: false })
       ]);
 
       setArtist(artistRes.data.data);
-
+      
       // Filter artworks by this artist
       const artistArtworks = artworksRes.data.data.filter((a) => a.artist?._id === id);
       setArtworks(artistArtworks);
+      
+      setEvents(eventsRes.data.data);
+
     } catch (error) {
+      console.error("Profile fetch error:", error);
       toast.error("Failed to load artist profile");
     } finally {
       setIsLoading(false);
@@ -36,146 +66,191 @@ const ArtistProfilePage = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return <Loading message="Loading artist profile..." />;
   }
 
   if (!artist) {
-    return <div className="error">Artist not found</div>;
+    return (
+        <div className="container mx-auto py-32 text-center text-muted-foreground">
+            <h2 className="text-2xl font-bold">Artist not found</h2>
+            <p>The artist you are looking for does not exist or has been removed.</p>
+        </div>
+    );
   }
 
+  const socialLinks = artist.artistInfo?.socialMedia;
+  const companyName = artist.artistInfo?.companyName || `${artist.firstName} ${artist.lastName}`;
+  const isVerified = artist.artistStatus === "verified";
+
   return (
-    <div className="artist-profile-page">
-      <div className="artist-header">
-        <div className="artist-avatar">
-          {artist.artistInfo?.logo || artist.profilePicture ? (
-            <img src={artist.artistInfo?.logo || artist.profilePicture} alt={artist.artistInfo?.companyName} />
-          ) : (
-            <div className="avatar-placeholder">
-              {artist.firstName?.[0]}
-              {artist.lastName?.[0]}
+    <div className="min-h-screen bg-background pb-20">
+      <div className="container mx-auto px-4 py-12 max-w-5xl">
+        
+        {/* 1. Header Section */}
+        <div className="flex flex-col md:flex-row gap-8 items-start mb-10">
+            {/* Avatar */}
+            <div className="flex-shrink-0 mx-auto md:mx-0">
+                 <Avatar className="h-32 w-32 md:h-40 md:w-40 border-2 border-border shadow-sm">
+                    <AvatarImage src={artist.profilePicture} alt={companyName} className="object-cover" />
+                    <AvatarFallback className="text-4xl">{artist.firstName?.[0]}</AvatarFallback>
+                </Avatar>
             </div>
-          )}
+
+            {/* Info */}
+            <div className="flex-1 text-center md:text-left space-y-4">
+                <div>
+                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex items-center justify-center md:justify-start gap-2">
+                        {companyName}
+                        {isVerified && <CheckCircle2 className="h-6 w-6 text-blue-500" />}
+                    </h1>
+                     {artist.artistInfo?.tagline && (
+                        <p className="text-xl text-muted-foreground font-medium mt-1">
+                            {artist.artistInfo.tagline}
+                        </p>
+                    )}
+                </div>
+
+                {/* Location */}
+                {artist.artistInfo?.address?.city && (
+                    <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{artist.artistInfo.address.city}, {artist.artistInfo.address.country}</span>
+                    </div>
+                )}
+
+                {/* Socials & Actions & KPIs */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                     <StartConversationButton
+                        artistId={artist._id}
+                        variant="default"
+                        size="sm"
+                      />
+                     
+                     {/* Socials */}
+                     {socialLinks && (
+                         <div className="flex items-center gap-1 border-l pl-3 border-gray-300 dark:border-gray-700">
+                            {socialLinks.website && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" asChild>
+                                <a href={socialLinks.website} target="_blank" rel="noopener noreferrer">
+                                    <Globe className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                            {socialLinks.instagram && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-pink-600" asChild>
+                                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer">
+                                    <Instagram className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                            {socialLinks.facebook && (
+                               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-600" asChild>
+                                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer">
+                                    <Facebook className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            )}
+                         </div>
+                     )}
+
+                     {/* Compact KPIs */}
+                     <div className="flex items-center gap-3 text-sm text-muted-foreground border-l pl-4 border-gray-300 dark:border-gray-700">
+                        <div className="flex items-center gap-1">
+                            <span className="font-bold text-foreground">{artworks.length}</span>
+                            <span>artworks</span>
+                        </div>
+                        <span className="text-gray-300">•</span>
+                        <div className="flex items-center gap-1">
+                            <span className="font-bold text-foreground">{events.length}</span>
+                            <span>events</span>
+                        </div>
+                     </div>
+                </div>
+            </div>
         </div>
 
-        <div className="artist-info">
-          <h1>{artist.artistInfo?.companyName || `${artist.firstName} ${artist.lastName}`}</h1>
-          {artist.artistInfo?.tagline && <p className="tagline">{artist.artistInfo.tagline}</p>}
-
-          {artist.artistInfo?.address && (
-            <p className="location">
-              {artist.artistInfo.address.city}, {artist.artistInfo.address.country}
-            </p>
-          )}
-
-          {artist.artistInfo?.socialMedia && (
-            <div className="social-links">
-              {artist.artistInfo.socialMedia.website && (
-                <a
-                  href={artist.artistInfo.socialMedia.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-link"
-                  title="Website"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                  </svg>
-                </a>
-              )}
-              {artist.artistInfo.socialMedia.instagram && (
-                <a
-                  href={artist.artistInfo.socialMedia.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-link"
-                  title="Instagram"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                  </svg>
-                </a>
-              )}
-              {artist.artistInfo.socialMedia.facebook && (
-                <a
-                  href={artist.artistInfo.socialMedia.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-link"
-                  title="Facebook"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                  </svg>
-                </a>
-              )}
-              {artist.artistInfo.socialMedia.twitter && (
-                <a
-                  href={artist.artistInfo.socialMedia.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-link"
-                  title="Twitter/X"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                </a>
-              )}
+        {/* 2. Bio Section */}
+         {artist.artistInfo?.description && (
+            <div className="mb-12 max-w-3xl">
+                <h3 className="text-lg font-semibold mb-2">About</h3>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {artist.artistInfo.description}
+                </p>
             </div>
-          )}
-        </div>
-      </div>
-
-      {artist.artistInfo?.description && (
-        <section className="artist-section">
-          <h2>About</h2>
-          <p>{artist.artistInfo.description}</p>
-        </section>
-      )}
-
-      {/* Location Section */}
-      {artist.artistInfo?.address && (artist.artistInfo.address.city || artist.artistInfo.address.street) && (
-        <section className="artist-section">
-          <h2>Studio Location</h2>
-          <LocationDisplay
-            address={{
-              street: artist.artistInfo.address.street,
-              streetNum: artist.artistInfo.address.streetNum,
-              zipCode: artist.artistInfo.address.zipCode,
-              city: artist.artistInfo.address.city,
-              country: artist.artistInfo.address.country,
-            }}
-            coordinates={
-              artist.artistInfo.address.location?.coordinates?.length === 2
-                ? {
-                    lat: artist.artistInfo.address.location.coordinates[1],
-                    lng: artist.artistInfo.address.location.coordinates[0],
-                  }
-                : null
-            }
-            showMap={true}
-            height="250px"
-            layout="horizontal"
-          />
-        </section>
-      )}
-
-      <section className="artist-section">
-        <h2>Artworks ({artworks.length})</h2>
-        {artworks.length === 0 ? (
-          <p className="empty-message">No artworks yet</p>
-        ) : (
-          <div className="artwork-grid">
-            {artworks.map((artwork) => (
-              <ArtworkCard key={artwork._id} artwork={artwork} />
-            ))}
-          </div>
         )}
-      </section>
+
+        <Separator className="my-8" />
+
+        {/* 3. Tabs Content */}
+        <Tabs defaultValue="artworks" className="w-full space-y-8 mb-16">
+            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+                <TabsTrigger 
+                    value="artworks" 
+                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground text-lg"
+                >
+                    Artworks
+                </TabsTrigger>
+                <TabsTrigger 
+                    value="events" 
+                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground text-lg"
+                >
+                    Upcoming Events
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="artworks" className="space-y-6 focus-visible:ring-0 mt-6">
+                    {artworks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/10 rounded-xl border border-dashed">
+                        <Palette className="h-10 w-10 text-muted-foreground/30 mb-4" />
+                        <h3 className="text-lg font-medium">No Artworks Yet</h3>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {artworks.map((artwork) => (
+                            <ArtworkCard key={artwork._id} artwork={artwork} />
+                        ))}
+                        </div>
+                    )}
+            </TabsContent>
+
+            <TabsContent value="events" className="space-y-6 focus-visible:ring-0 mt-6">
+                    {events.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center bg-muted/10 rounded-xl border border-dashed">
+                        <Calendar className="h-10 w-10 text-muted-foreground/30 mb-4" />
+                        <h3 className="text-lg font-medium">No Upcoming Events</h3>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {events.map((event) => (
+                            <EventCard key={event._id} event={event} />
+                        ))}
+                        </div>
+                    )}
+            </TabsContent>
+        </Tabs>
+
+        {/* 4. Location Map (Full Width at Bottom) */}
+        {artist.artistInfo?.address?.city && artist.artistInfo.address.location?.coordinates?.length === 2 && (
+            <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <MapPin className="h-5 w-5" /> Visit the Studio
+                 </h3>
+                 <div className="rounded-xl overflow-hidden border shadow-sm h-[400px] w-full bg-muted/20">
+                    <LocationDisplay
+                        address={artist.artistInfo.address}
+                        coordinates={{
+                            lat: artist.artistInfo.address.location.coordinates[1],
+                            lng: artist.artistInfo.address.location.coordinates[0],
+                        }}
+                        showMap={true}
+                        height="400px" // Explicit height passed to component
+                        zoom={13}
+                    />
+                </div>
+            </div>
+        )}
+
+      </div>
     </div>
   );
 };

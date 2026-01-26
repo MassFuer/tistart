@@ -74,6 +74,7 @@ export const authAPI = {
 export const artworksAPI = {
   getAll: (params) => api.get("/api/artworks", { params }),
   getOne: (id) => api.get(`/api/artworks/${id}`),
+  getArtistStats: () => api.get("/api/artworks/artist/stats"),
   create: (artworkData) => api.post("/api/artworks", artworkData),
   update: (id, artworkData) => api.patch(`/api/artworks/${id}`, artworkData),
   delete: (id) => api.delete(`/api/artworks/${id}`),
@@ -94,6 +95,7 @@ export const artworksAPI = {
 // Events API
 export const eventsAPI = {
   getAll: (params) => api.get("/api/events", { params }),
+  getFiltersMeta: () => api.get("/api/events/filters-meta"),
   getCalendar: (params) => api.get("/api/events/calendar", { params }),
   getOne: (id) => api.get(`/api/events/${id}`),
   create: (eventData) => api.post("/api/events", eventData),
@@ -120,6 +122,7 @@ export const usersAPI = {
     api.post("/api/users/profile/logo", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  getStats: () => api.get("/api/users/stats"),
   getFavorites: () => api.get("/api/users/favorites"),
   addFavorite: (artworkId) => api.post(`/api/users/favorites/${artworkId}`),
   removeFavorite: (artworkId) =>
@@ -160,9 +163,10 @@ export const apiCart = {
 };
 
 // Orders API
-export const apiOrders = {
+export const ordersAPI = {
   create: (orderData) => api.post("/api/orders", orderData),
   getMine: () => api.get("/api/orders/mine"),
+  getSales: () => api.get("/api/orders/sales"),
   getAll: (params) => api.get("/api/orders/all", { params }),
   getOne: (id) => api.get(`/api/orders/${id}`),
   updateStatus: (id, status) =>
@@ -214,9 +218,32 @@ export const geocodeAPI = {
   reverse: (lat, lng) => api.post("/api/geocode/reverse", { lat, lng }),
 };
 
+// Messaging API
+export const messagingAPI = {
+  // Conversations
+  getConversations: (params) => api.get("/api/conversations", { params }),
+  getConversation: (id) => api.get(`/api/conversations/${id}`),
+  createConversation: (data) => api.post("/api/conversations", data),
+  archiveConversation: (id) => api.delete(`/api/conversations/${id}`),
+  // Messages
+  getMessages: (conversationId, params) =>
+    api.get(`/api/conversations/${conversationId}/messages`, { params }),
+  sendMessage: (conversationId, data) =>
+    api.post(`/api/conversations/${conversationId}/messages`, data),
+  markAsRead: (conversationId) =>
+    api.patch(`/api/conversations/${conversationId}/read`),
+  // Offers
+  makeOffer: (conversationId, amount) =>
+    api.post(`/api/conversations/${conversationId}/offer`, { amount }),
+  respondToOffer: (conversationId, offerId, status) =>
+    api.patch(`/api/conversations/${conversationId}/offer/${offerId}`, { status }),
+  // Unread count
+  getUnreadCount: () => api.get("/api/conversations/unread/count"),
+};
+
 // Assign to main object for default export users
 api.cart = apiCart;
-api.orders = apiOrders;
+api.orders = ordersAPI;
 api.platform = platformAPI;
 api.videos = videosAPI;
 

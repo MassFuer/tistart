@@ -18,25 +18,30 @@
 
 /* Search control styling */
 .leaflet-control-geosearch {
-  background: var(--white);
+  z-index: 1000;
+  background: white;
   border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border-radius: 8px;
 }
 
 .leaflet-control-geosearch form {
-  background: var(--white);
+  background: white;
   border-radius: 8px;
+  padding: 2px;
 }
 
 .leaflet-control-geosearch input {
-  background: var(--white);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  width: 250px;
+  background: white;
+  color: #1f2937; /* Gray-800 */
+  border: 1px solid #e5e7eb; /* Gray-200 */
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  width: 100%;
+  min-width: 260px;
+  outline: none;
+  transition: all 0.2s;
 }
 
 .leaflet-control-geosearch input:focus {
@@ -45,9 +50,9 @@
 }
 
 .leaflet-control-geosearch .results {
-  background: var(--white);
+  background: white;
   border-radius: 0 0 8px 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #e5e7eb;
   border-top: none;
   max-height: 200px;
   overflow-y: auto;
@@ -55,31 +60,32 @@
 
 .leaflet-control-geosearch .results > * {
   padding: 0.5rem;
-  color: var(--text-color);
+  color: #1f2937;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .leaflet-control-geosearch .results > *:hover {
-  background: var(--bg-color);
+  background: #f3f4f6;
 }
 
 .leaflet-control-geosearch .results > *:last-child {
   border-bottom: none;
 }
 
-/* Dark mode adjustments */
+/* Dark mode adjustments - keep controls white for map contrast */
 [data-theme="dark"] .leaflet-control-geosearch,
 [data-theme="dark"] .leaflet-control-geosearch form,
 [data-theme="dark"] .leaflet-control-geosearch input,
 [data-theme="dark"] .leaflet-control-geosearch .results,
 [data-theme="dark"] .leaflet-control-geosearch .results > * {
-  background: var(--white);
-  color: var(--text-color);
+  background: white;
+  color: #1f2937;
+  border-color: #e5e7eb;
 }
 
 [data-theme="dark"] .leaflet-control-geosearch .results > *:hover {
-  background: var(--bg-color);
+  background: #f3f4f6;
 }
 
 /* Leaflet popup styling */

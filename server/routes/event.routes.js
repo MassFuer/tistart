@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Event = require("../models/Event.model");
+const User = require("../models/User.model"); // Import User model for company filtering
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isVerifiedArtist, isAdminRole } = require("../middleware/role.middleware");
 const {
@@ -13,6 +14,33 @@ const {
 } = require("../utils/r2");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
+
+// GET /api/events/filters-meta - Get metadata for filters (cities, companies, artists)
+router.get("/filters-meta", async (req, res, next) => {
+  try {
+     const [cities, companies, artists] = await Promise.all([
+        Event.distinct("location.city", { isPublic: true }),
+        User.distinct("artistInfo.companyName", { role: "artist" }), // Only artists have company names relevant here
+        User.find({ role: "artist", artistStatus: "verified" }).select("firstName lastName artistInfo.companyName _id")
+     ]);
+
+     // Filter out null/empty values
+     const cleanCities = cities.filter(c => c);
+     const cleanCompanies = companies.filter(c => c);
+
+     res.status(200).json({
+         cities: cleanCities.sort(),
+         companies: cleanCompanies.sort(),
+         artists: artists.map(a => ({
+             _id: a._id,
+             name: `${a.firstName} ${a.lastName}`,
+             companyName: a.artistInfo?.companyName
+         }))
+     });
+  } catch (error) {
+      next(error);
+  }
+});
 
 // GET /api/events - Get all events (public)
 router.get("/", async (req, res, next) => {
@@ -28,6 +56,8 @@ router.get("/", async (req, res, next) => {
       upcoming = "false",
       sort = "startDateTime",
       search,
+      city,
+      company,
     } = req.query;
 
     // Build filter object
@@ -35,6 +65,30 @@ router.get("/", async (req, res, next) => {
 
     if (category) {
       filter.category = category;
+    }
+
+    if (city) {
+      filter["location.city"] = { $regex: city, $options: "i" };
+    }
+
+    if (company) {
+      // Find artists with this company name
+      const artists = await User.find({
+        "artistInfo.companyName": { $regex: company, $options: "i" },
+        role: "artist" // Optional: ensure they are artists
+      }).select("_id");
+      
+      const artistIds = artists.map(a => a._id);
+      
+      // If artist filter is also present, intersect? 
+      // Current logic: If artist param exists, it overrides specific company search or intersects?
+      // Mongoose doesn't allow duplicate keys.
+      // If 'artist' param is set, it's specific ID. 'company' finds multiple IDs.
+      // If both present, maybe intersect. But frontend usually picks one.
+      // We'll prioritize 'artist' param if set, else use company list.
+      if (!artist) {
+         filter.artist = { $in: artistIds };
+      }
     }
 
     if (artist) {

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Artwork = require("../models/Artwork.model");
+const Order = require("../models/Order.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isVerifiedArtist, isAdminRole } = require("../middleware/role.middleware");
 const {
@@ -111,6 +112,85 @@ router.get("/", async (req, res, next) => {
         limit: Number(limit),
         total,
         pages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/artworks/artist/stats - Get artist artworks with sales stats (verified artist)
+router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
+  try {
+    const artistId = req.user._id;
+
+    // 1. Aggregate Orders to get Sales & Revenue per Artwork
+    const orderStats = await Order.aggregate([
+      {
+        $match: {
+          "items.artist": artistId,
+          status: { $in: ["paid", "shipped", "delivered"] }, // Only count completed sales
+        },
+      },
+      { $unwind: "$items" },
+      {
+        $match: {
+          "items.artist": artistId,
+        },
+      },
+      {
+        $group: {
+          _id: "$items.artwork",
+          totalSold: { $sum: "$items.quantity" },
+          totalRevenue: { $sum: "$items.artistEarnings" }, // Use pre-calculated earnings
+        },
+      },
+    ]);
+
+    // Create a map for easy lookup
+    const statsMap = {};
+    let totalArtistRevenue = 0;
+    let totalItemsSold = 0;
+
+    orderStats.forEach((stat) => {
+      statsMap[stat._id.toString()] = {
+        sold: stat.totalSold,
+        revenue: stat.totalRevenue,
+      };
+      totalArtistRevenue += stat.totalRevenue;
+      totalItemsSold += stat.totalSold;
+    });
+
+    // 2. Fetch all artworks by this artist
+    const artworks = await Artwork.find({ artist: artistId }).sort("-createdAt");
+
+    // 3. Merge stats
+    const artworksWithStats = artworks.map((artwork) => {
+      const stat = statsMap[artwork._id.toString()] || { sold: 0, revenue: 0 };
+      return {
+        ...artwork.toObject(),
+        stats: {
+          totalSold: stat.sold,
+          totalRevenue: stat.revenue,
+        },
+      };
+    });
+
+    // 4. Calculate Overall KPIs
+    const totalArtworks = artworks.length;
+    const totalReviews = artworks.reduce((acc, curr) => acc + (curr.numOfReviews || 0), 0);
+    // Weighted average rating
+    const totalRatingSum = artworks.reduce((acc, curr) => acc + ((curr.averageRating || 0) * (curr.numOfReviews || 0)), 0);
+    const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
+
+    res.status(200).json({
+      data: artworksWithStats,
+      kpis: {
+        totalRevenue: totalArtistRevenue,
+        totalSold: totalItemsSold,
+        totalArtworks,
+        totalReviews,
+        avgRating: Number(avgRating),
       },
     });
   } catch (error) {

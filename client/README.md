@@ -31,13 +31,15 @@ npm run dev
 ```
 Access the app at `http://localhost:5173`.
 
+
 ## 📂 Project Structure
 
 ```
 /src
-  /components      # Reusable UI components
+  /components
+    /ui            # Shadcn UI components (Button, Card, etc.)
     /artwork       # ArtworkCard, etc.
-    /common        # Buttons, Inputs, Modals
+    /common        # Reusable custom components
     /layout        # Navbar, Footer
     /map           # Leaflet map components
   /context         # React Context (Auth, Cart, Theme)
@@ -49,17 +51,26 @@ Access the app at `http://localhost:5173`.
 ## 📦 Key Dependencies
 
 - **Routing**: `react-router-dom`
+- **UI Framework**: `tailwindcss`, `class-variance-authority`, `clsx`, `tailwind-merge`
+- **Components**: Radix UI Primitives (via Shadcn)
 - **Maps**: `react-leaflet`, `leaflet-geosearch`
 - **Calendar**: `@fullcalendar/react`, `react-datepicker`
-- **Notifications**: `react-hot-toast`
-- **Icons**: `react-icons`
+- **Notifications**: `sonner`
+- **Icons**: `lucide-react`, `react-icons`
 - **Animations**: `framer-motion`
-- **Rich Text**: `react-mde`
 - **Payments**: `@stripe/react-stripe-js`
 
 ## 🎨 Features & UI
 
+- **Modern UI**: Built with Shadcn UI & Tailwind CSS.
 - **Responsive Design**: Mobile-first layouts.
 - **Dark Mode**: Toggleable theme support.
 - **Real-time Search**: Debounced search filters.
 - **Interactive Maps**: Cluster maps for events.
+- **Toast Notifications**: Stackable, theme-aware notifications via Sonner.
+- **Admin Dashboard**: Comprehensive stats, data tables, and management tools.
+- **Artist Onboarding**: Dedicated application flow with status tracking.
+- **Event Discovery**: Advanced filtering and map integration.
+- **Direct Messaging**: Internal chat system between collectors and artists.
+- **Custom Video Player**: Simplified, elegant video playback experience.
+- **Unified Dashboards**: Dedicated views for Artists (Sales, Analytics) and Collectors (Purchases, Favorites).

@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
+import { MessagingProvider } from "./context/MessagingContext";
 
 // Layout
 import Navbar from "./components/layout/Navbar";
@@ -18,11 +19,10 @@ import GalleryPage from "./pages/GalleryPage";
 import ArtworkDetailPage from "./pages/ArtworkDetailPage";
 import EventsPage from "./pages/EventsPage";
 import EventDetailPage from "./pages/EventDetailPage";
-import ProfilePage from "./pages/ProfilePage";
+import DashboardPage from "./pages/DashboardPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ApplyArtistPage from "./pages/ApplyArtistPage";
-import ArtistDashboard from "./pages/ArtistDashboard";
-import MyArtworksPage from "./pages/MyArtworksPage";
+
 import ArtworkFormPage from "./pages/ArtworkFormPage";
 import EventFormPage from "./pages/EventFormPage";
 import ArtistProfilePage from "./pages/ArtistProfilePage";
@@ -32,8 +32,8 @@ import NotFoundPage from "./pages/NotFoundPage";
 
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
-import MyOrdersPage from "./pages/MyOrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
+import MessagesPage from "./pages/MessagesPage";
 
 // Protected Route Components
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -44,7 +44,8 @@ import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 // Error Boundary
 import ErrorBoundary from "./components/common/ErrorBoundary";
 
-import "./App.css";
+// App css removed
+
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
+            <MessagingProvider>
             <CartProvider>
               <div className="app">
               <Navbar />
@@ -74,10 +76,18 @@ function App() {
 
                   {/* Protected Routes (any logged-in user) */}
                   <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/profile"
                     element={
                       <ProtectedRoute>
-                        <ProfilePage />
+                        <DashboardPage />
                       </ProtectedRoute>
                     }
                   />
@@ -117,7 +127,7 @@ function App() {
                     path="/my-orders"
                     element={
                       <ProtectedRoute>
-                        <MyOrdersPage />
+                        <DashboardPage />
                       </ProtectedRoute>
                     }
                   />
@@ -129,24 +139,17 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/messages"
+                    element={
+                      <ProtectedRoute>
+                        <MessagesPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Artist Routes (verified artists only) */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ArtistRoute>
-                        <ArtistDashboard />
-                      </ArtistRoute>
-                    }
-                  />
-                  <Route
-                    path="/my-artworks"
-                    element={
-                      <ArtistRoute>
-                        <MyArtworksPage />
-                      </ArtistRoute>
-                    }
-                  />
+
                   <Route
                     path="/artworks/new"
                     element={
@@ -206,8 +209,9 @@ function App() {
               </main>
               <Footer />
             </div>
-            <Toaster position="top-right" />
+            <Toaster position="top-center" />
             </CartProvider>
+            </MessagingProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

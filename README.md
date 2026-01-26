@@ -19,6 +19,8 @@ Nemesis is a full-stack art marketplace and community platform where:
 - **Video Streaming**: Pay-per-view video content with secure streaming.
 - **Geolocation**: Find events and artists near you.
 - **Advanced Search**: N-gram search by title, artist, or company name.
+- **Internal Messaging**: Secure chat system for collectors to inquire about artworks directly with artists.
+- **Unified Dashboards**: Tailored experiences for Artists (Analytics, Sales) and Collectors (Orders, Favorites).
 - **Role-Based Access**: User, Artist (verified), Admin, and SuperAdmin roles.
 
 ## 🛠️ Tech Stack
@@ -28,6 +30,8 @@ Nemesis is a full-stack art marketplace and community platform where:
 - React Router DOM
 - FullCalendar & React Leaflet (Maps)
 - Stripe Elements
+- Tailwind CSS & Shadcn UI
+- Sonner (Notifications)
 
 **Backend:**
 - Node.js & Express
@@ -106,7 +110,7 @@ The project demonstrates a robust implementation of the MERN stack (MongoDB, Exp
 
 ## 👥 Authors
 
-- **MassFuer** - *Lead Developer*
+- **MassFuer** - *Fullstack Developer*
 
 ## 📄 License
 

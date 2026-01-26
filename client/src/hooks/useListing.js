@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export const useListing = ({
   apiFetcher,
@@ -55,7 +55,7 @@ export const useListing = ({
     } finally {
       setLoading(false);
     }
-  }, [apiFetcher, filters, sort, onError]);
+  }, [apiFetcher, filters, sort, onError, enabled]);
 
   // Trigger fetch when filters or sort change
   useEffect(() => {

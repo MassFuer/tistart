@@ -5,18 +5,36 @@ import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api, { paymentsAPI } from "../services/api";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import Loading from "../components/common/Loading";
 import PaymentForm from "../components/payment/PaymentForm";
 import {
-  FaCcVisa,
-  FaCcMastercard,
-  FaCcAmex,
-  FaPaypal,
+  MapPin,
+  CreditCard,
+  ArrowLeft,
+} from "lucide-react";
+import { 
+  FaCcVisa, 
+  FaCcMastercard, 
+  FaCcAmex, 
+  FaPaypal, 
   FaApplePay,
-  FaLock,
+  FaLock 
 } from "react-icons/fa";
-import "./CheckoutPage.css";
+
+// Shadcn Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Load Stripe outside of component to avoid recreating on every render
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -68,17 +86,6 @@ const CheckoutPage = () => {
     0,
   );
 
-  // Debug logging
-  console.log("Checkout debug:", {
-    cartLength: cart.length,
-    totalPrice,
-    cartItems: cart.map((item) => ({
-      title: item.artwork?.title,
-      price: item.artwork?.price,
-      quantity: item.quantity,
-    })),
-  });
-
   // Step 1: Create order and get PaymentIntent
   const handleShippingSubmit = async (e) => {
     e.preventDefault();
@@ -105,9 +112,6 @@ const CheckoutPage = () => {
 
       const newOrderId = orderResponse.data.data._id;
       setOrderId(newOrderId);
-
-      // Don't refresh cart here - cart should remain until payment is successful
-      // await fetchCart();
 
       // Create PaymentIntent
       const paymentResponse = await paymentsAPI.createIntent(newOrderId);
@@ -179,16 +183,15 @@ const CheckoutPage = () => {
     toast.error(error.message || "Payment failed. Please try again.");
   };
 
-  if (loading) return <Loading message="Processing..." />;
+  if (loading) return <Loading message="Processing order..." />;
 
   // Stripe Elements appearance options
   const appearance = {
-    theme:
-      document.documentElement.getAttribute("data-theme") === "dark"
-        ? "night"
-        : "stripe",
+    theme: 'stripe',
     variables: {
-      colorPrimary: "#3498db",
+      colorPrimary: '#0f172a',
+      colorBackground: '#ffffff',
+      colorText: '#1e293b',
     },
   };
 
@@ -198,161 +201,193 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="checkout-page page-container">
-      <h1>Checkout</h1>
+    <div className="container mx-auto px-4 py-8 min-h-screen max-w-6xl">
+       <div className="flex items-center mb-8">
+            <Button variant="ghost" className="pl-0 gap-2" onClick={() => step === "payment" ? setStep("shipping") : navigate("/cart")}>
+                <ArrowLeft className="h-4 w-4" /> 
+                {step === "payment" ? "Back to Shipping" : "Back to Cart"}
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight ml-4">Checkout</h1>
+       </div>
 
-      {/* Progress indicator */}
-      <div className="checkout-progress">
-        <div
-          className={`progress-step ${step === "shipping" ? "active" : "completed"}`}
-        >
-          <span className="step-number">1</span>
-          <span className="step-label">Shipping</span>
+       {/* Steps Indicator - Centered at top */}
+        <div className="flex justify-center items-center space-x-4 mb-10">
+            <div className={`flex items-center gap-2 ${step === "shipping" ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "shipping" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                    1
+                </div>
+                <span>Shipping</span>
+            </div>
+            <div className="w-24 h-[1px] bg-border"></div>
+            <div className={`flex items-center gap-2 ${step === "payment" ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "payment" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}>
+                    2
+                </div>
+                <span>Payment</span>
+            </div>
         </div>
-        <div className="progress-line"></div>
-        <div className={`progress-step ${step === "payment" ? "active" : ""}`}>
-          <span className="step-number">2</span>
-          <span className="step-label">Payment</span>
-        </div>
-      </div>
 
-      <div className="checkout-container">
-        {/* Shipping Step */}
-        {step === "shipping" && (
-          <form onSubmit={handleShippingSubmit} className="shipping-form">
-            <h2>Shipping Address</h2>
-            <div className="form-group">
-              <label>Street</label>
-              <input
-                type="text"
-                name="street"
-                value={shippingAddress.street}
-                onChange={handleChange}
-                required
-              />
+       <div className="flex flex-col lg:flex-row gap-8 items-start">
+            {/* MAIN FORM AREA */}
+            <div className="flex-1 space-y-6">
+                {step === "shipping" ? (
+                   <Card>
+                       <CardHeader>
+                           <CardTitle className="flex items-center gap-2">
+                               <MapPin className="h-5 w-5" /> Shipping Address
+                           </CardTitle>
+                           <CardDescription>
+                               Where should we send your artwork?
+                           </CardDescription>
+                       </CardHeader>
+                       <CardContent>
+                           <form id="shipping-form" onSubmit={handleShippingSubmit} className="space-y-4">
+                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                   <div className="md:col-span-1">
+                                       <Label htmlFor="streetNum">Street Number</Label>
+                                       <Input 
+                                            id="streetNum" 
+                                            name="streetNum" 
+                                            value={shippingAddress.streetNum} 
+                                            onChange={handleChange} 
+                                            placeholder="123"
+                                            required
+                                        />
+                                   </div>
+                                   <div className="md:col-span-2">
+                                       <Label htmlFor="street">Street Name</Label>
+                                       <Input 
+                                            id="street" 
+                                            name="street" 
+                                            value={shippingAddress.street} 
+                                            onChange={handleChange} 
+                                            required 
+                                            placeholder="Fuer Street"
+                                        />
+                                   </div>
+                               </div>
+                               
+                               <div className="grid grid-cols-2 gap-4">
+                                   <div className="grid gap-2">
+                                       <Label htmlFor="city">City</Label>
+                                       <Input 
+                                            id="city" 
+                                            name="city" 
+                                            value={shippingAddress.city} 
+                                            onChange={handleChange} 
+                                            required 
+                                            placeholder="Marseille"
+                                        />
+                                   </div>
+                                    <div className="grid gap-2">
+                                       <Label htmlFor="zipCode">Zip Code</Label>
+                                       <Input 
+                                            id="zipCode" 
+                                            name="zipCode" 
+                                            value={shippingAddress.zipCode} 
+                                            onChange={handleChange} 
+                                            required 
+                                            placeholder="13000"
+                                        />
+                                   </div>
+                               </div>
+                               
+                               <div className="grid gap-2">
+                                   <Label htmlFor="country">Country</Label>
+                                   <Input 
+                                        id="country" 
+                                        name="country" 
+                                        value={shippingAddress.country} 
+                                        onChange={handleChange} 
+                                        required 
+                                        placeholder="France"
+                                    />
+                               </div>
+                           </form>
+                       </CardContent>
+                       <CardFooter>
+                           <Button type="submit" form="shipping-form" className="w-full" size="lg">
+                               Continue to Payment
+                           </Button>
+                       </CardFooter>
+                   </Card>
+                ) : (
+                    <Card>
+                        <CardHeader>
+                             <CardTitle className="flex items-center gap-2">
+                               <CreditCard className="h-5 w-5" /> Payment Method
+                           </CardTitle>
+                           <CardDescription>
+                               Secure checkout powered by Stripe
+                           </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {clientSecret && stripePromise && (
+                                <Elements stripe={stripePromise} options={elementsOptions}>
+                                    <PaymentForm
+                                        orderId={orderId}
+                                        totalAmount={totalPrice}
+                                        onSuccess={handlePaymentSuccess}
+                                        onError={handlePaymentError}
+                                    />
+                                </Elements>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Number</label>
-                <input
-                  type="text"
-                  name="streetNum"
-                  value={shippingAddress.streetNum}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Zip Code</label>
-                <input
-                  type="text"
-                  name="zipCode"
-                  value={shippingAddress.zipCode}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+
+            {/* SIDEBAR SUMMARY */}
+            <div className="w-full lg:w-96 space-y-6">
+                <Card className="sticky top-24">
+                  <CardHeader>
+                      <CardTitle>Order Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      {cart.map((item) => (
+                           <div key={item._id} className="flex justify-between items-start text-sm">
+                                <div>
+                                    <p className="font-medium">{item.artwork?.title} <span className="text-muted-foreground">x{item.quantity}</span></p>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.artwork?.artist?.artistInfo?.companyName || item.artwork?.artist?.lastName}</p>
+                                </div>
+                                <p className="font-medium">
+                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format((item.artwork?.price || 0) * item.quantity)}
+                                </p>
+                           </div>
+                      ))}
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalPrice)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span className="text-green-600 font-medium">Free</span>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="flex justify-between font-bold text-lg">
+                          <span>Total</span>
+                          <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalPrice)}</span>
+                      </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/30 p-4 flex flex-col gap-4">
+                       <div className="flex items-center gap-2 text-xs text-muted-foreground w-full justify-center">
+                           <FaLock className="h-3 w-3" /> Secure 256-bit SSL Encrypted Payment
+                       </div>
+                       <div className="flex justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
+                           <FaCcVisa className="h-6 w-6" title="Visa" />
+                           <FaCcMastercard className="h-6 w-6" title="Mastercard" />
+                           <FaCcAmex className="h-6 w-6" title="American Express" />
+                           <FaPaypal className="h-6 w-6" title="PayPal" />
+                       </div>
+                  </CardFooter>
+                </Card>
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>City</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={shippingAddress.city}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Country</label>
-                <input
-                  type="text"
-                  name="country"
-                  value={shippingAddress.country}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-block">
-              Continue to Payment
-            </button>
-          </form>
-        )}
-
-        {/* Payment Step */}
-        {step === "payment" && clientSecret && stripePromise && (
-          <div className="payment-section">
-            <h2>Payment Details</h2>
-            <button
-              className="btn-back"
-              onClick={() => setStep("shipping")}
-              type="button"
-            >
-              ← Back to Shipping
-            </button>
-
-            <Elements stripe={stripePromise} options={elementsOptions}>
-              <PaymentForm
-                orderId={orderId}
-                totalAmount={totalPrice}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
-            </Elements>
-          </div>
-        )}
-
-        {/* Order Summary (always visible) */}
-        <div className="order-summary">
-          <h2>Order Summary</h2>
-          <div className="summary-items">
-            {cart.map((item) => (
-              <div key={item._id} className="summary-item">
-                <span>
-                  {item.artwork?.title} (x{item.quantity})
-                </span>
-                <span>
-                  {new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  }).format((item.artwork?.price || 0) * item.quantity)}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="summary-divider"></div>
-          <div className="total-row">
-            <span>Total</span>
-            <span className="total-amount">
-              {new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-              }).format(totalPrice)}
-            </span>
-          </div>
-
-          <div className="payment-methods">
-            <p className="payment-methods-label">Accepted Payment Methods</p>
-            <div className="card-logos">
-              <FaCcVisa className="card-icon visa" title="Visa" />
-              <FaCcMastercard
-                className="card-icon mastercard"
-                title="Mastercard"
-              />
-              <FaCcAmex className="card-icon amex" title="American Express" />
-              <FaPaypal className="card-icon paypal" title="PayPal" />
-              <FaApplePay className="card-icon applepay" title="Apple Pay" />
-            </div>
-            <p className="secure-payment">
-              <FaLock className="lock-icon" />
-              Secure payment powered by Stripe
-            </p>
-          </div>
-        </div>
-      </div>
+       </div>
     </div>
   );
 };

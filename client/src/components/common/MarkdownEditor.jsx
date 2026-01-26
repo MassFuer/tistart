@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import SimpleMdeReact from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
-import './MarkdownEditor.css';
+
 
 const MarkdownEditor = ({ value, onChange, placeholder = 'Write your description...' }) => {
   const options = useMemo(() => ({

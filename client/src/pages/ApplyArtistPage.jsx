@@ -1,8 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import toast from "react-hot-toast";
-import "./ApplyArtistPage.css";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CheckCircle2, AlertCircle, Building2, User, Globe, Instagram, Facebook, Twitter } from "lucide-react";
 
 const ApplyArtistPage = () => {
   const { user, applyAsArtist } = useAuth();
@@ -30,39 +49,58 @@ const ApplyArtistPage = () => {
     },
   });
 
-  // Redirect if already applied
+  // Redirect/Status View if already applied
   if (user?.artistStatus !== "none") {
     return (
-      <div className="apply-artist-page">
-        <div className="status-card">
-          <h1>Artist Application</h1>
-          {user?.artistStatus === "pending" && (
-            <>
-              <p className="status pending">Your application is pending review</p>
-              <p>We&apos;ll notify you once your application has been reviewed.</p>
-            </>
-          )}
-          {user?.artistStatus === "incomplete" && (
-            <>
-              <p className="status incomplete">Your application is incomplete</p>
-              <p>Please update your information and resubmit.</p>
-            </>
-          )}
-          {user?.artistStatus === "verified" && (
-            <>
-              <p className="status verified">You&apos;re a verified artist!</p>
-              <button onClick={() => navigate("/dashboard")} className="btn btn-primary">
-                Go to Dashboard
-              </button>
-            </>
-          )}
-          {user?.artistStatus === "suspended" && (
-            <>
-              <p className="status suspended">Your artist account is suspended</p>
-              <p>Please contact support for assistance.</p>
-            </>
-          )}
-        </div>
+      <div className="container max-w-2xl py-20 px-4">
+        <Card className="text-center shadow-lg border-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <CardHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              {user?.artistStatus === "verified" ? (
+                <CheckCircle2 className="h-8 w-8 text-primary" />
+              ) : (
+                <AlertCircle className="h-8 w-8 text-yellow-500" />
+              )}
+            </div>
+            <CardTitle className="text-2xl">Artist Application Status</CardTitle>
+            <CardDescription className="text-base mt-2">
+              Current Status: <span className="font-semibold capitalize text-foreground">{user?.artistStatus}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {user?.artistStatus === "pending" && (
+              <p className="text-muted-foreground">
+                Your application is currently under review. Our team will verify your portfolio and information shortly.
+                We'll notify you via email once a decision has been made.
+              </p>
+            )}
+            {user?.artistStatus === "incomplete" && (
+              <p className="text-muted-foreground">
+                Your application has been marked as incomplete. Please update your profile information and contact support.
+              </p>
+            )}
+            {user?.artistStatus === "verified" && (
+              <p className="text-muted-foreground">
+                Congratulations! You are a verified artist. You can now access your dashboard to manage your artworks and events.
+              </p>
+            )}
+            {user?.artistStatus === "suspended" && (
+              <p className="text-destructive">
+                Your artist account has been suspended. Please contact our support team for more information.
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="justify-center pt-4">
+            {user?.artistStatus === "verified" && (
+              <Button onClick={() => navigate("/dashboard")} size="lg">
+                Go to Artist Dashboard
+              </Button>
+            )}
+            {user?.artistStatus === "pending" && (
+               <Button variant="outline" onClick={() => navigate("/")}>Return Home</Button>
+            )}
+          </CardFooter>
+        </Card>
       </div>
     );
   }
@@ -82,6 +120,10 @@ const ApplyArtistPage = () => {
       setFormData({ ...formData, [name]: value });
     }
   };
+  
+  const handleSelectChange = (val) => {
+      setFormData({ ...formData, type: val });
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,225 +142,217 @@ const ApplyArtistPage = () => {
   };
 
   return (
-    <div className="apply-artist-page">
-      <div className="form-container">
-        <h1>Become an Artist</h1>
-        <p className="form-description">
-          Fill out the form below to apply as an artist. Once approved, you&apos;ll be able to create and sell artworks.
+    <div className="container max-w-4xl py-12 px-4">
+      <div className="mb-10 text-center space-y-4">
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Become an Artist</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Join our curated community of creators. Fill out the application below to start exhibiting and selling your work to collectors worldwide.
         </p>
-
-        <form onSubmit={handleSubmit} className="artist-form">
-          <section className="form-section">
-            <h2>Basic Information</h2>
-
-            <div className="form-group">
-              <label htmlFor="companyName">Company / Artist Name *</label>
-              <input
-                type="text"
-                id="companyName"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                required
-                placeholder="Your artist or company name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="tagline">Tagline</label>
-              <input
-                type="text"
-                id="tagline"
-                name="tagline"
-                value={formData.tagline}
-                onChange={handleChange}
-                placeholder="A short description of your work"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">Description *</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                rows="4"
-                placeholder="Tell us about yourself and your art"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="type">Type *</label>
-              <select id="type" name="type" value={formData.type} onChange={handleChange} required>
-                <option value="individual">Individual Artist</option>
-                <option value="company">Company / Gallery</option>
-              </select>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Business Information</h2>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="taxId">Tax ID</label>
-                <input
-                  type="text"
-                  id="taxId"
-                  name="taxId"
-                  value={formData.taxId}
-                  onChange={handleChange}
-                  placeholder="Tax identification number"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="vatNumber">VAT Number</label>
-                <input
-                  type="text"
-                  id="vatNumber"
-                  name="vatNumber"
-                  value={formData.vatNumber}
-                  onChange={handleChange}
-                  placeholder="EU VAT number"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Address</h2>
-
-            <div className="form-row">
-              <div className="form-group flex-2">
-                <label htmlFor="address.street">Street</label>
-                <input
-                  type="text"
-                  id="address.street"
-                  name="address.street"
-                  value={formData.address.street}
-                  onChange={handleChange}
-                  placeholder="Street name"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="address.streetNum">Number</label>
-                <input
-                  type="text"
-                  id="address.streetNum"
-                  name="address.streetNum"
-                  value={formData.address.streetNum}
-                  onChange={handleChange}
-                  placeholder="123"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="address.zipCode">ZIP Code</label>
-                <input
-                  type="text"
-                  id="address.zipCode"
-                  name="address.zipCode"
-                  value={formData.address.zipCode}
-                  onChange={handleChange}
-                  placeholder="12345"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="address.city">City *</label>
-                <input
-                  type="text"
-                  id="address.city"
-                  name="address.city"
-                  value={formData.address.city}
-                  onChange={handleChange}
-                  required
-                  placeholder="City"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="address.country">Country *</label>
-                <input
-                  type="text"
-                  id="address.country"
-                  name="address.country"
-                  value={formData.address.country}
-                  onChange={handleChange}
-                  required
-                  placeholder="Country"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Social Media (Optional)</h2>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="socialMedia.website">Website</label>
-                <input
-                  type="url"
-                  id="socialMedia.website"
-                  name="socialMedia.website"
-                  value={formData.socialMedia.website}
-                  onChange={handleChange}
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="socialMedia.instagram">Instagram</label>
-                <input
-                  type="url"
-                  id="socialMedia.instagram"
-                  name="socialMedia.instagram"
-                  value={formData.socialMedia.instagram}
-                  onChange={handleChange}
-                  placeholder="https://instagram.com/username"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="socialMedia.facebook">Facebook</label>
-                <input
-                  type="url"
-                  id="socialMedia.facebook"
-                  name="socialMedia.facebook"
-                  value={formData.socialMedia.facebook}
-                  onChange={handleChange}
-                  placeholder="https://facebook.com/page"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="socialMedia.twitter">Twitter</label>
-                <input
-                  type="url"
-                  id="socialMedia.twitter"
-                  name="socialMedia.twitter"
-                  value={formData.socialMedia.twitter}
-                  onChange={handleChange}
-                  placeholder="https://twitter.com/username"
-                />
-              </div>
-            </div>
-          </section>
-
-          <button type="submit" className="btn btn-primary btn-large" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Application"}
-          </button>
-        </form>
       </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-8">
+          
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" /> Basic Information
+              </CardTitle>
+              <CardDescription>Tell us about who you are as an artist</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Artist / Company Name *</Label>
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g. Studio Picasso"
+                  />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="type">Entity Type *</Label>
+                    <Select value={formData.type} onValueChange={handleSelectChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="individual">Individual Artist</SelectItem>
+                            <SelectItem value="company">Company / Gallery</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    name="tagline"
+                    value={formData.tagline}
+                    onChange={handleChange}
+                    placeholder="A short punchy description (e.g. 'Contemporary Abstract Painter')"
+                  />
+              </div>
+
+              <div className="space-y-2">
+                  <Label htmlFor="description">Bio / Description *</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    placeholder="Tell us your story, your inspiration, and what makes your art unique..."
+                    className="min-h-[150px]"
+                  />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Information */}
+          <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" /> Business Details
+                </CardTitle>
+                <CardDescription>Required for invoicing and payments</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+                 <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <Label htmlFor="taxId">Tax ID / SSN</Label>
+                        <Input
+                            id="taxId"
+                            name="taxId"
+                            value={formData.taxId}
+                            onChange={handleChange}
+                            placeholder="Optional"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="vatNumber">VAT Number</Label>
+                        <Input
+                            id="vatNumber"
+                            name="vatNumber"
+                            value={formData.vatNumber}
+                            onChange={handleChange}
+                            placeholder="If applicable (EU)"
+                        />
+                    </div>
+                 </div>
+
+                 <div className="space-y-2">
+                    <Label>Address</Label>
+                    <div className="grid gap-4 md:grid-cols-4">
+                        <div className="md:col-span-3">
+                             <Input
+                                name="address.street"
+                                value={formData.address.street}
+                                onChange={handleChange}
+                                placeholder="Street Address"
+                            />
+                        </div>
+                        <div>
+                            <Input
+                                name="address.streetNum"
+                                value={formData.address.streetNum}
+                                onChange={handleChange}
+                                placeholder="No."
+                            />
+                        </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3 mt-2">
+                         <Input
+                            name="address.city"
+                            value={formData.address.city}
+                            onChange={handleChange}
+                            required
+                            placeholder="City"
+                        />
+                         <Input
+                            name="address.zipCode"
+                            value={formData.address.zipCode}
+                            onChange={handleChange}
+                            placeholder="Postal Code"
+                        />
+                         <Input
+                            name="address.country"
+                            value={formData.address.country}
+                            onChange={handleChange}
+                            required
+                            placeholder="Country"
+                        />
+                    </div>
+                 </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Media */}
+          <Card>
+             <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-primary" /> Online Presence
+                </CardTitle>
+                <CardDescription>Where can collectors find more about you?</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                         <Label className="flex items-center gap-2"><Globe className="h-3 w-3"/> Website</Label>
+                         <Input
+                            type="url"
+                            name="socialMedia.website"
+                            value={formData.socialMedia.website}
+                            onChange={handleChange}
+                            placeholder="https://..."
+                         />
+                    </div>
+                    <div className="space-y-2">
+                         <Label className="flex items-center gap-2"><Instagram className="h-3 w-3"/> Instagram</Label>
+                         <Input
+                            type="url"
+                            name="socialMedia.instagram"
+                            value={formData.socialMedia.instagram}
+                            onChange={handleChange}
+                            placeholder="https://instagram.com/..."
+                         />
+                    </div>
+                    <div className="space-y-2">
+                         <Label className="flex items-center gap-2"><Facebook className="h-3 w-3"/> Facebook</Label>
+                         <Input
+                            type="url"
+                            name="socialMedia.facebook"
+                            value={formData.socialMedia.facebook}
+                            onChange={handleChange}
+                            placeholder="https://facebook.com/..."
+                         />
+                    </div>
+                     <div className="space-y-2">
+                         <Label className="flex items-center gap-2"><Twitter className="h-3 w-3"/> Twitter / X</Label>
+                         <Input
+                            type="url"
+                            name="socialMedia.twitter"
+                            value={formData.socialMedia.twitter}
+                            onChange={handleChange}
+                            placeholder="https://twitter.com/..."
+                         />
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end pt-4">
+              <Button type="submit" size="lg" className="w-full md:w-auto px-8" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting Application..." : "Submit Application"}
+              </Button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 };

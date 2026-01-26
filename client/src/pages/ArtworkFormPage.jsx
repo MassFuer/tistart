@@ -3,7 +3,38 @@ import { useParams, useNavigate } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import toast from "react-hot-toast";
 import MarkdownEditor from "../components/common/MarkdownEditor";
-import "./ArtworkFormPage.css";
+import { 
+  Upload, 
+  X, 
+  Image as ImageIcon, 
+  Video, 
+  Loader2, 
+  ArrowLeft, 
+  Save 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert } from "@/components/ui/alert";
+import { Trash2 } from "lucide-react";
 
 const ArtworkFormPage = () => {
   const { id } = useParams();
@@ -37,23 +68,21 @@ const ArtworkFormPage = () => {
       unit: "cm",
     },
     totalInStock: 1,
-    // Video-specific fields
     video: {
       isPaid: false,
     },
   });
 
   const isVideoCategory = formData.category === "video" || formData.category === "music";
-
   const categories = ["painting", "sculpture", "photography", "digital", "music", "video", "other"];
 
+  // Effects & Handlers (kept same as original)
   useEffect(() => {
     if (isEditing) {
       fetchArtwork();
     }
   }, [id]);
 
-  // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -86,7 +115,6 @@ const ArtworkFormPage = () => {
         },
       });
       setExistingImages(artwork.images || []);
-      // Set existing video if present
       if (artwork.video?.url) {
         setExistingVideo(artwork.video);
       }
@@ -100,7 +128,6 @@ const ArtworkFormPage = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setFormData({
@@ -118,31 +145,40 @@ const ArtworkFormPage = () => {
     }
   };
 
+  // Select Change Handler for Shadcn Select
+  const handleSelectChange = (name, value) => {
+    if (name.includes(".")) {
+       const [parent, child] = name.split(".");
+       setFormData({
+        ...formData,
+        [parent]: {
+          ...formData[parent],
+          [child]: value,
+        },
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     const maxFiles = 5 - existingImages.length - selectedFiles.length;
-
     if (files.length > maxFiles) {
       toast.error(`You can only upload ${maxFiles} more image(s)`);
       return;
     }
-
-    // Validate file types
     const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
     const invalidFiles = files.filter((file) => !validTypes.includes(file.type));
     if (invalidFiles.length > 0) {
       toast.error("Only JPG, PNG, and WebP images are allowed");
       return;
     }
-
-    // Validate file sizes (5MB max)
     const oversizedFiles = files.filter((file) => file.size > 5 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       toast.error("Each image must be under 5MB");
       return;
     }
-
-    // Create preview URLs
     const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
     setPreviewUrls([...previewUrls, ...newPreviewUrls]);
     setSelectedFiles([...selectedFiles, ...files]);
@@ -158,37 +194,25 @@ const ArtworkFormPage = () => {
     setExistingImages(existingImages.filter((_, i) => i !== index));
   };
 
-  // Video handling
   const handleVideoSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
     const validTypes = ["video/mp4", "video/webm", "video/quicktime"];
     if (!validTypes.includes(file.type)) {
       toast.error("Only MP4, WebM, and MOV videos are allowed");
       return;
     }
-
-    // Validate file size (500MB max)
     if (file.size > 500 * 1024 * 1024) {
       toast.error("Video must be under 500MB");
       return;
     }
-
-    // Cleanup previous preview
-    if (videoPreviewUrl) {
-      URL.revokeObjectURL(videoPreviewUrl);
-    }
-
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     setSelectedVideo(file);
     setVideoPreviewUrl(URL.createObjectURL(file));
   };
 
   const removeSelectedVideo = () => {
-    if (videoPreviewUrl) {
-      URL.revokeObjectURL(videoPreviewUrl);
-    }
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     setSelectedVideo(null);
     setVideoPreviewUrl(null);
   };
@@ -199,13 +223,11 @@ const ArtworkFormPage = () => {
 
   const uploadVideo = async (artworkId) => {
     if (!selectedVideo) return;
-
     setIsUploadingVideo(true);
     try {
       const formDataUpload = new FormData();
       formDataUpload.append("video", selectedVideo);
       formDataUpload.append("isPaid", formData.video.isPaid);
-
       await artworksAPI.uploadVideo(artworkId, formDataUpload);
       toast.success("Video uploaded successfully");
     } catch (error) {
@@ -218,14 +240,12 @@ const ArtworkFormPage = () => {
 
   const uploadImages = async (artworkId) => {
     if (selectedFiles.length === 0) return;
-
     setIsUploading(true);
     try {
       const formDataUpload = new FormData();
       selectedFiles.forEach((file) => {
         formDataUpload.append("images", file);
       });
-
       await artworksAPI.uploadImages(artworkId, formDataUpload);
       toast.success("Images uploaded successfully");
     } catch (error) {
@@ -239,7 +259,6 @@ const ArtworkFormPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       const data = {
         ...formData,
@@ -257,27 +276,17 @@ const ArtworkFormPage = () => {
           unit: formData.dimensions.unit,
         },
       };
-
-      // Don't send video object in regular update - it's handled separately
-      // Only send video.isPaid if we have an existing video and no new video is being uploaded
       delete data.video;
-
       let artworkId = id;
 
       if (isEditing) {
-        // Include existing images in update
         data.images = existingImages;
-
-        // Handle video settings update (isPaid) without overwriting the video URL
-        // Only update if we have an existing video and are not uploading a new one
         if (existingVideo && !selectedVideo) {
           data.videoIsPaid = formData.video.isPaid;
         }
-        // If user removed the existing video (existingVideo is null) and no new video, clear it
         if (!existingVideo && !selectedVideo && isVideoCategory) {
           data.removeVideo = true;
         }
-
         await artworksAPI.update(id, data);
         toast.success("Artwork updated successfully");
       } else {
@@ -286,18 +295,12 @@ const ArtworkFormPage = () => {
         toast.success("Artwork created successfully");
       }
 
-      // Upload new images if any
-      if (selectedFiles.length > 0) {
-        await uploadImages(artworkId);
-      }
-
-      // Upload video if any (for video/music categories)
-      if (selectedVideo) {
-        await uploadVideo(artworkId);
-      }
+      if (selectedFiles.length > 0) await uploadImages(artworkId);
+      if (selectedVideo) await uploadVideo(artworkId);
 
       navigate("/my-artworks");
     } catch (error) {
+       console.error(error);
       const message = error.response?.data?.error || "Failed to save artwork";
       toast.error(message);
     } finally {
@@ -306,393 +309,350 @@ const ArtworkFormPage = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
   const totalImages = existingImages.length + selectedFiles.length;
 
   return (
-    <div className="artwork-form-page">
-      <div className="form-container">
-        <h1>{isEditing ? "Edit Artwork" : "Create New Artwork"}</h1>
-
-        <form onSubmit={handleSubmit} className="artwork-form">
-          <section className="form-section">
-            <h2>Basic Information</h2>
-
-            <div className="form-group">
-              <label htmlFor="title">Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                placeholder="Artwork title"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">Description *</label>
-              <MarkdownEditor
-                value={formData.description}
-                onChange={(value) => setFormData({ ...formData, description: value })}
-                placeholder="Describe your artwork... (Markdown supported)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="category">Category *</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Images</h2>
-            <p className="form-description">Upload up to 5 images (JPG, PNG, WebP - max 5MB each)</p>
-
-            {/* Existing Images */}
-            {existingImages.length > 0 && (
-              <div className="image-gallery">
-                <h4>Current Images</h4>
-                <div className="image-preview-grid">
-                  {existingImages.map((url, index) => (
-                    <div key={`existing-${index}`} className="image-preview-item">
-                      <img src={url} alt={`Artwork ${index + 1}`} />
-                      <button
-                        type="button"
-                        className="remove-image-btn"
-                        onClick={() => removeExistingImage(index)}
-                        title="Remove image"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* New Image Previews */}
-            {previewUrls.length > 0 && (
-              <div className="image-gallery">
-                <h4>New Images</h4>
-                <div className="image-preview-grid">
-                  {previewUrls.map((url, index) => (
-                    <div key={`new-${index}`} className="image-preview-item new-image">
-                      <img src={url} alt={`New ${index + 1}`} />
-                      <button
-                        type="button"
-                        className="remove-image-btn"
-                        onClick={() => removeSelectedFile(index)}
-                        title="Remove image"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upload Input */}
-            {totalImages < 5 && (
-              <div className="image-upload-area">
-                <input
-                  type="file"
-                  id="images"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="file-input"
-                />
-                <label htmlFor="images" className="file-input-label">
-                  <span className="upload-icon">+</span>
-                  <span>Add Images ({totalImages}/5)</span>
-                </label>
-              </div>
-            )}
-          </section>
-
-          {/* Video Upload Section - Only for video/music categories */}
-          {isVideoCategory && (
-            <section className="form-section">
-              <h2>Video Content</h2>
-              <p className="form-description">
-                Upload your video file (MP4, WebM, MOV - max 500MB).
-                <strong> Important:</strong> Use H.264 codec for best browser compatibility.
-                HEVC/H.265 videos may not play in Chrome/Firefox.
-              </p>
-
-              {/* Existing Video */}
-              {existingVideo && !videoPreviewUrl && (
-                <div className="video-gallery">
-                  <h4>Current Video</h4>
-                  <div className="video-preview-item">
-                    <video src={existingVideo.url} controls />
-                    <button
-                      type="button"
-                      className="remove-video-btn"
-                      onClick={removeExistingVideo}
-                      title="Remove video"
-                    >
-                      ×
-                    </button>
-                    {existingVideo.isPaid && (
-                      <span className="video-paid-badge">Premium</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* New Video Preview */}
-              {videoPreviewUrl && (
-                <div className="video-gallery">
-                  <h4>New Video</h4>
-                  <div className="video-preview-item new-video">
-                    <video src={videoPreviewUrl} controls />
-                    <button
-                      type="button"
-                      className="remove-video-btn"
-                      onClick={removeSelectedVideo}
-                      title="Remove video"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Video Upload Input */}
-              {!existingVideo && !videoPreviewUrl && (
-                <div className="video-upload-area">
-                  <input
-                    type="file"
-                    id="video"
-                    accept="video/mp4,video/webm,video/quicktime"
-                    onChange={handleVideoSelect}
-                    className="file-input"
-                  />
-                  <label htmlFor="video" className="file-input-label">
-                    <span className="upload-icon">🎬</span>
-                    <span>Add Video</span>
-                  </label>
-                </div>
-              )}
-
-              {/* Change Video Button */}
-              {(existingVideo || videoPreviewUrl) && (
-                <div className="change-video-area">
-                  <input
-                    type="file"
-                    id="change-video"
-                    accept="video/mp4,video/webm,video/quicktime"
-                    onChange={handleVideoSelect}
-                    className="file-input"
-                  />
-                  <label htmlFor="change-video" className="btn btn-secondary btn-small">
-                    Change Video
-                  </label>
-                </div>
-              )}
-
-              {/* Video Pricing Option */}
-              <div className="form-group checkbox-group video-pricing">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="video.isPaid"
-                    checked={formData.video.isPaid}
-                    onChange={handleChange}
-                  />
-                  Premium video (requires purchase to watch)
-                </label>
-                <p className="form-hint">
-                  {formData.video.isPaid
-                    ? "Users must pay the artwork price to access the full video."
-                    : "Video will be freely viewable by all users."}
-                </p>
-              </div>
-            </section>
-          )}
-
-          <section className="form-section">
-            <h2>Pricing</h2>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="price">Price (EUR) *</label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="originalPrice">Original Price (EUR)</label>
-                <input
-                  type="number"
-                  id="originalPrice"
-                  name="originalPrice"
-                  value={formData.originalPrice}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="For discounted items"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="totalInStock">Stock Quantity *</label>
-                <input
-                  type="number"
-                  id="totalInStock"
-                  name="totalInStock"
-                  value={formData.totalInStock}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  placeholder="1"
-                />
-              </div>
-
-              <div className="form-group checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="isForSale"
-                    checked={formData.isForSale}
-                    onChange={handleChange}
-                  />
-                  Available for sale
-                </label>
-              </div>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Details</h2>
-
-            <div className="form-group">
-              <label htmlFor="materialsUsed">Materials Used</label>
-              <input
-                type="text"
-                id="materialsUsed"
-                name="materialsUsed"
-                value={formData.materialsUsed}
-                onChange={handleChange}
-                placeholder="Oil, canvas, wood (comma separated)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="colors">Colors</label>
-              <input
-                type="text"
-                id="colors"
-                name="colors"
-                value={formData.colors}
-                onChange={handleChange}
-                placeholder="Blue, red, gold (comma separated)"
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="dimensions.width">Width</label>
-                <input
-                  type="number"
-                  id="dimensions.width"
-                  name="dimensions.width"
-                  value={formData.dimensions.width}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="dimensions.height">Height</label>
-                <input
-                  type="number"
-                  id="dimensions.height"
-                  name="dimensions.height"
-                  value={formData.dimensions.height}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="dimensions.depth">Depth</label>
-                <input
-                  type="number"
-                  id="dimensions.depth"
-                  name="dimensions.depth"
-                  value={formData.dimensions.depth}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="dimensions.unit">Unit</label>
-                <select
-                  id="dimensions.unit"
-                  name="dimensions.unit"
-                  value={formData.dimensions.unit}
-                  onChange={handleChange}
-                >
-                  <option value="cm">cm</option>
-                  <option value="in">inches</option>
-                  <option value="m">m</option>
-                </select>
-              </div>
-            </div>
-          </section>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={() => navigate("/my-artworks")}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting || isUploading || isUploadingVideo}>
-              {isSubmitting || isUploading || isUploadingVideo
-                ? "Saving..."
-                : isEditing
-                ? "Update Artwork"
-                : "Create Artwork"}
-            </button>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/my-artworks")}>
+                  <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {isEditing ? "Edit Artwork" : "Create New Artwork"}
+              </h1>
           </div>
-        </form>
+          <Button onClick={handleSubmit} disabled={isSubmitting || isUploading || isUploadingVideo}>
+              {(isSubmitting || isUploading || isUploadingVideo) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditing ? "Update Artwork" : "Publish Artwork"}
+          </Button>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* BASIC INFO */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+                <CardDescription>Tell us about your masterpiece</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
+                    <Input
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        required
+                        placeholder="e.g. Sunset on the Seine"
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select 
+                        value={formData.category} 
+                        onValueChange={(val) => handleSelectChange("category", val)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map((cat) => (
+                                <SelectItem key={cat} value={cat} className="capitalize">
+                                    {cat}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="description">Description *</Label>
+                    <div className="min-h-[200px] border rounded-md">
+                        <MarkdownEditor
+                            value={formData.description}
+                            onChange={(value) => setFormData({ ...formData, description: value })}
+                            placeholder="Describe your artwork... (Markdown supported)"
+                        />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* MEDIA */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Media Gallery</CardTitle>
+                <CardDescription>
+                    Upload up to 5 images. {isVideoCategory && "For videos/music, upload a preview clip or full file."}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+                {/* Images */}
+                <div className="space-y-4">
+                    <Label className="text-base">Images ({totalImages}/5)</Label>
+                    
+                    <div className="flex flex-wrap gap-4">
+                        {/* Existing */}
+                        {existingImages.map((url, index) => (
+                            <div key={`existing-${index}`} className="relative group w-32 h-32 rounded-lg overflow-hidden border">
+                                <img src={url} alt={`Existing ${index}`} className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={() => removeExistingImage(index)}
+                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ))}
+
+                        {/* New */}
+                        {previewUrls.map((url, index) => (
+                             <div key={`new-${index}`} className="relative group w-32 h-32 rounded-lg overflow-hidden border ring-2 ring-primary/20">
+                                <img src={url} alt={`New ${index}`} className="w-full h-full object-cover" />
+                                 <button
+                                    type="button"
+                                    onClick={() => removeSelectedFile(index)}
+                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                                <Badge className="absolute bottom-1 left-1 h-5 text-[10px]" variant="secondary">New</Badge>
+                            </div>
+                        ))}
+
+                        {/* Upload Button */}
+                        {totalImages < 5 && (
+                             <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                                <span className="text-xs text-muted-foreground font-medium">Add Image</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handleFileSelect}
+                                />
+                            </label>
+                        )}
+                    </div>
+                </div>
+                
+                {/* Video */}
+                {isVideoCategory && (
+                    <div className="space-y-4 pt-4 border-t">
+                        <Label className="text-base">Video / Audio Content</Label>
+                        <Alert className={`bg-muted/50 ${existingVideo || videoPreviewUrl ? "border-green-200" : ""}`}>
+                            <div className="flex flex-col gap-4">
+                                {(existingVideo || videoPreviewUrl) ? (
+                                    <div className="w-full max-w-md aspect-video bg-black rounded-lg overflow-hidden relative">
+                                        <video 
+                                            src={videoPreviewUrl || existingVideo?.url} 
+                                            controls 
+                                            className="w-full h-full"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute top-2 right-2 rounded-full"
+                                            onClick={videoPreviewUrl ? removeSelectedVideo : removeExistingVideo}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-background">
+                                         <Video className="h-10 w-10 text-muted-foreground mb-4" />
+                                         <p className="text-sm text-muted-foreground mb-4 text-center">
+                                             Upload MP4, WebM or MOV (max 500MB). <br />
+                                             Recommended codec: H.264
+                                         </p>
+                                         <Button type="button" variant="secondary" onClick={() => document.getElementById('video-upload').click()}>
+                                            <Upload className="mr-2 h-4 w-4" /> Select Video File
+                                         </Button>
+                                         <input
+                                            id="video-upload"
+                                            type="file"
+                                            accept="video/*"
+                                            className="hidden"
+                                            onChange={handleVideoSelect}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex items-center space-x-2 pt-2">
+                                    <Checkbox 
+                                        id="video-paid" 
+                                        checked={formData.video.isPaid}
+                                        onCheckedChange={(checked) => handleSelectChange("video.isPaid", checked)}
+                                    />
+                                    <div>
+                                        <Label htmlFor="video-paid" className="font-medium">Premium Content</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            If checked, users must purchase the artwork to watch the full video.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </Alert>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
+        {/* DETAILS & PRICING */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="materials">Materials Used</Label>
+                        <Input
+                            id="materials"
+                            name="materialsUsed"
+                            value={formData.materialsUsed}
+                            onChange={handleChange}
+                            placeholder="e.g. Oil, Canvas, Wood"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="colors">Colors</Label>
+                        <Input
+                            id="colors"
+                            name="colors"
+                            value={formData.colors}
+                            onChange={handleChange}
+                            placeholder="e.g. Red, Blue, Gold"
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label>Dimensions</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <Input
+                                placeholder="Width"
+                                type="number"
+                                name="dimensions.width"
+                                value={formData.dimensions.width}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                placeholder="Height"
+                                type="number"
+                                name="dimensions.height"
+                                value={formData.dimensions.height}
+                                onChange={handleChange}
+                            />
+                            <Input
+                                placeholder="Depth"
+                                type="number"
+                                name="dimensions.depth"
+                                value={formData.dimensions.depth}
+                                onChange={handleChange}
+                            />
+                        </div>
+                         <Select 
+                            value={formData.dimensions.unit} 
+                            onValueChange={(val) => handleSelectChange("dimensions.unit", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="cm">cm</SelectItem>
+                                <SelectItem value="in">inches</SelectItem>
+                                <SelectItem value="m">meters</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pricing & Inventory</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="price">Price (€) *</Label>
+                            <Input
+                                id="price"
+                                name="price"
+                                type="number"
+                                min="0" 
+                                step="0.01"
+                                value={formData.price}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="originalPrice">Original Price (€)</Label>
+                            <Input
+                                id="originalPrice"
+                                name="originalPrice"
+                                type="number"
+                                min="0" 
+                                step="0.01"
+                                value={formData.originalPrice}
+                                onChange={handleChange}
+                            />
+                        </div>
+                     </div>
+                     
+                     <div className="space-y-2">
+                        <Label htmlFor="stock">Stock Quantity *</Label>
+                        <Input
+                            id="stock"
+                            name="totalInStock"
+                            type="number"
+                            min="0"
+                            value={formData.totalInStock}
+                            onChange={handleChange}
+                            required
+                        />
+                     </div>
+
+                     <div className="flex items-center space-x-2 pt-4">
+                        <Checkbox 
+                            id="for-sale" 
+                            checked={formData.isForSale}
+                            onCheckedChange={(checked) => handleSelectChange("isForSale", checked)}
+                        />
+                         <div>
+                            <Label htmlFor="for-sale" className="font-medium">Available for Sale</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Allow users to purchase this artwork immediately.
+                            </p>
+                        </div>
+                     </div>
+                </CardContent>
+            </Card>
+        </div>
+
+        <div className="flex justify-end gap-4 pb-12">
+            <Button type="button" variant="outline" onClick={() => navigate("/my-artworks")}>
+                Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting || isUploading || isUploadingVideo}>
+                {(isSubmitting || isUploading || isUploadingVideo) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditing ? "Update Artwork" : "Publish Artwork"}
+            </Button>
+        </div>
+      </form>
     </div>
   );
 };
