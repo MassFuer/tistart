@@ -89,6 +89,53 @@ const orderSchema = new Schema(
   }
 );
 
+// Flag paid status change for post-save hook
+orderSchema.pre("save", function (next) {
+  // Check if status changed to 'paid'
+  if (this.isModified("status") && this.status === "paid") {
+    this.wasJustPaid = true;
+  }
+  next();
+});
+
+orderSchema.post("save", async function (doc) {
+  try {
+    if (this.wasJustPaid) {
+      const User = model("User");
+      const PlatformStats = require("./PlatformStats.model");
+
+      // 1. Update Buyer Stats
+      await User.findByIdAndUpdate(doc.user, { $inc: { "stats.orders": 1 } });
+
+      // 2. Update Artist Stats (Sales)
+      // An order can have items from multiple artists.
+      // We want to count 1 sale per artist for this order.
+      const uniqueArtistIds = [...new Set(doc.items.map((item) => item.artist.toString()))];
+
+      await Promise.all(
+        uniqueArtistIds.map((artistId) =>
+          User.findByIdAndUpdate(artistId, { $inc: { "stats.sales": 1 } })
+        )
+      );
+
+      // 3. Update Platform Stats
+      await PlatformStats.updateOne(
+        { _id: "global" },
+        {
+          $inc: {
+            "orders.total": 1,
+            "orders.totalRevenue": doc.totalAmount,
+            "orders.totalPlatformFees": doc.platformFeeTotal,
+          },
+        },
+        { upsert: true }
+      );
+    }
+  } catch (err) {
+    console.error("Error updating stats in Order post-save hook:", err);
+  }
+});
+
 const Order = model("Order", orderSchema);
 
 module.exports = Order;

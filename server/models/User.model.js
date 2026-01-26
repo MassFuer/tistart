@@ -180,6 +180,18 @@ const userSchema = new Schema(
       enum: ["free", "pro", "enterprise"],
       default: "free",
     },
+    // Denormalized stats for dashboard
+    stats: {
+      initialized: { type: Boolean, default: false },
+      artworks: { type: Number, default: 0 },
+      events: { type: Number, default: 0 },
+      sales: { type: Number, default: 0 },
+      orders: { type: Number, default: 0 },
+      avgRating: { type: Number, default: 0 },
+      reviewCount: { type: Number, default: 0 },
+      favorites: { type: Number, default: 0 },
+      attending: { type: Number, default: 0 },
+    },
   },
   {
     timestamps: true,

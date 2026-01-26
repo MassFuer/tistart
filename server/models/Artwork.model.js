@@ -172,6 +172,93 @@ artworkSchema.index({ searchKeywords: 1 });
 // Text index for search (keeping it for legacy or alternative use)
 artworkSchema.index({ title: "text", description: "text" });
 
+// Flag new document and check for status changes for post-save hook
+artworkSchema.pre("save", async function (next) {
+  this.wasNew = this.isNew;
+
+  // Capture previous isForSale state for updates
+  if (!this.isNew && this.isModified("isForSale")) {
+    try {
+      // Need to fetch old doc to know previous state
+      const oldDoc = await this.constructor.findById(this._id).select("isForSale");
+      if (oldDoc) {
+        this.wasForSale = oldDoc.isForSale;
+      }
+    } catch (err) {
+      console.error("Error fetching old artwork in pre-save:", err);
+    }
+  }
+  next();
+});
+
+artworkSchema.post("save", async function (doc) {
+  try {
+    const User = model("User");
+    const PlatformStats = require("./PlatformStats.model");
+
+    if (this.wasNew) {
+      // Update Artist Stats
+      await User.findByIdAndUpdate(doc.artist, { $inc: { "stats.artworks": 1 } });
+
+      // Update Platform Stats
+      await PlatformStats.updateOne(
+        { _id: "global" },
+        {
+          $inc: {
+            "artworks.total": 1,
+            "artworks.forSale": doc.isForSale ? 1 : 0,
+          },
+        },
+        { upsert: true }
+      );
+    } else {
+      // Handle updates
+      if (this.isModified("isForSale")) {
+        // Only if we successfully captured previous state
+        if (this.wasForSale !== undefined) {
+          const oldVal = this.wasForSale;
+          const newVal = doc.isForSale;
+
+          if (oldVal !== newVal) {
+            const change = newVal ? 1 : -1;
+            await PlatformStats.updateOne(
+              { _id: "global" },
+              { $inc: { "artworks.forSale": change } }
+            );
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error updating stats in Artwork post-save hook:", err);
+  }
+});
+
+artworkSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    try {
+      const User = model("User");
+      const PlatformStats = require("./PlatformStats.model");
+
+      // Update Artist Stats
+      await User.findByIdAndUpdate(doc.artist, { $inc: { "stats.artworks": -1 } });
+
+      // Update Platform Stats
+      await PlatformStats.updateOne(
+        { _id: "global" },
+        {
+          $inc: {
+            "artworks.total": -1,
+            "artworks.forSale": doc.isForSale ? -1 : 0,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Error updating stats in Artwork post-delete hook:", err);
+    }
+  }
+});
+
 const Artwork = model("Artwork", artworkSchema);
 
 module.exports = Artwork;

@@ -1,4 +1,5 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
 
 const reviewSchema = new Schema(
   {
@@ -70,22 +71,75 @@ reviewSchema.statics.calcAverageRating = async function (artworkId) {
   }
 };
 
-// Update artwork stats after saving a review
-reviewSchema.post("save", async function () {
+// Static method to calculate artist rating
+reviewSchema.statics.calcArtistRating = async function (artistId) {
+  const stats = await this.aggregate([
+    {
+      $lookup: {
+        from: "artworks",
+        localField: "artwork",
+        foreignField: "_id",
+        as: "artworkData",
+      },
+    },
+    { $unwind: "$artworkData" },
+    { $match: { "artworkData.artist": new mongoose.Types.ObjectId(artistId) } },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: "$rating" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const User = model("User");
+
+  if (stats.length > 0) {
+    await User.findByIdAndUpdate(artistId, {
+      "stats.avgRating": Math.round(stats[0].avgRating * 10) / 10,
+      "stats.reviewCount": stats[0].count,
+    });
+  } else {
+    await User.findByIdAndUpdate(artistId, {
+      "stats.avgRating": 0,
+      "stats.reviewCount": 0,
+    });
+  }
+};
+
+// Helper to trigger artist update
+async function updateArtistStats(reviewDoc) {
+  try {
+    const Artwork = model("Artwork");
+    const artwork = await Artwork.findById(reviewDoc.artwork).select("artist");
+    if (artwork && artwork.artist) {
+      await reviewDoc.constructor.calcArtistRating(artwork.artist);
+    }
+  } catch (err) {
+    console.error("Error updating artist stats from review:", err);
+  }
+}
+
+// Update stats after saving a review
+reviewSchema.post("save", async function (doc) {
   await this.constructor.calcAverageRating(this.artwork);
+  await updateArtistStats(doc);
 });
 
-// Update artwork stats after updating a review (rating change)
+// Update stats after updating a review (rating change)
 reviewSchema.post("findOneAndUpdate", async function (doc) {
   if (doc) {
     await doc.constructor.calcAverageRating(doc.artwork);
+    await updateArtistStats(doc);
   }
 });
 
-// Update artwork stats after removing a review
+// Update stats after removing a review
 reviewSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
     await doc.constructor.calcAverageRating(doc.artwork);
+    await updateArtistStats(doc);
   }
 });
 
