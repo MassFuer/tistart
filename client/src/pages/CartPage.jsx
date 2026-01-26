@@ -1,7 +1,29 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import Loading from "../components/common/Loading";
-import "./CartPage.css";
+import { 
+  Trash2, 
+  Minus, 
+  Plus, 
+  ShoppingBag, 
+  ArrowRight, 
+  ShieldCheck, 
+  Truck, 
+  RefreshCw,
+  ArrowLeft
+} from "lucide-react";
+
+// Shadcn Components
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const CartPage = () => {
   const { cart, loading, removeFromCart, clearCart, updateQuantity, cartCount } = useCart();
@@ -25,186 +47,183 @@ const CartPage = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="cart-page">
-      <div className="cart-header">
-        <h1>Shopping Cart</h1>
-        {cart.length > 0 && (
-          <span className="cart-count">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
-        )}
+    <div className="container mx-auto px-4 py-8 min-h-screen max-w-7xl">
+       {/* Height Fix and Container consistency */}
+      
+      <div className="flex items-center gap-2 mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Shopping Cart</h1>
+        <span className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm font-medium">
+            {cartCount} {cartCount === 1 ? "item" : "items"}
+        </span>
       </div>
 
       {cart.length === 0 ? (
-        <div className="empty-cart">
-          <div className="empty-cart-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-          </div>
-          <h2>Your cart is empty</h2>
-          <p>Looks like you haven't added any artworks yet.</p>
-          <Link to="/gallery" className="btn btn-primary">
-            Browse Gallery
-          </Link>
+        <div className="flex flex-col items-center justify-center py-20 bg-muted/30 rounded-xl border border-dashed">
+            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-6">
+                <ShoppingBag className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2">Your cart is empty</h2>
+            <p className="text-muted-foreground mb-8 text-center max-w-md">
+                Looks like you haven't added any artworks to your collection yet.
+                Explore our gallery to find unique pieces.
+            </p>
+            <Button asChild size="lg">
+                <Link to="/gallery">
+                    Browse Gallery <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
         </div>
       ) : (
-        <div className="cart-content">
-          <div className="cart-items-section">
-            <div className="cart-items">
-              {cart.map((item) => (
-                <div key={item._id} className="cart-item">
-                  <Link to={`/artworks/${item.artwork?._id}`} className="item-image">
-                    {item.artwork?.images?.[0] ? (
-                      <img src={item.artwork.images[0]} alt={item.artwork.title} />
-                    ) : (
-                      <div className="no-image">No Image</div>
-                    )}
-                  </Link>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Cart Items List */}
+          <div className="flex-1 space-y-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Cart Items</CardTitle>
+                      <CardDescription>Manage your selection before checkout</CardDescription>
+                  </CardHeader>
+                  <CardContent className="divide-y p-0">
+                      {cart.map((item) => (
+                          <div key={item._id} className="flex flex-col sm:flex-row gap-4 p-6 hover:bg-muted/20 transition-colors">
+                              {/* Image */}
+                              <Link to={`/artworks/${item.artwork?._id}`} className="shrink-0 w-full sm:w-32 aspect-square rounded-md overflow-hidden bg-muted border">
+                                  {item.artwork?.images?.[0] ? (
+                                      <img 
+                                        src={item.artwork.images[0]} 
+                                        alt={item.artwork.title} 
+                                        className="w-full h-full object-cover"
+                                      />
+                                  ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                                          No Image
+                                      </div>
+                                  )}
+                              </Link>
 
-                  <div className="item-info">
-                    <div className="item-details">
-                      <Link to={`/artworks/${item.artwork?._id}`} className="item-title">
-                        {item.artwork?.title}
-                      </Link>
-                      <p className="item-artist">
-                        by{" "}
-                        <Link to={`/artists/${item.artwork?.artist?._id}`} className="artist-link">
-                          {item.artwork?.artist?.artistInfo?.companyName ||
-                            `${item.artwork?.artist?.firstName} ${item.artwork?.artist?.lastName}`}
-                        </Link>
-                      </p>
-                    </div>
+                              {/* Details */}
+                              <div className="flex-1 min-w-0 flex flex-col justify-between gap-4">
+                                  <div>
+                                       <div className="flex justify-between items-start">
+                                            <div>
+                                                <Link to={`/artworks/${item.artwork?._id}`} className="font-semibold text-lg hover:underline truncate block">
+                                                    {item.artwork?.title}
+                                                </Link>
+                                                <Link to={`/artists/${item.artwork?.artist?._id}`} className="text-sm text-muted-foreground hover:text-foreground">
+                                                    by {item.artwork?.artist?.artistInfo?.companyName ||
+                                                        `${item.artwork?.artist?.firstName} ${item.artwork?.artist?.lastName}`}
+                                                </Link>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-lg">{formatCurrency((item.artwork?.price || 0) * item.quantity)}</p>
+                                                {item.quantity > 1 && (
+                                                    <p className="text-xs text-muted-foreground">{formatCurrency(item.artwork?.price)} each</p>
+                                                )}
+                                            </div>
+                                       </div>
+                                  </div>
 
-                    <div className="item-controls">
-                      <div className="quantity-control">
-                        <button
-                          onClick={() => updateQuantity(item.artwork._id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                          className="quantity-btn"
-                          aria-label="Decrease quantity"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </button>
-                        <span className="quantity-value">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.artwork._id, item.quantity + 1)}
-                          disabled={item.quantity >= item.artwork?.totalInStock}
-                          className="quantity-btn"
-                          aria-label="Increase quantity"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                          </svg>
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => handleRemove(item.artwork._id)}
-                        className="remove-btn"
-                        aria-label="Remove item"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
-
-                      <div className="item-pricing">
-                        <span className="item-subtotal">
-                          {formatCurrency((item.artwork?.price || 0) * item.quantity)}
-                        </span>
-                        {item.quantity > 1 && (
-                          <span className="item-unit-price">
-                            {formatCurrency(item.artwork?.price)} each
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={clearCart} className="clear-cart-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-              Clear Cart
-            </button>
+                                  {/* Controls */}
+                                  <div className="flex items-center justify-between">
+                                       <div className="flex items-center border rounded-md">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-8 w-8 rounded-r-none"
+                                                onClick={() => updateQuantity(item.artwork._id, item.quantity - 1)}
+                                                disabled={item.quantity <= 1}
+                                            >
+                                                <Minus className="h-3 w-3" />
+                                            </Button>
+                                            <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-8 w-8 rounded-l-none"
+                                                onClick={() => updateQuantity(item.artwork._id, item.quantity + 1)}
+                                                disabled={item.quantity >= (item.artwork?.totalInStock || 1)}
+                                            >
+                                                <Plus className="h-3 w-3" />
+                                            </Button>
+                                       </div>
+                                       
+                                       <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleRemove(item.artwork._id)}
+                                        >
+                                           <Trash2 className="h-4 w-4 mr-2" /> Remove
+                                       </Button>
+                                  </div>
+                              </div>
+                          </div>
+                      ))}
+                  </CardContent>
+                  <CardFooter className="bg-muted/30 p-4 flex justify-between">
+                      <Button variant="ghost" size="sm" asChild>
+                          <Link to="/gallery">
+                              <ArrowLeft className="mr-2 h-4 w-4" /> Continue Shopping
+                          </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={clearCart} className="text-muted-foreground hover:text-destructive">
+                          Clear Cart
+                      </Button>
+                  </CardFooter>
+              </Card>
           </div>
 
-          <div className="cart-sidebar">
-            <div className="cart-summary">
-              <h2>Order Summary</h2>
+          {/* Sidebar Summary */}
+          <div className="w-full lg:w-96 space-y-6">
+              <Card className="sticky top-24">
+                  <CardHeader>
+                      <CardTitle>Order Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal ({cartCount} items)</span>
+                          <span>{formatCurrency(calculateTotal())}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span className="text-green-600 font-medium">Free</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between font-bold text-lg">
+                          <span>Total</span>
+                          <span>{formatCurrency(calculateTotal())}</span>
+                      </div>
+                  </CardContent>
+                  <CardFooter className="flex-col gap-6">
+                      <Button className="w-full" size="lg" onClick={() => navigate("/checkout")}>
+                          Proceed to Checkout <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
 
-              <div className="summary-details">
-                <div className="summary-row">
-                  <span>Subtotal ({cartCount} {cartCount === 1 ? "item" : "items"})</span>
-                  <span>{formatCurrency(calculateTotal())}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Shipping</span>
-                  <span className="free-shipping">Free</span>
-                </div>
-              </div>
-
-              <div className="summary-total">
-                <span>Total</span>
-                <span>{formatCurrency(calculateTotal())}</span>
-              </div>
-
-              <button
-                onClick={() => navigate("/checkout")}
-                className="checkout-btn"
-              >
-                Proceed to Checkout
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
-            </div>
-
-            <div className="shipping-info">
-              <div className="info-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="3" width="15" height="13"></rect>
-                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                </svg>
-                <div>
-                  <strong>Free Shipping</strong>
-                  <span>On all orders</span>
-                </div>
-              </div>
-              <div className="info-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                <div>
-                  <strong>Secure Payment</strong>
-                  <span>100% protected</span>
-                </div>
-              </div>
-              <div className="info-item">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                </svg>
-                <div>
-                  <strong>Easy Returns</strong>
-                  <span>30-day return policy</span>
-                </div>
-              </div>
-            </div>
+                      {/* Trust Badges */}
+                      <div className="grid grid-cols-1 gap-4 text-sm text-muted-foreground w-full">
+                          <div className="flex items-center gap-3">
+                              <Truck className="h-5 w-5 text-primary shrink-0" />
+                              <div>
+                                  <p className="font-medium text-foreground">Free Shipping</p>
+                                  <p className="text-xs">On all orders worldwide</p>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+                              <div>
+                                  <p className="font-medium text-foreground">Secure Payment</p>
+                                  <p className="text-xs">256-bit SSL encryption</p>
+                              </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <RefreshCw className="h-5 w-5 text-primary shrink-0" />
+                              <div>
+                                  <p className="font-medium text-foreground">Easy Returns</p>
+                                  <p className="text-xs">30-day return policy</p>
+                              </div>
+                          </div>
+                      </div>
+                  </CardFooter>
+              </Card>
           </div>
         </div>
       )}

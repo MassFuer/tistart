@@ -40,7 +40,7 @@ const updateArtworkStats = async (artworkId) => {
   }
 };
 
-// GET /api/artworks/:artworkId/reviews - Get all reviews for an artwork (public)
+// GET /api/artworks/:artworkId/reviews - Get reviews for an artwork (public)
 router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
   try {
     const { artworkId } = req.params;
@@ -55,7 +55,7 @@ router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
 
     const [reviews, total] = await Promise.all([
       Review.find({ artwork: artworkId })
-        .populate("user", "firstName lastName profilePicture")
+        .populate("user", "firstName lastName profilePicture role")
         .sort(sort)
         .skip(skip)
         .limit(Number(limit)),
@@ -114,7 +114,7 @@ router.post(
         return res.status(403).json({ error: "You cannot review your own artwork." });
       }
 
-      // Check if user has purchased this artwork (for verified badge)
+      // Check if user has purchased this artwork
       const hasPurchased = await Order.exists({
         user: userId,
         "items.artwork": artworkId,
@@ -151,7 +151,7 @@ router.post(
   }
 );
 
-// PATCH /api/reviews/:id - Update a review (owner only)
+// PATCH /api/reviews/:id - Update a review (Author, Admin, or Owner)
 router.patch(
   "/reviews/:id",
   isAuthenticated,
@@ -174,15 +174,21 @@ router.patch(
     try {
       const { id } = req.params;
       const userId = req.payload._id;
+      const userRole = req.payload.role;
 
-      const review = await Review.findById(id);
+      const review = await Review.findById(id).populate("artwork");
       if (!review) {
         return res.status(404).json({ error: "Review not found." });
       }
 
-      // Check ownership
-      if (review.user.toString() !== userId) {
-        return res.status(403).json({ error: "You can only update your own reviews." });
+      // Roles
+      const isReviewAuthor = review.user.toString() === userId;
+      const isAdmin = isAdminRole(userRole);
+      const isArtworkOwner = review.artwork.artist.toString() === userId;
+
+      // Permission Check: Author OR Admin OR Artwork Owner
+      if (!isReviewAuthor && !isAdmin && !isArtworkOwner) {
+        return res.status(403).json({ error: "Not authorized to update this review." });
       }
 
       // Update allowed fields
@@ -200,7 +206,7 @@ router.patch(
       }).populate("user", "firstName lastName profilePicture");
 
       // Update Stats (using artwork id from original review)
-      await updateArtworkStats(review.artwork);
+      await updateArtworkStats(review.artwork._id);
 
       res.status(200).json({
         message: "Review updated successfully",

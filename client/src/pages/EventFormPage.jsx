@@ -1,11 +1,40 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { eventsAPI, geocodeAPI } from "../services/api";
+import { parseAddressFromSearch } from "../utils/addressUtils";
 import toast from "react-hot-toast";
 import AddressForm from "../components/map/AddressForm";
 import LocationMap from "../components/map/LocationMap";
 import MarkdownEditor from "../components/common/MarkdownEditor";
-import "./EventFormPage.css";
+import { 
+  Upload, 
+  X, 
+  Image as ImageIcon, 
+  Loader2, 
+  ArrowLeft, 
+  Calendar
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const EventFormPage = () => {
   const { id } = useParams();
@@ -122,6 +151,22 @@ const EventFormPage = () => {
     }
   };
 
+  // Helper for Shadcn Select/Checkbox manual updates
+  const handleManualChange = (name, value) => {
+    if (name.includes(".")) {
+       const [parent, child] = name.split(".");
+       setFormData({
+        ...formData,
+        [parent]: {
+          ...formData[parent],
+          [child]: value,
+        },
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -170,154 +215,22 @@ const EventFormPage = () => {
     // Only reverse geocode if this is from a map click, not from search
     // Search results already have address data
     if (newCoords.address) {
-      // This is from search - parse the address more intelligently
-      console.log("Search result address:", newCoords.address);
-
-      // Try to parse different address formats
-      const addressStr = newCoords.address.trim();
-      let street = "",
-        streetNum = "",
-        zipCode = "",
-        city = "",
-        country = "";
-
-      // Handle different address formats
-      const parts = addressStr.split(",").map((part) => part.trim());
-
-      if (parts.length >= 2) {
-        // Last part is usually country
-        country = parts[parts.length - 1];
-
-        // Find the most likely city part (usually contains zip code or is a city name)
-        let cityPart = "";
-        let cityIndex = -1;
-
-        // Look for part with zip code pattern (international: 4-6 digits)
-        for (let i = parts.length - 2; i >= 0; i--) {
-          const zipMatch = parts[i].match(/\b(\d{4,6})\b/);
-          if (zipMatch) {
-            cityPart = parts[i];
-            cityIndex = i;
-            zipCode = zipMatch[1];
-            break;
-          }
-        }
-
-        // If no zip code found, try to find city by heuristics
-        if (cityIndex === -1) {
-          for (
-            let i = parts.length - 2;
-            i >= Math.max(0, parts.length - 4);
-            i--
-          ) {
-            const part = parts[i];
-
-            // Skip if it looks like administrative region
-            const adminKeywords = [
-              "Île-de-France",
-              "Provence",
-              "Région",
-              "Department",
-              "State",
-              "Province",
-              "County",
-              "District",
-              "Region",
-              "Departamento",
-              "Bundesland",
-              "Länder",
-              "Oblast",
-              "Prefecture",
-            ];
-
-            if (
-              part.length > 35 || // Too long, likely administrative
-              adminKeywords.some((keyword) =>
-                part.toLowerCase().includes(keyword.toLowerCase()),
-              )
-            ) {
-              continue;
+      // Use shared utility to parse search result
+      const parsed = parseAddressFromSearch(newCoords);
+      if (parsed) {
+        setFormData({
+            ...formData,
+            location: {
+                ...formData.location,
+                street: parsed.street || formData.location.street,
+                streetNum: parsed.streetNum || formData.location.streetNum,
+                zipCode: parsed.zipCode || formData.location.zipCode,
+                city: parsed.city || formData.location.city,
+                country: parsed.country || formData.location.country,
             }
-
-            // Prefer parts with 2-4 words (likely city names)
-            const wordCount = part.split(/\s+/).length;
-            if (wordCount >= 1 && wordCount <= 4) {
-              cityPart = part;
-              cityIndex = i;
-              break;
-            }
-          }
-        }
-
-        // Extract city name from city part
-        if (cityPart) {
-          // Remove zip code if present
-          const cityMatch = cityPart.match(/^(\d{4,6}\s*)?(.+)$/);
-          if (cityMatch) {
-            city = cityMatch[2].trim();
-          } else {
-            city = cityPart.trim();
-          }
-        }
-
-        // Everything before the city part is the street address
-        if (cityIndex > 0) {
-          const streetPart = parts.slice(0, cityIndex).join(", ");
-
-          // Handle various street number formats
-          const streetPatterns = [
-            /^(\d+[a-zA-Z]?\s*[-/]?\s*)(.+)/, // "123 Main St", "123-A Main St"
-            /^(.+?)\s+(\d+[a-zA-Z]?)$/, // "Main St 123"
-            /^(\d+)\s+(.+)/, // "123 Main St"
-          ];
-
-          for (const pattern of streetPatterns) {
-            const streetMatch = streetPart.match(pattern);
-            if (streetMatch) {
-              if (pattern === streetPatterns[1]) {
-                // "Main St 123" format
-                street = streetMatch[1].trim();
-                streetNum = streetMatch[2].trim();
-              } else {
-                // "123 Main St" format
-                streetNum = streetMatch[1].trim();
-                street = streetMatch[2].trim();
-              }
-              break;
-            }
-          }
-
-          // If no pattern matched, use the whole part as street
-          if (!street) {
-            street = streetPart;
-          }
-        } else if (parts.length === 2) {
-          // Only city and country, no street
-          street = formData.location.street; // Keep existing street
-          streetNum = formData.location.streetNum; // Keep existing street number
-        }
+        });
+        // console.log("Parsed address:", parsed);
       }
-
-      setFormData({
-        ...formData,
-        location: {
-          ...formData.location,
-          street: street || formData.location.street,
-          streetNum: streetNum || formData.location.streetNum,
-          zipCode: zipCode || formData.location.zipCode,
-          city: city || formData.location.city,
-          country: country || formData.location.country,
-        },
-      });
-
-      console.log("Parsed address:", {
-        street,
-        streetNum,
-        zipCode,
-        city,
-        country,
-      });
-      // Don't show toast for search - it's expected behavior
     } else {
       // This is from map click - reverse geocode to get address
       try {
@@ -338,7 +251,6 @@ const EventFormPage = () => {
         toast.success("Address updated from map");
       } catch (error) {
         console.error("Reverse geocode error:", error);
-        // Don't show error, coordinates are still saved
       }
     }
   };
@@ -429,295 +341,306 @@ const EventFormPage = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
   const hasImage = existingImage || previewUrl;
 
   return (
-    <div className="event-form-page">
-      <div className="form-container">
-        <h1>{isEditing ? "Edit Event" : "Create New Event"}</h1>
-
-        <form onSubmit={handleSubmit} className="event-form">
-          <section className="form-section">
-            <h2>Basic Information</h2>
-
-            <div className="form-group">
-              <label htmlFor="title">Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                placeholder="Event title"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="description">Description *</label>
-              <MarkdownEditor
-                value={formData.description}
-                onChange={(value) => setFormData({ ...formData, description: value })}
-                placeholder="Describe your event... (Markdown supported)"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="category">Category *</label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Event Image</h2>
-            <p className="form-description">
-              Upload an image for your event (JPG, PNG, WebP - max 5MB)
-            </p>
-
-            {/* Existing Image */}
-            {existingImage && !previewUrl && (
-              <div className="image-gallery">
-                <h4>Current Image</h4>
-                <div className="image-preview-grid">
-                  <div className="image-preview-item">
-                    <img src={existingImage} alt="Event" />
-                    <button
-                      type="button"
-                      className="remove-image-btn"
-                      onClick={removeExistingImage}
-                      title="Remove image"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* New Image Preview */}
-            {previewUrl && (
-              <div className="image-gallery">
-                <h4>New Image</h4>
-                <div className="image-preview-grid">
-                  <div className="image-preview-item new-image">
-                    <img src={previewUrl} alt="New event" />
-                    <button
-                      type="button"
-                      className="remove-image-btn"
-                      onClick={removeSelectedFile}
-                      title="Remove image"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Upload Input */}
-            {!hasImage && (
-              <div className="image-upload-area">
-                <input
-                  type="file"
-                  id="image"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleFileSelect}
-                  className="file-input"
-                />
-                <label htmlFor="image" className="file-input-label">
-                  <span className="upload-icon">+</span>
-                  <span>Add Event Image</span>
-                </label>
-              </div>
-            )}
-
-            {/* Change Image Button */}
-            {hasImage && (
-              <div className="change-image-area">
-                <input
-                  type="file"
-                  id="change-image"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleFileSelect}
-                  className="file-input"
-                />
-                <label
-                  htmlFor="change-image"
-                  className="btn btn-secondary btn-small"
-                >
-                  Change Image
-                </label>
-              </div>
-            )}
-          </section>
-
-          <section className="form-section">
-            <h2>Date & Time</h2>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="startDateTime">Start Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  id="startDateTime"
-                  name="startDateTime"
-                  value={formData.startDateTime}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="endDateTime">End Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  id="endDateTime"
-                  name="endDateTime"
-                  value={formData.endDateTime}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Location</h2>
-
-            <div className="form-group checkbox-group">
-              <label>
-                <input
-                  type="checkbox"
-                  name="location.isOnline"
-                  checked={formData.location.isOnline}
-                  onChange={handleChange}
-                />
-                This is an online event
-              </label>
-            </div>
-
-            {formData.location.isOnline ? (
-              <div className="form-group">
-                <label htmlFor="location.onlineUrl">Event URL</label>
-                <input
-                  type="url"
-                  id="location.onlineUrl"
-                  name="location.onlineUrl"
-                  value={formData.location.onlineUrl}
-                  onChange={handleChange}
-                  placeholder="https://zoom.us/j/..."
-                />
-              </div>
-            ) : (
-              <div className="location-editor">
-                <div className="location-form-wrapper">
-                  <AddressForm
-                    address={formData.location}
-                    onChange={handleAddressChange}
-                    onGeocode={handleGeocode}
-                    showVenue={true}
-                  />
-                </div>
-
-                <div className="location-map-wrapper">
-                  <p className="map-hint">
-                    Click on the map or use search to set location
-                  </p>
-                  <LocationMap
-                    coordinates={coordinates}
-                    onLocationChange={handleMapLocationChange}
-                    editable={true}
-                    height="350px"
-                    showSearch={true}
-                    zoom={13}
-                  />
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section className="form-section">
-            <h2>Capacity & Pricing</h2>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="price">Price (EUR)</label>
-                <input
-                  type="number"
-                  id="price"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0 for free events"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="maxCapacity">Max Capacity</label>
-                <input
-                  type="number"
-                  id="maxCapacity"
-                  name="maxCapacity"
-                  value={formData.maxCapacity}
-                  onChange={handleChange}
-                  min="0"
-                  placeholder="Leave empty for unlimited"
-                />
-              </div>
-            </div>
-
-            <div className="form-group checkbox-group">
-              <label>
-                <input
-                  type="checkbox"
-                  name="isPublic"
-                  checked={formData.isPublic}
-                  onChange={handleChange}
-                />
-                Make this event public
-              </label>
-            </div>
-          </section>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard")}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting || isUploading}
-            >
-              {isSubmitting || isUploading
-                ? "Saving..."
-                : isEditing
-                  ? "Update Event"
-                  : "Create Event"}
-            </button>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+                  <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {isEditing ? "Edit Event" : "Create New Event"}
+              </h1>
           </div>
-        </form>
+          <Button onClick={handleSubmit} disabled={isSubmitting || isUploading}>
+              {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditing ? "Update Event" : "Publish Event"}
+          </Button>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        
+        {/* BASIC INFO */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+                <CardDescription>Tell us the details of your event</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Event Title *</Label>
+                    <Input
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                        required
+                        placeholder="e.g. Summer Art Exhibition"
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select 
+                        value={formData.category} 
+                        onValueChange={(val) => handleManualChange("category", val)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map((cat) => (
+                                <SelectItem key={cat} value={cat} className="capitalize">
+                                    {cat}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                     <Label htmlFor="description">Description *</Label>
+                     <div className="min-h-[200px] border rounded-md">
+                        <MarkdownEditor
+                            value={formData.description}
+                            onChange={(value) => setFormData({ ...formData, description: value })}
+                            placeholder="Describe your event... (Markdown supported)"
+                        />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* IMAGE */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Event Image</CardTitle>
+                <CardDescription>
+                     Upload an image for your event (JPG, PNG, WebP - max 5MB)
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
+                     {hasImage ? (
+                        <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border shadow-sm group">
+                            <img 
+                                src={previewUrl || existingImage} 
+                                alt="Event Preview" 
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <Button 
+                                    type="button" 
+                                    variant="secondary" 
+                                    onClick={() => document.getElementById('event-image').click()}
+                                >
+                                    Change
+                                </Button>
+                                <Button 
+                                    type="button" 
+                                    variant="destructive"
+                                    onClick={previewUrl ? removeSelectedFile : removeExistingImage}
+                                >
+                                    Remove
+                                </Button>
+                            </div>
+                        </div>
+                     ) : (
+                        <div className="text-center py-8">
+                             <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                             <p className="text-sm text-muted-foreground mb-4">
+                                Drag & drop or click to upload
+                             </p>
+                             <Button type="button" variant="secondary" onClick={() => document.getElementById('event-image').click()}>
+                                <Upload className="mr-2 h-4 w-4" /> Select Image
+                             </Button>
+                        </div>
+                     )}
+                     <input
+                        id="event-image"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                    />
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* TIME */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Date & Time</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="startDateTime">Start Date & Time *</Label>
+                        <div className="relative">
+                            <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="datetime-local"
+                                id="startDateTime"
+                                name="startDateTime"
+                                value={formData.startDateTime}
+                                onChange={handleChange}
+                                required
+                                className="pl-10"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="endDateTime">End Date & Time *</Label>
+                         <div className="relative">
+                            <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="datetime-local"
+                                id="endDateTime"
+                                name="endDateTime"
+                                value={formData.endDateTime}
+                                onChange={handleChange}
+                                required
+                                className="pl-10"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* LOCATION */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Location</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2 border p-4 rounded-md bg-muted/20">
+                    <Checkbox 
+                        id="isOnline" 
+                        checked={formData.location.isOnline}
+                        onCheckedChange={(checked) => handleManualChange("location.isOnline", checked)}
+                    />
+                    <div>
+                        <Label htmlFor="isOnline" className="font-medium cursor-pointer">This is an online event</Label>
+                    </div>
+                </div>
+
+                {formData.location.isOnline ? (
+                     <div className="space-y-2">
+                        <Label htmlFor="location.onlineUrl">Event URL</Label>
+                        <Input
+                            type="url"
+                            id="location.onlineUrl"
+                            name="location.onlineUrl"
+                            value={formData.location.onlineUrl}
+                            onChange={handleChange}
+                            placeholder="https://zoom.us/j/..."
+                        />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="order-2 lg:order-1">
+                             <Label className="mb-4 block">Address Details</Label>
+                             <div className="bg-card border rounded-lg p-4">
+                                <AddressForm
+                                    address={formData.location}
+                                    onChange={handleAddressChange}
+                                    onGeocode={handleGeocode}
+                                    showVenue={true}
+                                />
+                             </div>
+                        </div>
+                        <div className="order-1 lg:order-2 space-y-2">
+                             <Label>Map Location</Label>
+                             <div className="border rounded-lg overflow-hidden h-[350px]">
+                                <LocationMap
+                                    coordinates={coordinates}
+                                    onLocationChange={handleMapLocationChange}
+                                    editable={true}
+                                    height="100%"
+                                    showSearch={true}
+                                    zoom={13}
+                                />
+                             </div>
+                             <p className="text-xs text-muted-foreground">
+                                Click on the map to automatically set the address.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
+        {/* CAPACITY & PRICE */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Capacity & Pricing</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                        <Label htmlFor="price">Price (€)</Label>
+                        <Input
+                            type="number"
+                            id="price"
+                            name="price"
+                            value={formData.price}
+                            onChange={handleChange}
+                            min="0"
+                            step="0.01"
+                            placeholder="0 for free events"
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="maxCapacity">Max Capacity</Label>
+                        <Input
+                            type="number"
+                            id="maxCapacity"
+                            name="maxCapacity"
+                            value={formData.maxCapacity}
+                            onChange={handleChange}
+                            min="0"
+                            placeholder="Leave empty for unlimited"
+                        />
+                     </div>
+                 </div>
+
+                 <div className="flex items-center space-x-2 border p-4 rounded-md">
+                    <Checkbox 
+                        id="isPublic" 
+                        checked={formData.isPublic}
+                        onCheckedChange={(checked) => handleManualChange("isPublic", checked)}
+                    />
+                    <div>
+                        <Label htmlFor="isPublic" className="font-medium cursor-pointer">Make this event public</Label>
+                        <p className="text-xs text-muted-foreground">
+                             Public events are visible to all users in the events page.
+                        </p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4 pb-12">
+            <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
+                Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting || isUploading}>
+                {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditing ? "Update Event" : "Publish Event"}
+            </Button>
+        </div>
+      </form>
     </div>
   );
 };

@@ -2,7 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authAPI } from "../services/api";
-import "./VerifyEmailPage.css";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function VerifyEmailPage() {
   const { token } = useParams();
@@ -48,47 +57,65 @@ function VerifyEmailPage() {
   }, [token, navigate]);
 
   return (
-    <div className="verify-email-page">
-      <div className="verify-email-container">
-        <div className="verify-email-card">
-          {loading ? (
-            <div className="verify-loading">
-              <div className="spinner"></div>
-              <h2>Verifying your email...</h2>
-              <p>Please wait while we verify your email address.</p>
+    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+      <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
+        <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-4">
+                {loading ? (
+                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                    </div>
+                ) : verified ? (
+                    <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                ) : (
+                    <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
+                        <XCircle className="h-8 w-8 text-red-600" />
+                    </div>
+                )}
             </div>
-          ) : verified ? (
-            <div className="verify-success">
-              <div className="success-icon">✓</div>
-              <h2>Email Verified!</h2>
-              <p>
-                Thank you, {userData?.firstName}! Your email has been
-                successfully verified.
-              </p>
-              <p className="redirect-message">
-                Redirecting to login in 3 seconds...
-              </p>
-              <Link to="/login" className="btn btn-primary">
-                Go to Login
-              </Link>
-            </div>
-          ) : (
-            <div className="verify-error">
-              <div className="error-icon">✕</div>
-              <h2>Verification Failed</h2>
-              <p>{error}</p>
-              <div className="error-actions">
-                <Link to="/resend-email" className="btn btn-primary">
-                  Resend Verification Email
-                </Link>
-                <Link to="/signup" className="btn btn-secondary">
-                  Sign Up Again
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+          <CardTitle className="text-2xl">
+            {loading
+              ? "Verifying Email"
+              : verified
+              ? "Email Verified!"
+              : "Verification Failed"}
+          </CardTitle>
+          <CardDescription className="text-base mt-2">
+             {loading
+              ? "Please wait while we verify your email address..."
+              : verified
+              ? `Thank you, ${userData?.firstName || 'User'}! Your email has been successfully verified.`
+              : error}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4 pt-4 text-center">
+             {verified && (
+                <p className="text-sm text-muted-foreground animate-pulse">
+                     Redirecting to login in 3 seconds...
+                </p>
+             )}
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-3">
+            {loading ? null : verified ? (
+                <Button className="w-full" asChild>
+                     <Link to="/login">Go to Login</Link>
+                </Button>
+            ) : (
+                <div className="flex flex-col w-full gap-3">
+                     <Button className="w-full" asChild>
+                        <Link to="/resend-email">Resend Verification Email</Link>
+                     </Button>
+                     <Button variant="outline" className="w-full" asChild>
+                        <Link to="/signup">Sign Up Again</Link>
+                     </Button>
+                </div>
+            )}
+        </CardFooter>
+      </Card>
     </div>
   );
 }

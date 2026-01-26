@@ -1,6 +1,5 @@
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { MapPin } from "lucide-react";
 import LocationMap from "./LocationMap";
-import "./LocationDisplay.css";
 
 const LocationDisplay = ({
   address = {},
@@ -29,37 +28,37 @@ const LocationDisplay = ({
 
   const addressLines = formatAddress();
   const hasAddress = addressLines.length > 0;
-  const hasCoordinates = coordinates?.lat && coordinates?.lng;
+  const hasCoordinates = coordinates?.lat != null && coordinates?.lng != null;
 
   if (!hasAddress && !hasCoordinates) {
     return (
-      <div className="location-display empty">
-        <FaMapMarkerAlt className="icon" />
+      <div className="flex items-center gap-2 text-muted-foreground p-4 bg-muted/30 rounded-lg">
+        <MapPin className="h-5 w-5" />
         <span>No location set</span>
       </div>
     );
   }
 
   return (
-    <div className={`location-display ${layout}`}>
+    <div className={`flex ${layout === "horizontal" ? "flex-col md:flex-row gap-6" : "flex-col gap-4"} w-full`}>
       {hasAddress && (
-        <div className="address-text">
-          <FaMapMarkerAlt className="icon" />
-          <div className="address-lines">
-            {address.venue && <span className="venue">{address.venue}</span>}
+        <div className="flex items-start gap-3 min-w-[200px]">
+          <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+          <div className="flex flex-col gap-1">
+            {address.venue && <span className="font-semibold text-lg">{address.venue}</span>}
             {addressLines.map((line, index) => (
-              <span key={index} className="line">{line}</span>
+              <span key={index} className="text-foreground">{line}</span>
             ))}
           </div>
         </div>
       )}
 
       {showMap && hasCoordinates && (
-        <div className="map-wrapper" style={{ height }}>
+        <div className="flex-1 rounded-lg overflow-hidden border shadow-sm relative z-0" style={{ height }}>
           <LocationMap
             coordinates={coordinates}
             editable={false}
-            height={height}
+            height="100%"
             showSearch={false}
             zoom={15}
           />

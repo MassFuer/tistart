@@ -80,6 +80,9 @@ app.use("/api/payments", paymentRoutes);
 const geocodeRoutes = require("./routes/geocode.routes");
 app.use("/api/geocode", geocodeRoutes);
 
+const conversationRoutes = require("./routes/conversation.routes");
+app.use("/api/conversations", conversationRoutes);
+
 // 📚 Swagger API Documentation
 try {
   const swaggerDocument = require("./swagger-output.json");

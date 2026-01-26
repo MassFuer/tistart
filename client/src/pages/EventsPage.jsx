@@ -11,7 +11,7 @@ import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { Filter, Calendar as CalendarIcon, Map as MapIcon, List as ListIcon } from "lucide-react";
 
 // Shadcn Components

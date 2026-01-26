@@ -194,6 +194,42 @@ router.post("/", isAuthenticated, orderLimiter, async (req, res, next) => {
   }
 });
 
+// GET /api/orders/sales - Get sales for the logged-in artist
+router.get("/sales", isAuthenticated, async (req, res, next) => {
+  try {
+    const userId = req.payload._id;
+    
+    // Find orders that contain items where the artist is the current user
+    const sales = await Order.find({ "items.artist": userId })
+      .populate("user", "firstName lastName email profilePicture")
+      .populate({
+        path: "items.artwork",
+        select: "title images price",
+      })
+      .sort({ createdAt: -1 });
+
+    // Filter items in the orders to return ONLY the items belonging to this artist
+    // This is important because an order might contain items from multiple artists
+    const sanitizedSales = sales.map(order => {
+      const artistItems = order.items.filter(item => 
+        item.artist.toString() === userId
+      );
+      
+      const orderObj = order.toObject();
+      orderObj.items = artistItems;
+      
+      // Recalculate total for this artist only
+      orderObj.totalAmount = artistItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      return orderObj;
+    });
+
+    res.status(200).json({ data: sanitizedSales });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/orders/mine - Get my orders
 router.get("/mine", isAuthenticated, async (req, res, next) => {
   try {

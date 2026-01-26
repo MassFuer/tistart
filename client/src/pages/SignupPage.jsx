@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { FaGoogle, FaGithub, FaMicrosoft, FaApple } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, User, Palette } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -30,6 +31,9 @@ const SignupPage = () => {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  const isArtistSignup = searchParams.get("role") === "artist";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -89,6 +93,15 @@ const SignupPage = () => {
                 <p className="text-muted-foreground text-sm">
                     Please check your inbox and click the verification link to confirm your email address.
                 </p>
+                {isArtistSignup && (
+                    <Alert className="bg-blue-50 text-blue-900 border-blue-200 text-left">
+                        <Palette className="h-4 w-4" />
+                        <AlertTitle>Next Step: Artist Application</AlertTitle>
+                        <AlertDescription className="text-xs">
+                            Once verified and logged in, you can complete your artist profile application.
+                        </AlertDescription>
+                    </Alert>
+                )}
                 <p className="text-xs text-muted-foreground">
                     Redirecting to login in 5 seconds...
                 </p>
@@ -110,9 +123,24 @@ const SignupPage = () => {
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 bg-muted/30">
       <Card className="w-full max-w-lg shadow-lg border-0 bg-card">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+          <div className="flex justify-center mb-2">
+             {isArtistSignup ? (
+                 <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Palette className="h-6 w-6 text-primary" />
+                 </div>
+             ) : (
+                <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="h-6 w-6 text-primary" />
+                 </div>
+             )}
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">
+              {isArtistSignup ? "Create Artist Account" : "Create an account"}
+          </CardTitle>
           <CardDescription className="text-center">
-            Enter your email below to create your account
+            {isArtistSignup 
+                ? "Step 1: Create your account to start your artist application" 
+                : "Enter your email below to create your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -192,7 +220,7 @@ const SignupPage = () => {
             </div>
 
             <Button className="w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Sign Up"}
+              {isSubmitting ? "Creating account..." : isArtistSignup ? "Continue to Step 2" : "Sign Up"}
             </Button>
           </form>
 

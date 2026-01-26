@@ -2,7 +2,18 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authAPI } from "../services/api";
-import "./ResendEmailPage.css";
+import { Mail, Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function ResendEmailPage() {
   const navigate = useNavigate();
@@ -42,74 +53,92 @@ function ResendEmailPage() {
 
   if (sent) {
     return (
-      <div className="resend-email-page">
-        <div className="resend-email-container">
-          <div className="resend-email-card">
-            <div className="success-state">
-              <div className="success-icon">✓</div>
-              <h2>Email Sent!</h2>
-              <p>
-                We've sent a verification email to <strong>{email}</strong>
-              </p>
-              <p className="instructions">
-                Please check your inbox and click the verification link to
-                confirm your email address.
-              </p>
-              <p className="redirect-message">
-                Redirecting to login in 3 seconds...
-              </p>
-              <Link to="/login" className="btn btn-primary">
-                Go to Login
-              </Link>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+        <Card className="w-full max-w-md shadow-lg border-t-4 border-t-green-500">
+           <CardHeader className="text-center pb-2">
+                 <div className="flex justify-center mb-4">
+                    <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                </div>
+                <CardTitle className="text-2xl">Email Sent!</CardTitle>
+                <CardDescription className="text-base mt-2">
+                    We've sent a verification email to <strong className="text-foreground">{email}</strong>
+                </CardDescription>
+           </CardHeader>
+           
+           <CardContent className="text-center space-y-4 pt-2">
+                <p className="text-sm text-muted-foreground">
+                    Please check your inbox click the verification link to confirm your email address.
+                </p>
+                <p className="text-sm font-medium animate-pulse text-primary">
+                    Redirecting to login in 3 seconds...
+                </p>
+           </CardContent>
+
+           <CardFooter>
+                 <Button className="w-full" asChild>
+                    <Link to="/login">Go to Login</Link>
+                </Button>
+           </CardFooter>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="resend-email-page">
-      <div className="resend-email-container">
-        <div className="resend-email-card">
-          <h1>Resend Verification Email</h1>
-          <p className="subtitle">
+    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+      <Card className="w-full max-w-md shadow-lg border-t-4 border-t-primary">
+        <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Mail className="h-6 w-6 text-primary" />
+                 </div>
+            </div>
+          <CardTitle className="text-2xl">Resend Verification</CardTitle>
+          <CardDescription>
             Enter your email address and we'll send you a new verification link.
-          </p>
+          </CardDescription>
+        </CardHeader>
 
-          <form onSubmit={handleSubmit} className="resend-form">
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
                 type="email"
                 id="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
                 disabled={loading}
                 required
+                className="h-11"
               />
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary btn-block"
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "Resend Verification Email"}
-            </button>
+            <Button type="submit" className="w-full h-11" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  Resend Verification Email
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
           </form>
-
-          <div className="form-footer">
-            <p>
-              Already verified? <Link to="/login">Log in here</Link>
-            </p>
-            <p>
-              Need a new account? <Link to="/signup">Sign up</Link>
-            </p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+        
+        <CardFooter className="flex justify-center pt-0">
+             <Button variant="link" className="text-sm text-muted-foreground" asChild>
+                 <Link to="/login">Back to Login</Link>
+             </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

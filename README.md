@@ -28,6 +28,8 @@ Nemesis is a full-stack art marketplace and community platform where:
 - React Router DOM
 - FullCalendar & React Leaflet (Maps)
 - Stripe Elements
+- Tailwind CSS & Shadcn UI
+- Sonner (Notifications)
 
 **Backend:**
 - Node.js & Express
@@ -106,7 +108,7 @@ The project demonstrates a robust implementation of the MERN stack (MongoDB, Exp
 
 ## 👥 Authors
 
-- **MassFuer** - *Lead Developer*
+- **MassFuer** - *Fullstack Developer*
 
 ## 📄 License
 

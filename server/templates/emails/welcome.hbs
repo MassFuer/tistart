@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Welcome to Nemesis!</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: {{colors.background}}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: {{colors.background}};">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: {{colors.card}}; border-radius: 8px; border: 1px solid {{colors.border}}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+          {{> header}}
+
+          <tr>
+            <td style="padding: 32px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: {{colors.foreground}};">
+                Welcome, {{firstName}}!
+              </h2>
+
+              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: {{colors.mutedForeground}};">
+                Your email has been verified successfully. You're all set to start exploring amazing artworks and events on Nemesis.
+              </p>
+
+              <div style="padding: 20px; background-color: {{colors.muted}}; border-radius: 6px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: {{colors.foreground}};">
+                  Here's what you can do:
+                </h3>
+                <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: {{colors.mutedForeground}};">
+                  <li>Browse and discover unique artworks</li>
+                  <li>Connect with talented artists</li>
+                  <li>Attend exclusive art events</li>
+                  <li>Build your personal art collection</li>
+                </ul>
+              </div>
+
+              <table cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td align="center" style="border-radius: 6px; background-color: {{colors.success}};">
+                    <a href="{{clientUrl}}" target="_blank" style="
+                      display: inline-block;
+                      padding: 12px 24px;
+                      font-size: 14px;
+                      font-weight: 500;
+                      color: {{colors.successForeground}};
+                      text-decoration: none;
+                      border-radius: 6px;
+                    ">Start Exploring</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{> footer}}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

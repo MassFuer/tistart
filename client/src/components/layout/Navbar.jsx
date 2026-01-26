@@ -4,21 +4,23 @@ import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useMessaging } from "../../context/MessagingContext";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo.jpg";
-import { 
-  Menu, 
-  ShoppingCart, 
-  User, 
-  LogOut, 
-  Settings, 
-  Heart, 
-  Package, 
-  Palette, 
-  LayoutDashboard, 
+import {
+  Menu,
+  ShoppingCart,
+  User,
+  LogOut,
+  Settings,
+  Heart,
+  Package,
+  Palette,
+  LayoutDashboard,
   ShieldAlert,
   Moon,
-  Sun
+  Sun,
+  MessageCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ const Navbar = () => {
   const { user, isAuthenticated, isVerifiedArtist, isAdmin, isSuperAdmin, logout } = useAuth();
   const { cartCount } = useCart();
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { unreadCount } = useMessaging();
   const [hidden, setHidden] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
@@ -137,6 +140,21 @@ const Navbar = () => {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
+          {/* Messages */}
+          {isAuthenticated && (
+            <Link to="/messages">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                <MessageCircle className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground animate-in zoom-in">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+                <span className="sr-only">Messages</span>
+              </Button>
+            </Link>
+          )}
+
           {/* Cart */}
           {isAuthenticated && (
             <Link to="/cart">
@@ -156,11 +174,11 @@ const Navbar = () => {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full p-0 overflow-hidden">
                     {user?.profilePicture ? (
-                         <img src={user.profilePicture} alt={user.firstName} className="h-8 w-8 rounded-full object-cover border" />
+                         <img src={user.profilePicture} alt={user.firstName} className="h-full w-full rounded-full object-cover" />
                     ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted border">
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
                             <User className="h-4 w-4" />
                         </div>
                     )}
@@ -174,23 +192,32 @@ const Navbar = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {(isVerifiedArtist || isAdmin || isSuperAdmin) && (
+                    <DropdownMenuItem asChild>
+                        <Link to={`/artists/${user._id}`}><User className="mr-2 h-4 w-4" /> My Public Profile</Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
-                    <Link to="/profile"><Settings className="mr-2 h-4 w-4" /> Profile</Link>
+                    <Link to="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/my-orders"><Package className="mr-2 h-4 w-4" /> My Orders</Link>
+                    <Link to="/messages" className="flex items-center">
+                      <MessageCircle className="mr-2 h-4 w-4" /> Messages
+                      {unreadCount > 0 && (
+                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link to="/dashboard?tab=activity"><Package className="mr-2 h-4 w-4" /> My Orders</Link>
                 </DropdownMenuItem>
                 
                 {(isVerifiedArtist || isAdmin) && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                             <Link to="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                             <Link to="/my-artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
-                        </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem asChild>
+                            <Link to="/dashboard?tab=content"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
+                    </DropdownMenuItem>
                 )}
 
                 {isAdmin && (

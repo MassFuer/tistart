@@ -4,8 +4,9 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { FaLock, FaSpinner } from "react-icons/fa";
-import "./PaymentForm.css";
+import { Lock, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
   const stripe = useStripe();
@@ -57,8 +58,8 @@ const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="payment-form">
-      <div className="payment-element-container">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-background border rounded-lg p-4">
         <PaymentElement
           options={{
             layout: "tabs",
@@ -67,30 +68,35 @@ const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
       </div>
 
       {errorMessage && (
-        <div className="payment-error">
-          {errorMessage}
-        </div>
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
 
-      <button
-        type="submit"
-        disabled={!stripe || isProcessing}
-        className="btn btn-primary pay-button"
-      >
-        {isProcessing ? (
-          <>
-            <FaSpinner className="spinner" /> Processing...
-          </>
-        ) : (
-          <>
-            <FaLock /> Pay ${totalAmount?.toFixed(2)}
-          </>
-        )}
-      </button>
+      <div className="pt-2">
+          <Button 
+            type="submit" 
+            disabled={!stripe || isProcessing} 
+            className="w-full" 
+            size="lg"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing Payment...
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" /> Pay {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalAmount)}
+              </>
+            )}
+          </Button>
 
-      <p className="payment-secure-notice">
-        <FaLock /> Your payment is secured by Stripe
-      </p>
+          <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
+            <Lock className="h-3 w-3" /> Your payment is secured by Stripe
+          </p>
+      </div>
     </form>
   );
 };

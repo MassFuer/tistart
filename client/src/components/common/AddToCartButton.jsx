@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
-import "./AddToCartButton.css";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Plus, Minus, Trash2, Loader2 } from "lucide-react";
 
 const AddToCartButton = ({ artwork, className = "", compact = false }) => {
   const { cart, addToCart, updateQuantity, removeFromCart, loading: cartLoading } = useCart();
@@ -20,12 +21,13 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
   // Don't show button if artwork is not for sale or out of stock
   if (!artwork.isForSale || artwork.totalInStock <= 0) {
     return (
-      <button
+      <Button
         disabled
-        className={`add-to-cart-btn sold-out ${compact ? "compact" : ""} ${className}`}
+        variant="secondary"
+        className={`w-full opacity-50 cursor-not-allowed ${className}`}
       >
         Sold Out
-      </button>
+      </Button>
     );
   }
 
@@ -92,108 +94,65 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
     }
   };
 
+  const isLoading = loading || cartLoading;
+
   // If item is in cart, show quantity controls
   if (quantityInCart > 0) {
     return (
-      <div className={`quantity-controls-wrapper ${compact ? "compact" : ""} ${className}`}>
-        <div className="quantity-controls">
-          <button
-            onClick={handleDecrement}
-            disabled={loading || cartLoading}
-            className="quantity-btn minus"
-            aria-label="Decrease quantity"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      <div className={`flex items-center gap-2 ${className}`}>
+        <div className="flex items-center border rounded-md">
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 rounded-none rounded-l-md" 
+                onClick={handleDecrement}
+                disabled={isLoading}
             >
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-          <span className="quantity-display">{quantityInCart}</span>
-          <button
-            onClick={handleIncrement}
-            disabled={loading || cartLoading || quantityInCart >= artwork.totalInStock}
-            className="quantity-btn plus"
-            aria-label="Increase quantity"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+                <Minus className="h-4 w-4" />
+            </Button>
+            <span className="w-10 text-center font-medium text-sm">
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mx-auto"/> : quantityInCart}
+            </span>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-9 w-9 rounded-none rounded-r-md" 
+                onClick={handleIncrement}
+                disabled={isLoading || quantityInCart >= artwork.totalInStock}
             >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
+                <Plus className="h-4 w-4" />
+            </Button>
         </div>
-        <button
-          onClick={handleRemove}
-          disabled={loading || cartLoading}
-          className="quantity-trash-btn"
-          aria-label="Remove from cart"
-        >
-          {loading ? (
-            <span className="spinner-small"></span>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        
+        {!compact && (
+            <Button 
+                variant="destructive" 
+                size="icon" 
+                className="h-9 w-9"
+                onClick={handleRemove}
+                disabled={isLoading}
             >
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          )}
-        </button>
+                <Trash2 className="h-4 w-4" />
+            </Button>
+        )}
       </div>
     );
   }
 
   // Default: Add to Cart button
   return (
-    <button
+    <Button
       onClick={handleAddToCart}
-      disabled={loading || cartLoading}
-      className={`add-to-cart-btn ${compact ? "compact" : ""} ${className}`}
+      disabled={isLoading}
+      className={`w-full ${className}`}
     >
-      {loading ? (
-        <span className="spinner"></span>
+      {isLoading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
-        <>
-          <svg
-            className="cart-icon"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-          Add to Cart
-        </>
+        <ShoppingCart className="mr-2 h-4 w-4" />
       )}
-    </button>
+      {isLoading ? "Adding..." : "Add to Cart"}
+    </Button>
   );
 };
 

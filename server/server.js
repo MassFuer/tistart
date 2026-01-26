@@ -1,8 +1,20 @@
+const http = require("http");
 const app = require("./app");
+const { initializeSocket } = require("./socket");
 
-// ℹ️ Sets the PORT for our app to have access to it. If no env has been set, we hard code it to 5005
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = initializeSocket(server);
+
+// Make io available to routes
+app.set("io", io);
+
+// Set the PORT for our app
 const PORT = process.env.PORT || 5005;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`Socket.io ready for connections`);
 });

@@ -1,16 +1,21 @@
-import "./ErrorMessage.css";
+import { AlertTriangle, RefreshCcw } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const ErrorMessage = ({ message = "Something went wrong", onRetry }) => {
   return (
-    <div className="error-container">
-      <div className="error-icon">⚠️</div>
-      <p className="error-text">{message}</p>
-      {onRetry && (
-        <button onClick={onRetry} className="btn btn-secondary retry-btn">
-          Try Again
-        </button>
-      )}
-    </div>
+    <Alert variant="destructive" className="my-4 max-w-2xl mx-auto">
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>Error</AlertTitle>
+      <AlertDescription className="flex flex-col gap-4 pt-2">
+        <p>{message}</p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry} className="w-fit bg-background text-foreground hover:bg-accent">
+            <RefreshCcw className="mr-2 h-3 w-3" /> Try Again
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 };
 

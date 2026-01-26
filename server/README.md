@@ -76,10 +76,10 @@ npm run seed
 
 | Resource | Base Path | Description |
 |----------|-----------|-------------|
-| **Auth** | `/auth` | Login, Signup, Verify, Artist Application |
+| **Auth** | `/auth` | Login, Signup (Role support), Verify, Artist Application |
 | **Artworks** | `/api/artworks` | CRUD Artworks, Uploads, Search |
-| **Events** | `/api/events` | Calendar, Maps, Attendance |
-| **Orders** | `/api/orders` | Checkout, Order History |
+| **Events** | `/api/events` | Calendar, Maps, Attendance, Filtering |
+| **Orders** | `/api/orders` | Checkout, User History, Admin Overview |
 | **Users** | `/api/users` | Profile, Favorites, Artists List |
 | **Cart** | `/api/cart` | Persistent Shopping Cart |
 | **Videos** | `/api/videos` | Secure Streaming, Purchases |

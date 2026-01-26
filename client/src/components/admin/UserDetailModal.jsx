@@ -2,8 +2,30 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { adminAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
-import "./UserDetailModal.css";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Loading from "@/components/common/Loading";
+import { User, Mail, AtSign, Calendar, Shield, AlertTriangle, Trash2, Edit } from "lucide-react";
 
 const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
   const { user: currentUser } = useAuth();
@@ -51,6 +73,10 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name, value) => {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -83,23 +109,18 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
 
   const canEdit = () => {
     if (!user) return false;
-    // SuperAdmin can edit anyone except other superAdmins
     if (isSuperAdmin) {
       return user.role !== "superAdmin" || user._id === currentUser._id;
     }
-    // Admin can edit users and artists, not admins/superAdmins
     return user.role !== "admin" && user.role !== "superAdmin";
   };
 
   const canDelete = () => {
     if (!user) return false;
-    // Can't delete yourself
     if (user._id === currentUser._id) return false;
-    // SuperAdmin can delete admins and below
     if (isSuperAdmin) {
       return user.role !== "superAdmin";
     }
-    // Admin can delete users and artists only
     return user.role !== "admin" && user.role !== "superAdmin";
   };
 
@@ -108,302 +129,249 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
       year: "numeric",
       month: "long",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
   if (isLoading) {
     return (
-      <div className="modal-overlay">
-        <div className="user-detail-modal">
-          <div className="modal-loading">Loading user details...</div>
-        </div>
-      </div>
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent>
+                <Loading />
+            </DialogContent>
+        </Dialog>
     );
   }
 
   if (!user) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="user-detail-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{isEditing ? "Edit User" : "User Details"}</h2>
-          <button className="modal-close" onClick={onClose}>
-            &times;
-          </button>
-        </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <DialogTitle>{isEditing ? "Edit User" : "User Details"}</DialogTitle>
+        </DialogHeader>
 
-        <div className="modal-body">
-          {/* User Avatar & Basic Info */}
-          <div className="user-profile-section">
-            <div className="user-avatar-large">
-              {user.profilePicture ? (
-                <img src={user.profilePicture} alt={user.firstName} />
-              ) : (
-                <span>
-                  {user.firstName?.[0]}
-                  {user.lastName?.[0]}
-                </span>
-              )}
+        <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6">
+                
+                {/* Header Profile - Only show in View mode */}
+                {!isEditing && (
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20 border">
+                            <AvatarImage src={user.profilePicture} />
+                            <AvatarFallback className="text-xl">{user.firstName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                             <h2 className="text-2xl font-bold">{user.firstName} {user.lastName}</h2>
+                             <p className="text-muted-foreground">@{user.userName}</p>
+                             <div className="flex gap-2 mt-2">
+                                 <Badge variant={user.role === "admin" || user.role === "superAdmin" ? "default" : "secondary"} className="capitalize">
+                                     {user.role}
+                                 </Badge>
+                                 {user.artistStatus !== "none" && (
+                                     <Badge variant="outline" className="capitalize">
+                                         {user.artistStatus}
+                                     </Badge>
+                                 )}
+                             </div>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Form Mode */}
+                {isEditing ? (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName">First Name</Label>
+                                <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Last Name</Label>
+                                <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                             <Label htmlFor="userName">Username</Label>
+                             <Input id="userName" name="userName" value={formData.userName} onChange={handleChange} />
+                        </div>
+                        <div className="space-y-2">
+                             <Label htmlFor="email">Email</Label>
+                             <Input id="email" name="email" value={formData.email} onChange={handleChange} type="email" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                 <Label>Role</Label>
+                                 <Select value={formData.role} onValueChange={(val) => handleSelectChange("role", val)}>
+                                     <SelectTrigger>
+                                         <SelectValue />
+                                     </SelectTrigger>
+                                     <SelectContent>
+                                         {roles.map((role) => (
+                                             <SelectItem key={role} value={role}>{role}</SelectItem>
+                                         ))}
+                                     </SelectContent>
+                                 </Select>
+                             </div>
+                             <div className="space-y-2">
+                                 <Label>Artist Status</Label>
+                                 <Select value={formData.artistStatus} onValueChange={(val) => handleSelectChange("artistStatus", val)}>
+                                     <SelectTrigger>
+                                         <SelectValue />
+                                     </SelectTrigger>
+                                     <SelectContent>
+                                         {artistStatuses.map((status) => (
+                                             <SelectItem key={status} value={status}>{status}</SelectItem>
+                                         ))}
+                                     </SelectContent>
+                                 </Select>
+                             </div>
+                        </div>
+                    </div>
+                ) : (
+                    // View Mode
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="space-y-4">
+                                 <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
+                                     <User className="h-4 w-4" /> Account Info
+                                 </h3>
+                                 <div className="space-y-2 text-sm">
+                                     <div className="flex justify-between">
+                                         <span className="text-muted-foreground flex items-center gap-2"><Mail className="h-3 w-3"/> Email</span>
+                                         <span>{user.email}</span>
+                                     </div>
+                                     <div className="flex justify-between">
+                                         <span className="text-muted-foreground flex items-center gap-2"><Shield className="h-3 w-3"/> Verified</span>
+                                         <span className={user.isEmailVerified ? "text-green-600" : "text-yellow-600"}>
+                                             {user.isEmailVerified ? "Yes" : "No"}
+                                         </span>
+                                     </div>
+                                     <div className="flex justify-between">
+                                          <span className="text-muted-foreground flex items-center gap-2"><Calendar className="h-3 w-3"/> Joined</span>
+                                          <span>{formatDate(user.createdAt)}</span>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             {/* Artist Details */}
+                             {user.artistInfo && user.artistStatus !== "none" && (
+                                 <div className="space-y-4">
+                                     <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
+                                         <AtSign className="h-4 w-4" /> Artist Profile
+                                     </h3>
+                                     <div className="space-y-2 text-sm">
+                                         {user.artistInfo.companyName && (
+                                             <div className="flex justify-between">
+                                                 <span className="text-muted-foreground">Company</span>
+                                                 <span>{user.artistInfo.companyName}</span>
+                                             </div>
+                                         )}
+                                         {user.artistInfo.type && (
+                                             <div className="flex justify-between">
+                                                 <span className="text-muted-foreground">Type</span>
+                                                 <span>{user.artistInfo.type}</span>
+                                             </div>
+                                         )}
+                                          {user.artistInfo.address?.city && (
+                                             <div className="flex justify-between">
+                                                 <span className="text-muted-foreground">Location</span>
+                                                 <span>{user.artistInfo.address.city}, {user.artistInfo.address.country}</span>
+                                             </div>
+                                         )}
+                                     </div>
+                                 </div>
+                             )}
+                        </div>
+
+                         {/* Storage Info */}
+                        {user.storage && user.storage.totalBytes > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
+                                    <Shield className="h-4 w-4" /> Storage Usage
+                                </h3>
+                                <div className="grid grid-cols-4 gap-4 text-center text-sm bg-muted/30 p-4 rounded-lg">
+                                     <div>
+                                         <p className="text-muted-foreground mb-1">Total</p>
+                                         <p className="font-medium">{(user.storage.totalBytes / (1024 * 1024)).toFixed(2)} MB</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-muted-foreground mb-1">Images</p>
+                                         <p className="font-medium">{(user.storage.imageBytes / (1024 * 1024)).toFixed(2)} MB</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-muted-foreground mb-1">Videos</p>
+                                         <p className="font-medium">{(user.storage.videoBytes / (1024 * 1024)).toFixed(2)} MB</p>
+                                     </div>
+                                     <div>
+                                         <p className="text-muted-foreground mb-1">Files</p>
+                                         <p className="font-medium">{user.storage.fileCount || 0}</p>
+                                     </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {user.artistStatus === "verified" && (
+                             <div className="flex justify-end">
+                                 <Button variant="outline" asChild size="sm">
+                                     <Link to={`/artists/${user._id}`} target="_blank">View Public Profile</Link>
+                                 </Button>
+                             </div>
+                        )}
+                    </div>
+                )}
+                
+                {/* Delete Confirmation */}
+                {showDeleteConfirm && (
+                    <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2">
+                         <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                         <div className="flex-1">
+                             <h4 className="font-semibold text-destructive">Delete User Account?</h4>
+                             <p className="text-sm text-destructive/80 mb-3">
+                                 This action cannot be undone. All data associated with this user will be permanently removed.
+                             </p>
+                             <div className="flex gap-2">
+                                 <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                                     {isDeleting ? "Deleting..." : "Yes, Delete Account"}
+                                 </Button>
+                                 <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                             </div>
+                         </div>
+                    </div>
+                )}
+
             </div>
-            {!isEditing && (
-              <div className="user-basic-info">
-                <h3>
-                  {user.firstName} {user.lastName}
-                </h3>
-                <p className="user-username">@{user.userName}</p>
-                <p className="user-email">{user.email}</p>
-                <div className="user-badges">
-                  <span className={`badge badge-role badge-${user.role}`}>{user.role}</span>
-                  {user.artistStatus !== "none" && (
-                    <span className={`badge badge-status badge-${user.artistStatus}`}>
-                      {user.artistStatus}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+        </ScrollArea>
 
-          {/* Edit Form */}
-          {isEditing ? (
-            <div className="edit-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Username</label>
-                  <input
-                    type="text"
-                    name="userName"
-                    value={formData.userName}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Role</label>
-                  <select name="role" value={formData.role} onChange={handleChange}>
-                    {roles.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Artist Status</label>
-                  <select name="artistStatus" value={formData.artistStatus} onChange={handleChange}>
-                    {artistStatuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* User Details */}
-              <div className="user-details-grid">
-                <div className="detail-item">
-                  <label>User ID</label>
-                  <span className="detail-value mono">{user._id}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Email Verified</label>
-                  <span className={`detail-value ${user.isEmailVerified ? "verified" : "unverified"}`}>
-                    {user.isEmailVerified ? "Yes" : "No"}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <label>Member Since</label>
-                  <span className="detail-value">{formatDate(user.createdAt)}</span>
-                </div>
-                <div className="detail-item">
-                  <label>Last Updated</label>
-                  <span className="detail-value">{formatDate(user.updatedAt)}</span>
-                </div>
-              </div>
-
-              {/* Artist Info */}
-              {user.artistInfo && user.artistStatus !== "none" && (
-                <div className="artist-info-section">
-                  <h4>Artist Information</h4>
-                  <div className="user-details-grid">
-                    {user.artistInfo.companyName && (
-                      <div className="detail-item">
-                        <label>Company Name</label>
-                        <span className="detail-value">{user.artistInfo.companyName}</span>
-                      </div>
+        <DialogFooter className="p-4 border-t flex justify-end gap-2">
+             {!isEditing && !showDeleteConfirm && (
+                 <>
+                    {canDelete() && (
+                        <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </Button>
                     )}
-                    {user.artistInfo.tagline && (
-                      <div className="detail-item">
-                        <label>Tagline</label>
-                        <span className="detail-value">{user.artistInfo.tagline}</span>
-                      </div>
+                    {canEdit() && (
+                        <Button onClick={() => setIsEditing(true)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
                     )}
-                    {user.artistInfo.type && (
-                      <div className="detail-item">
-                        <label>Type</label>
-                        <span className="detail-value">{user.artistInfo.type}</span>
-                      </div>
-                    )}
-                    {user.artistInfo.taxId && (
-                      <div className="detail-item">
-                        <label>Tax ID</label>
-                        <span className="detail-value mono">{user.artistInfo.taxId}</span>
-                      </div>
-                    )}
-                    {user.artistInfo.address?.city && (
-                      <div className="detail-item">
-                        <label>Location</label>
-                        <span className="detail-value">
-                          {user.artistInfo.address.city}, {user.artistInfo.address.country}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {user.artistInfo.description && (
-                    <div className="artist-description">
-                      <label>Description</label>
-                      <p>{user.artistInfo.description}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Storage Info (for artists) */}
-              {user.storage && user.storage.totalBytes > 0 && (
-                <div className="storage-section">
-                  <h4>Storage Usage</h4>
-                  <div className="user-details-grid">
-                    <div className="detail-item">
-                      <label>Total Used</label>
-                      <span className="detail-value">
-                        {(user.storage.totalBytes / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Images</label>
-                      <span className="detail-value">
-                        {(user.storage.imageBytes / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Videos</label>
-                      <span className="detail-value">
-                        {(user.storage.videoBytes / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <label>File Count</label>
-                      <span className="detail-value">{user.storage.fileCount || 0}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Links */}
-              {user.artistStatus === "verified" && (
-                <div className="quick-links">
-                  <Link to={`/artists/${user._id}`} className="btn btn-secondary" target="_blank">
-                    View Public Profile
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Modal Footer */}
-        <div className="modal-footer">
-          {isEditing ? (
-            <>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setIsEditing(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </>
-          ) : (
-            <>
-              {showDeleteConfirm ? (
-                <div className="delete-confirm">
-                  <span>Are you sure? This cannot be undone.</span>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? "Deleting..." : "Confirm Delete"}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {canDelete() && (
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => setShowDeleteConfirm(true)}
-                    >
-                      Delete User
-                    </button>
-                  )}
-                  {canEdit() && (
-                    <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
-                      Edit User
-                    </button>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+                     <Button variant="outline" onClick={onClose}>Close</Button>
+                 </>
+             )}
+             
+             {isEditing && (
+                 <>
+                     <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
+                     <Button onClick={handleSave} disabled={isSaving}>
+                         {isSaving ? "Saving..." : "Save Changes"}
+                     </Button>
+                 </>
+             )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

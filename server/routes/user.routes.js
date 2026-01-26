@@ -3,6 +3,8 @@ const router = express.Router();
 
 const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
+const Order = require("../models/Order.model");
+const mongoose = require("mongoose");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isAdmin, attachUser, isSuperAdmin } = require("../middleware/role.middleware");
 const {
@@ -137,6 +139,69 @@ router.post(
     }
   }
 );
+
+// GET /api/users/stats - Get user statistics for dashboard
+router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const role = req.user.role;
+    const stats = {
+      isArtist: role === "artist" || role === "admin" || role === "superAdmin",
+    };
+
+    // Artist Stats
+    if (stats.isArtist) {
+      const [artworksCount, eventsCount, salesCount] = await Promise.all([
+        Artwork.countDocuments({ artist: userId }),
+        // Check for Event model usage if available usually imported, assume Event model needed
+        mongoose.model("Event").countDocuments({ artist: userId }), 
+        Order.countDocuments({ "items.artist": userId })
+      ]);
+
+      stats.artworks = artworksCount;
+      stats.events = eventsCount;
+      stats.sales = salesCount;
+
+      // Calculate Average Rating across all artworks
+      const ratingAgg = await mongoose.model("Review").aggregate([
+        { 
+          $lookup: {
+            from: "artworks",
+            localField: "artwork",
+            foreignField: "_id",
+            as: "artwork"
+          }
+        },
+        { $unwind: "$artwork" },
+        { $match: { "artwork.artist": userId } },
+        {
+          $group: {
+            _id: null,
+            avgRating: { $avg: "$rating" },
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+
+      stats.avgRating = ratingAgg.length > 0 ? Math.round(ratingAgg[0].avgRating * 10) / 10 : 0;
+      stats.reviewCount = ratingAgg.length > 0 ? ratingAgg[0].count : 0;
+    }
+
+    // User Stats (Everyone has these)
+    const [ordersCount, attendingCount] = await Promise.all([
+      Order.countDocuments({ user: userId }),
+      mongoose.model("Event").countDocuments({ attendees: userId })
+    ]);
+
+    stats.orders = ordersCount;
+    stats.favorites = req.user.favorites.length;
+    stats.attending = attendingCount;
+
+    res.status(200).json({ data: stats });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ==================== FAVORITES ====================
 
