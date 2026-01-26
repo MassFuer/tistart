@@ -1,26 +1,56 @@
-import { useState, useRef, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo.jpg";
-import { FaShoppingCart, FaUser, FaSignOutAlt, FaHeart, FaClipboardList, FaCog, FaPalette, FaUsers, FaTachometerAlt, FaCrown } from "react-icons/fa";
-import "./Navbar.css";
+import { 
+  Menu, 
+  ShoppingCart, 
+  User, 
+  LogOut, 
+  Settings, 
+  Heart, 
+  Package, 
+  Palette, 
+  LayoutDashboard, 
+  ShieldAlert,
+  Moon,
+  Sun
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Assuming Avatar not installed, will fallback to img or circle
+// Actually I didn't install Avatar... I'll use simple img tag or circle div
+// Or use Lucide User icon
 
 const Navbar = () => {
   const { user, isAuthenticated, isVerifiedArtist, isAdmin, isSuperAdmin, logout } = useAuth();
   const { cartCount } = useCart();
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const profileRef = useRef(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
   const { scrollY } = useScroll();
 
-  // Hide navbar on scroll down, show on scroll up
+  // Hide navbar on scroll down
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
     if (latest > previous && latest > 150) {
@@ -30,205 +60,195 @@ const Navbar = () => {
     }
   });
 
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const handleLogout = async () => {
     try {
       await logout();
       toast.success("Logged out successfully");
       navigate("/");
-      setIsMenuOpen(false);
-      setIsProfileOpen(false);
+      setIsSheetOpen(false);
     } catch (error) {
       toast.error("Error logging out");
     }
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-    setIsProfileOpen(false);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-    setIsProfileOpen(false);
-  };
-
-  const toggleProfile = () => {
-    setIsProfileOpen(!isProfileOpen);
-  };
+  const NavItems = ({ mobile = false }) => (
+    <>
+      <NavLink 
+        to="/gallery" 
+        className={({ isActive }) => 
+          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+        }
+        onClick={() => setIsSheetOpen(false)}
+      >
+        Gallery
+      </NavLink>
+      <NavLink 
+        to="/events" 
+        className={({ isActive }) => 
+          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+        }
+        onClick={() => setIsSheetOpen(false)}
+      >
+        Events
+      </NavLink>
+      
+      {isAuthenticated && (
+        <NavLink 
+            to="/favorites" 
+            className={({ isActive }) => 
+            `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+            }
+            onClick={() => setIsSheetOpen(false)}
+        >
+            Favorites
+        </NavLink>
+      )}
+    </>
+  );
 
   return (
-    <motion.nav
+    <motion.header
       variants={{
         visible: { y: 0 },
         hidden: { y: "-100%" }
       }}
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="navbar"
+      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div className="navbar-header">
-        <div className="navbar-brand">
-          <NavLink to="/" onClick={closeMenu}>
-            <img src={logo} alt="Nemesis Logo" className="navbar-logo" />
-          </NavLink>
-          <NavLink to="/" onClick={closeMenu}>
-            Nemesis
-          </NavLink>
-        </div>
+      <div className="w-full flex h-16 items-center px-4 md:px-12">
+        {/* LOGO - Left */}
+        <Link to="/" className="mr-6 flex items-center space-x-2 flex-none" onClick={() => setIsSheetOpen(false)}>
+          <img src={logo} alt="Nemesis" className="h-8 w-8 rounded-full object-cover" />
+          <span className="hidden font-bold sm:inline-block text-xl tracking-tight">Nemesis</span>
+        </Link>
 
-        <div className="navbar-mobile-controls">
+        {/* DESKTOP NAV - Center */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-sm">
+          <NavItems />
+        </nav>
+
+        {/* RIGHT ACTIONS - Right */}
+        <div className="flex items-center justify-end space-x-4 ml-auto">
+          
+          {/* Theme Toggle */}
+          <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="h-9 w-9">
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+
+          {/* Cart */}
           {isAuthenticated && (
-            <NavLink to="/cart" className="cart-icon-link" onClick={closeMenu}>
-              <FaShoppingCart />
-              {cartCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="cart-badge"
-                >
-                  {cartCount}
-                </motion.span>
-              )}
-            </NavLink>
+            <Link to="/cart">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                    <ShoppingCart className="h-4 w-4" />
+                    {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground animate-in zoom-in">
+                            {cartCount}
+                        </span>
+                    )}
+                    <span className="sr-only">Cart</span>
+                </Button>
+            </Link>
           )}
-          <button
-            onClick={toggleDarkMode}
-            className="theme-toggle"
-            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {isDarkMode ? "☀️" : "🌙"}
-          </button>
-          <button
-            className={`hamburger ${isMenuOpen ? "active" : ""}`}
-            onClick={toggleMenu}
-            aria-label="Toggle navigation menu"
-          >
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
-          </button>
+
+          {/* User Profile / Auth */}
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    {user?.profilePicture ? (
+                         <img src={user.profilePicture} alt={user.firstName} className="h-8 w-8 rounded-full object-cover border" />
+                    ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted border">
+                            <User className="h-4 w-4" />
+                        </div>
+                    )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link to="/profile"><Settings className="mr-2 h-4 w-4" /> Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link to="/my-orders"><Package className="mr-2 h-4 w-4" /> My Orders</Link>
+                </DropdownMenuItem>
+                
+                {(isVerifiedArtist || isAdmin) && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                             <Link to="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                             <Link to="/my-artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
+                        </DropdownMenuItem>
+                    </>
+                )}
+
+                {isAdmin && (
+                    <DropdownMenuItem asChild>
+                         <Link to="/admin"><ShieldAlert className="mr-2 h-4 w-4" /> Admin</Link>
+                    </DropdownMenuItem>
+                )}
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+             <div className="hidden md:flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                    <Link to="/login">Log in</Link>
+                </Button>
+                <Button asChild>
+                    <Link to="/signup">Sign up</Link>
+                </Button>
+             </div>
+          )}
+
+          {/* MOBILE MENU (SHEET) */}
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex flex-col">
+                <SheetHeader>
+                    <SheetTitle className="text-left flex items-center gap-2">
+                        <img src={logo} alt="Nemesis" className="h-6 w-6 rounded-full" />
+                        Nemesis
+                    </SheetTitle>
+                </SheetHeader>
+                <div className="grid gap-6 py-6">
+                    <NavItems mobile />
+                    {!isAuthenticated && (
+                        <div className="flex flex-col gap-2 mt-4">
+                            <Button variant="outline" asChild className="justify-start">
+                                <Link to="/login" onClick={() => setIsSheetOpen(false)}>Log in</Link>
+                            </Button>
+                            <Button asChild className="justify-start">
+                                <Link to="/signup" onClick={() => setIsSheetOpen(false)}>Sign up</Link>
+                            </Button>
+                        </div>
+                    )}
+                 </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
-        <NavLink to="/gallery" onClick={closeMenu}>
-          Gallery
-        </NavLink>
-        <NavLink to="/events" onClick={closeMenu}>
-          Events
-        </NavLink>
-
-        {isAuthenticated ? (
-          <div className="navbar-user">
-            {/* Cart Icon - Desktop */}
-            <NavLink to="/cart" className="cart-icon-link desktop-only" onClick={closeMenu}>
-              <FaShoppingCart />
-              {cartCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="cart-badge"
-                >
-                  {cartCount}
-                </motion.span>
-              )}
-            </NavLink>
-
-            {/* Profile Dropdown */}
-            <div className="profile-dropdown" ref={profileRef}>
-              <button className="profile-trigger" onClick={toggleProfile}>
-                {user?.profilePicture ? (
-                  <img src={user.profilePicture} alt={user.firstName} className="navbar-avatar" />
-                ) : (
-                  <FaUser className="profile-icon" />
-                )}
-                <span className="profile-name">{user?.firstName}</span>
-                <span className={`dropdown-arrow ${isProfileOpen ? "open" : ""}`}>▼</span>
-              </button>
-
-              {isProfileOpen && (
-                <div className="profile-menu">
-                  <NavLink to="/profile" onClick={closeMenu} className="menu-item">
-                    <FaCog /> Profile
-                  </NavLink>
-                  <NavLink to="/my-orders" onClick={closeMenu} className="menu-item">
-                    <FaClipboardList /> Orders
-                  </NavLink>
-                  <NavLink to="/favorites" onClick={closeMenu} className="menu-item">
-                    <FaHeart /> Favorites
-                  </NavLink>
-
-                  {(isVerifiedArtist || isAdmin) && (
-                    <>
-                      <div className="menu-divider"></div>
-                      <NavLink to="/dashboard" onClick={closeMenu} className="menu-item">
-                        <FaTachometerAlt /> Dashboard
-                      </NavLink>
-                      <NavLink to="/my-artworks" onClick={closeMenu} className="menu-item">
-                        <FaPalette /> {isAdmin ? "All Artworks" : "My Artworks"}
-                      </NavLink>
-                    </>
-                  )}
-
-                  {isAdmin && (
-                    <NavLink to="/admin" onClick={closeMenu} className="menu-item">
-                      <FaUsers /> Admin
-                    </NavLink>
-                  )}
-
-                  {isSuperAdmin && (
-                    <NavLink to="/superadmin" onClick={closeMenu} className="menu-item superadmin-item">
-                      <FaCrown /> SuperAdmin
-                    </NavLink>
-                  )}
-
-                  <div className="menu-divider"></div>
-                  <button onClick={handleLogout} className="menu-item logout-item">
-                    <FaSignOutAlt /> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Theme Toggle - Desktop */}
-            <button
-              onClick={toggleDarkMode}
-              className="theme-toggle desktop-only"
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {isDarkMode ? "☀️" : "🌙"}
-            </button>
-          </div>
-        ) : (
-          <div className="navbar-auth">
-            <NavLink to="/login" onClick={closeMenu}>
-              Login
-            </NavLink>
-            <NavLink to="/signup" className="btn-signup" onClick={closeMenu}>
-              Sign Up
-            </NavLink>
-            <button
-              onClick={toggleDarkMode}
-              className="theme-toggle desktop-only"
-              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {isDarkMode ? "☀️" : "🌙"}
-            </button>
-          </div>
-        )}
-      </div>
-    </motion.nav>
+    </motion.header>
   );
 };
 
