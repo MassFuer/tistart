@@ -1,16 +1,62 @@
-# React + Vite
+# Nemesis Client (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend application for Nemesis, built with **React 19** and **Vite**.
 
-Currently, two official plugins are available:
+## 🚀 Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js (v18+)
+- Backend server running on port 5005
 
-## React Compiler
+### Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+cd client
+npm install
+```
 
-## Expanding the ESLint configuration
+### Environment Variables
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Create a `.env` file in the `client` directory:
+
+```env
+VITE_API_URL=http://localhost:5005
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...  # Optional (for payments)
+```
+
+### Running Locally
+
+```bash
+npm run dev
+```
+Access the app at `http://localhost:5173`.
+
+## 📂 Project Structure
+
+```
+/src
+  /components      # Reusable UI components
+    /artwork       # ArtworkCard, etc.
+    /common        # Buttons, Inputs, Modals
+    /layout        # Navbar, Footer
+    /map           # Leaflet map components
+  /context         # React Context (Auth, Cart, Theme)
+  /hooks           # Custom hooks (useAuth, useCart)
+  /pages           # Page views (Gallery, Profile, etc.)
+  /services        # API service (Axios configuration)
+```
+
+## 📦 Key Dependencies
+
+- **Routing**: `react-router-dom`
+- **Maps**: `react-leaflet`, `leaflet-geosearch`
+- **Calendar**: `@fullcalendar/react`
+- **Notifications**: `react-hot-toast`
+- **Payments**: `@stripe/react-stripe-js`
+
+## 🎨 Features & UI
+
+- **Responsive Design**: Mobile-first layouts.
+- **Dark Mode**: Toggleable theme support.
+- **Real-time Search**: Debounced search filters.
+- **Interactive Maps**: Cluster maps for events.
