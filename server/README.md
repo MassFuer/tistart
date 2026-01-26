@@ -26,7 +26,7 @@ PORT=5005
 CLIENT_URL=http://localhost:5173
 MONGODB_URI=mongodb://127.0.0.1:27017/nemesis
 TOKEN_SECRET=your-secret-key-at-least-32-chars
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=6h
 
 # Cloudflare R2 (Storage)
 R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
@@ -85,6 +85,9 @@ npm run seed
 | **Videos** | `/api/videos` | Secure Streaming, Purchases |
 | **Payments** | `/api/payments` | Stripe Intents & Webhooks |
 | **Admin** | `/api/admin` | Dashboard Stats, User Management |
+| **Platform** | `/api/platform` | Settings, Stats, Storage |
+| **Reviews** | `/api/reviews` | CRUD Reviews |
+| **Geocode** | `/api/geocode` | Address to Coordinates, Reverse Geocoding |
 
 ## 🧪 Scripts
 

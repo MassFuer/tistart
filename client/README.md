@@ -50,8 +50,11 @@ Access the app at `http://localhost:5173`.
 
 - **Routing**: `react-router-dom`
 - **Maps**: `react-leaflet`, `leaflet-geosearch`
-- **Calendar**: `@fullcalendar/react`
+- **Calendar**: `@fullcalendar/react`, `react-datepicker`
 - **Notifications**: `react-hot-toast`
+- **Icons**: `react-icons`
+- **Animations**: `framer-motion`
+- **Rich Text**: `react-mde`
 - **Payments**: `@stripe/react-stripe-js`
 
 ## 🎨 Features & UI

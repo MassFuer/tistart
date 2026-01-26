@@ -2,7 +2,7 @@
 
 A comprehensive platform for artists to showcase and sell their work, manage events, and connect with art lovers.
 
-![Nemesis Banner](https://via.placeholder.com/1200x400?text=Nemesis+Art+Platform)
+![Nemesis Banner](https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg)
 
 ## 🎨 Overview
 
