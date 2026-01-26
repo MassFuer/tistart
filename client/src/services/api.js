@@ -94,6 +94,7 @@ export const artworksAPI = {
 // Events API
 export const eventsAPI = {
   getAll: (params) => api.get("/api/events", { params }),
+  getFiltersMeta: () => api.get("/api/events/filters-meta"),
   getCalendar: (params) => api.get("/api/events/calendar", { params }),
   getOne: (id) => api.get(`/api/events/${id}`),
   create: (eventData) => api.post("/api/events", eventData),
