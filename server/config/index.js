@@ -3,6 +3,7 @@ const logger = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
 const { sanitizeInput } = require("../utils/sanitize");
 
 const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
@@ -28,6 +29,9 @@ module.exports = (app) => {
   // Body parsers
   app.use(express.json());
   app.use(express.urlencoded({ extended: false }));
+
+  // Data sanitization against NoSQL query injection
+  app.use(mongoSanitize());
 
   // Sanitize input (XSS protection)
   app.use(sanitizeInput);
