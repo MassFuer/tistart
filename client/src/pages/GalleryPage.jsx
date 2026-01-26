@@ -30,7 +30,7 @@ const GalleryPage = () => {
       minPrice: "",
       maxPrice: "",
       artist: "",
-      isForSale: false,
+      isForSale: "",
       materials: "",
       colors: "",
       search: "",
@@ -114,7 +114,7 @@ const GalleryPage = () => {
       minPrice: "",
       maxPrice: "",
       artist: "",
-      isForSale: false,
+      isForSale: "",
       materials: "",
       colors: "",
       search: "",
@@ -124,9 +124,7 @@ const GalleryPage = () => {
   };
 
   const removeFilter = (filterKey) => {
-    let value = "";
-    if (filterKey === "isForSale") value = false;
-    updateFilter(filterKey, value);
+    updateFilter(filterKey, "");
     toast.success(`${filterKey} filter removed`);
   };
 
@@ -292,8 +290,8 @@ const GalleryPage = () => {
               <input
                 type="checkbox"
                 name="isForSale"
-                checked={filters.isForSale === true || filters.isForSale === "true"}
-                onChange={handleFilterChange}
+                checked={filters.isForSale === "true" || filters.isForSale === true}
+                onChange={(e) => updateFilter("isForSale", e.target.checked ? "true" : "")}
               />
               <span>For Sale Only</span>
             </label>

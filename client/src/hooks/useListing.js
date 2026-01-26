@@ -24,8 +24,13 @@ export const useListing = ({
     setLoading(true);
     setError(null);
     try {
-      // Merge filters and sort
-      const params = { ...filters };
+      // Merge filters and sort, removing empty values
+      const params = Object.entries(filters).reduce((acc, [key, value]) => {
+        if (value !== "" && value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
       if (sort) {
         params.sort = sort;
       }

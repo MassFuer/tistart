@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -48,28 +48,34 @@ const EventsPage = () => {
   const [allEventsForMap, setAllEventsForMap] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
 
-  // Fetch specialized data for non-grid views
-  useEffect(() => {
-    if (viewMode === "calendar") {
-      fetchCalendarEvents();
-    } else if (viewMode === "map") {
-      fetchAllEventsForMap();
-    }
-  }, [viewMode, filters.category, filters.startDate, filters.endDate, filters.search]);
+  const getCategoryColor = (category) => {
+    const colors = {
+      exhibition: "#3498db",
+      concert: "#e74c3c",
+      workshop: "#2ecc71",
+      meetup: "#9b59b6",
+      other: "#95a5a6",
+    };
+    return colors[category] || colors.other;
+  };
 
-  const fetchCalendarEvents = async () => {
+  const fetchCalendarEvents = useCallback(async () => {
     try {
-      // Get date range for calendar (current month ± 1 month for buffer)
+      // Use filter dates if provided, otherwise use calendar default range
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() + 12, 0);
+      const defaultStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 12, 0);
 
-      const response = await eventsAPI.getCalendar({
-        start: start.toISOString(),
-        end: end.toISOString(),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.search && { search: filters.search }),
-      });
+      const params = {
+        start: filters.startDate || defaultStart.toISOString(),
+        end: filters.endDate || defaultEnd.toISOString(),
+      };
+      
+      // Add optional filters
+      if (filters.category) params.category = filters.category;
+      if (filters.search) params.search = filters.search;
+
+      const response = await eventsAPI.getCalendar(params);
 
       const formattedEvents = response.data.data.map((event) => ({
         id: event.id,
@@ -84,9 +90,9 @@ const EventsPage = () => {
       console.error('Calendar fetch error:', error);
       toast.error("Failed to load calendar events");
     }
-  };
+  }, [filters.startDate, filters.endDate, filters.category, filters.search]);
 
-  const fetchAllEventsForMap = async () => {
+  const fetchAllEventsForMap = useCallback(async () => {
     try {
       const params = { limit: 200 }; // Get more events for map
       if (filters.category) params.category = filters.category;
@@ -99,21 +105,19 @@ const EventsPage = () => {
     } catch (error) {
       toast.error("Failed to load events for map");
     }
-  };
+  }, [filters.category, filters.startDate, filters.endDate, filters.search]);
+
+  // Fetch specialized data for non-grid views
+  useEffect(() => {
+    if (viewMode === "calendar") {
+      fetchCalendarEvents();
+    } else if (viewMode === "map") {
+      fetchAllEventsForMap();
+    }
+  }, [viewMode, fetchCalendarEvents, fetchAllEventsForMap]);
 
   const handleMapEventClick = (event) => {
     navigate(`/events/${event._id}`);
-  };
-
-  const getCategoryColor = (category) => {
-    const colors = {
-      exhibition: "#3498db",
-      concert: "#e74c3c",
-      workshop: "#2ecc71",
-      meetup: "#9b59b6",
-      other: "#95a5a6",
-    };
-    return colors[category] || colors.other;
   };
 
   // Handlers for FilterBar
