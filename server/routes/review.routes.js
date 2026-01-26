@@ -8,6 +8,37 @@ const Order = require("../models/Order.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
+const mongoose = require("mongoose");
+
+// Helper to update artwork stats
+const updateArtworkStats = async (artworkId) => {
+  try {
+     const stats = await Review.aggregate([
+       { $match: { artwork: new mongoose.Types.ObjectId(artworkId) } },
+       {
+         $group: {
+           _id: "$artwork",
+           nRating: { $sum: 1 },
+           avgRating: { $avg: "$rating" }
+         }
+       }
+     ]);
+
+     if (stats.length > 0) {
+       await Artwork.findByIdAndUpdate(artworkId, {
+         numOfReviews: stats[0].nRating,
+         averageRating: stats[0].avgRating
+       });
+     } else {
+       await Artwork.findByIdAndUpdate(artworkId, {
+         numOfReviews: 0,
+         averageRating: 0
+       });
+     }
+  } catch(err) {
+      console.error("Error updating artwork stats:", err);
+  }
+};
 
 // GET /api/artworks/:artworkId/reviews - Get all reviews for an artwork (public)
 router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
@@ -100,6 +131,9 @@ router.post(
         isVerified: !!hasPurchased,
       });
 
+      // Update Artwork Stats
+      await updateArtworkStats(artworkId);
+
       // Populate user info for response
       await review.populate("user", "firstName lastName profilePicture");
 
@@ -165,6 +199,9 @@ router.patch(
         runValidators: true,
       }).populate("user", "firstName lastName profilePicture");
 
+      // Update Stats (using artwork id from original review)
+      await updateArtworkStats(review.artwork);
+
       res.status(200).json({
         message: "Review updated successfully",
         data: updatedReview,
@@ -195,7 +232,11 @@ router.delete("/reviews/:id", isAuthenticated, async (req, res, next) => {
       return res.status(403).json({ error: "You can only delete your own reviews." });
     }
 
+    const artworkId = review.artwork;
     await Review.findByIdAndDelete(id);
+
+    // Update Stats
+    await updateArtworkStats(artworkId);
 
     res.status(200).json({
       message: "Review deleted successfully",
