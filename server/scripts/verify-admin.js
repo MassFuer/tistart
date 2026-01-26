@@ -17,7 +17,7 @@ const verifyAdmin = async () => {
       console.log(`👤 User ${email} not found. Creating new admin...`);
       const salt = await bcryptjs.genSalt(12);
       const hashedPassword = await bcryptjs.hash("Admin123!", salt);
-      
+
       user = await User.create({
         firstName: "Admin",
         lastName: "User",
@@ -35,7 +35,6 @@ const verifyAdmin = async () => {
       await user.save();
       console.log(`✅ Updated ${email} to verified admin.`);
     }
-
   } catch (error) {
     console.error("❌ Error:", error);
   } finally {

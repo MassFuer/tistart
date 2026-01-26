@@ -41,72 +41,73 @@ router.post(
     try {
       const { firstName, lastName, userName, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { userName: userName.toLowerCase() }],
-    });
+      // Check if user already exists
+      const existingUser = await User.findOne({
+        $or: [{ email: email.toLowerCase() }, { userName: userName.toLowerCase() }],
+      });
 
-    if (existingUser) {
-      if (existingUser.email === email.toLowerCase()) {
-        return res.status(400).json({ error: "Email already registered." });
+      if (existingUser) {
+        if (existingUser.email === email.toLowerCase()) {
+          return res.status(400).json({ error: "Email already registered." });
+        }
+        return res.status(400).json({ error: "Username already taken." });
       }
-      return res.status(400).json({ error: "Username already taken." });
+
+      // Hash password
+      const hashedPassword = await bcryptjs.hash(password, saltRounds);
+
+      // Create user instance to generate _id
+      const newUser = new User({
+        firstName,
+        lastName,
+        userName: userName.toLowerCase(),
+        email: email.toLowerCase(),
+        password: hashedPassword,
+      });
+
+      // Generate email verification token using the new user's _id
+      const emailVerificationToken = jwt.sign({ userId: newUser._id }, process.env.TOKEN_SECRET, {
+        expiresIn: "24h",
+      });
+
+      // Assign token to user
+      newUser.emailVerificationToken = emailVerificationToken;
+      newUser.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Save user to database
+      await newUser.save();
+
+      // Send verification email
+      const verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+
+      try {
+        await sendVerificationEmail(newUser.email, newUser.firstName, verificationLink);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // Continue even if email fails, user can request resend later
+      }
+
+      // Remove password from response
+      const userResponse = {
+        _id: newUser._id,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        userName: newUser.userName,
+        email: newUser.email,
+        role: newUser.role,
+        artistStatus: newUser.artistStatus,
+        isEmailVerified: newUser.isEmailVerified,
+      };
+
+      res.status(201).json({
+        data: userResponse,
+        message: "Registration successful. Please check your email to verify your address.",
+      });
+    } catch (error) {
+      next(error);
     }
-
-    // Hash password
-    const hashedPassword = await bcryptjs.hash(password, saltRounds);
-
-    // Create user instance to generate _id
-    const newUser = new User({
-      firstName,
-      lastName,
-      userName: userName.toLowerCase(),
-      email: email.toLowerCase(),
-      password: hashedPassword,
-    });
-
-    // Generate email verification token using the new user's _id
-    const emailVerificationToken = jwt.sign({ userId: newUser._id }, process.env.TOKEN_SECRET, {
-      expiresIn: "24h",
-    });
-
-    // Assign token to user
-    newUser.emailVerificationToken = emailVerificationToken;
-    newUser.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // Save user to database
-    await newUser.save();
-
-    // Send verification email
-    const verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
-
-    try {
-      await sendVerificationEmail(newUser.email, newUser.firstName, verificationLink);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
-      // Continue even if email fails, user can request resend later
-    }
-
-    // Remove password from response
-    const userResponse = {
-      _id: newUser._id,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      userName: newUser.userName,
-      email: newUser.email,
-      role: newUser.role,
-      artistStatus: newUser.artistStatus,
-      isEmailVerified: newUser.isEmailVerified,
-    };
-
-    res.status(201).json({
-      data: userResponse,
-      message: "Registration successful. Please check your email to verify your address.",
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // POST /auth/login - Login user
 router.post(
@@ -121,66 +122,67 @@ router.post(
     try {
       const { email, password } = req.body;
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+      // Find user by email
+      const user = await User.findOne({ email: email.toLowerCase() });
 
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password." });
-    }
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password." });
+      }
 
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        error: "Please verify your email address before logging in.",
-        requiresEmailVerification: true,
-        userId: user._id,
+      // Check if email is verified
+      if (!user.isEmailVerified) {
+        return res.status(403).json({
+          error: "Please verify your email address before logging in.",
+          requiresEmailVerification: true,
+          userId: user._id,
+        });
+      }
+
+      // Check password
+      const isPasswordValid = await bcryptjs.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid email or password." });
+      }
+
+      // Create JWT payload
+      const payload = {
+        _id: user._id,
+        email: user.email,
+        userName: user.userName,
+        role: user.role,
+        artistStatus: user.artistStatus,
+      };
+
+      // Sign token
+      const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
+        algorithm: "HS256",
+        expiresIn: process.env.JWT_EXPIRES_IN || "7d",
       });
+
+      // Set HTTP-only cookie
+      res.cookie("authToken", authToken, getCookieOptions());
+
+      // Return user data (without password)
+      const userResponse = {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userName: user.userName,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        role: user.role,
+        artistStatus: user.artistStatus,
+        artistInfo: user.role === "artist" ? user.artistInfo : undefined,
+        isEmailVerified: user.isEmailVerified,
+      };
+
+      res.status(200).json({ data: userResponse });
+    } catch (error) {
+      next(error);
     }
-
-    // Check password
-    const isPasswordValid = await bcryptjs.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password." });
-    }
-
-    // Create JWT payload
-    const payload = {
-      _id: user._id,
-      email: user.email,
-      userName: user.userName,
-      role: user.role,
-      artistStatus: user.artistStatus,
-    };
-
-    // Sign token
-    const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
-      algorithm: "HS256",
-      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-    });
-
-    // Set HTTP-only cookie
-    res.cookie("authToken", authToken, getCookieOptions());
-
-    // Return user data (without password)
-    const userResponse = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userName: user.userName,
-      email: user.email,
-      profilePicture: user.profilePicture,
-      role: user.role,
-      artistStatus: user.artistStatus,
-      artistInfo: user.role === "artist" ? user.artistInfo : undefined,
-      isEmailVerified: user.isEmailVerified,
-    };
-
-    res.status(200).json({ data: userResponse });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // POST /auth/logout - Logout user
 router.post("/logout", (req, res) => {

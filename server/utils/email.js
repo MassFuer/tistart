@@ -45,9 +45,9 @@ const sendVerificationEmail = async (email, firstName, verificationLink) => {
     return info;
   } catch (error) {
     console.error("Nodemailer error:", error);
-    // Don't throw error to prevent blocking execution if email fails, 
+    // Don't throw error to prevent blocking execution if email fails,
     // but in a real app you might want to handle this more gracefully
-    throw error; 
+    throw error;
   }
 };
 
@@ -87,13 +87,17 @@ const sendWelcomeEmail = async (email, firstName) => {
 
 const sendOrderConfirmationEmail = async (email, firstName, order) => {
   try {
-    const itemsHtml = order.items.map(item => `
+    const itemsHtml = order.items
+      .map(
+        (item) => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.artwork?.title || 'Artwork'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.artwork?.title || "Artwork"}</td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${item.price.toFixed(2)}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join("");
 
     const shippingAddress = order.shippingAddress;
     const addressHtml = `

@@ -224,53 +224,54 @@ router.post(
         isPublic,
       } = req.body;
 
-    // Determine artist ID
-    let artistId = req.user._id;
-    if (req.user.role === "admin" && req.body.artist) {
-      artistId = req.body.artist;
-    }
-
-    // Prepare location object
-    let eventLocation = {};
-    if (location) {
-      eventLocation = {
-        venue: location.venue,
-        street: location.street,
-        streetNum: location.streetNum,
-        zipCode: location.zipCode,
-        city: location.city,
-        country: location.country,
-        isOnline: location.isOnline || false,
-        onlineUrl: location.onlineUrl,
-      };
-
-      // If coordinates are explicitly provided (from map), use them
-      if (location.coordinates?.coordinates?.length === 2) {
-        eventLocation.coordinates = {
-          type: "Point",
-          coordinates: location.coordinates.coordinates,
-        };
+      // Determine artist ID
+      let artistId = req.user._id;
+      if (req.user.role === "admin" && req.body.artist) {
+        artistId = req.body.artist;
       }
+
+      // Prepare location object
+      let eventLocation = {};
+      if (location) {
+        eventLocation = {
+          venue: location.venue,
+          street: location.street,
+          streetNum: location.streetNum,
+          zipCode: location.zipCode,
+          city: location.city,
+          country: location.country,
+          isOnline: location.isOnline || false,
+          onlineUrl: location.onlineUrl,
+        };
+
+        // If coordinates are explicitly provided (from map), use them
+        if (location.coordinates?.coordinates?.length === 2) {
+          eventLocation.coordinates = {
+            type: "Point",
+            coordinates: location.coordinates.coordinates,
+          };
+        }
+      }
+
+      const event = await Event.create({
+        title,
+        description,
+        artist: artistId,
+        startDateTime: new Date(startDateTime),
+        endDateTime: new Date(endDateTime),
+        location: eventLocation,
+        price: price || 0,
+        maxCapacity: maxCapacity || 0,
+        category,
+        isPublic: isPublic !== undefined ? isPublic : true,
+      });
+
+      res.status(201).json({ data: event });
+    } catch (error) {
+      next(error);
     }
-
-    const event = await Event.create({
-      title,
-      description,
-      artist: artistId,
-      startDateTime: new Date(startDateTime),
-      endDateTime: new Date(endDateTime),
-      location: eventLocation,
-      price: price || 0,
-      maxCapacity: maxCapacity || 0,
-      category,
-      isPublic: isPublic !== undefined ? isPublic : true,
-    });
-
-    res.status(201).json({ data: event });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // PATCH /api/events/:id - Update event (owner only)
 router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
@@ -433,9 +434,7 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user already joined
-    const isAttending = event.attendees?.some(
-      (id) => id.toString() === userId.toString()
-    );
+    const isAttending = event.attendees?.some((id) => id.toString() === userId.toString());
 
     if (isAttending) {
       return res.status(400).json({ error: "You have already joined this event." });
@@ -462,7 +461,10 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     if (!updatedEvent) {
       // Check why it failed
       const currentEvent = await Event.findById(req.params.id);
-      if (currentEvent.maxCapacity > 0 && currentEvent.attendees.length >= currentEvent.maxCapacity) {
+      if (
+        currentEvent.maxCapacity > 0 &&
+        currentEvent.attendees.length >= currentEvent.maxCapacity
+      ) {
         return res.status(400).json({ error: "Event is full." });
       }
       return res.status(400).json({ error: "Could not join event. Please try again." });
@@ -491,18 +493,14 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user is in attendees (robust comparison)
-    const isAttending = event.attendees.some(
-      (id) => id.toString() === req.payload._id.toString()
-    );
+    const isAttending = event.attendees.some((id) => id.toString() === req.payload._id.toString());
 
     if (!isAttending) {
       return res.status(400).json({ error: "You are not registered for this event." });
     }
 
     // Remove user
-    event.attendees = event.attendees.filter(
-      (id) => id.toString() !== req.payload._id.toString()
-    );
+    event.attendees = event.attendees.filter((id) => id.toString() !== req.payload._id.toString());
     await event.save();
 
     res.status(200).json({ message: "Successfully left event.", data: event });

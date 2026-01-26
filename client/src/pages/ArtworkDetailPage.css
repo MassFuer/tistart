@@ -191,7 +191,20 @@
 .artist-link {
   color: var(--secondary-color);
   margin-bottom: 1rem;
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+.artist-link .artist-company {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.artist-link .artist-name {
+  font-size: 0.95rem;
+  opacity: 0.9;
 }
 
 .price-section {

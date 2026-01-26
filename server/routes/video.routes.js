@@ -116,79 +116,88 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
 });
 
 // POST /api/videos/:artworkId/purchase - Instant purchase video access
-router.post("/:artworkId/purchase", isAuthenticated, purchaseLimiter, attachUser, async (req, res, next) => {
-  try {
-    const { artworkId } = req.params;
+router.post(
+  "/:artworkId/purchase",
+  isAuthenticated,
+  purchaseLimiter,
+  attachUser,
+  async (req, res, next) => {
+    try {
+      const { artworkId } = req.params;
 
-    const artwork = await Artwork.findById(artworkId).populate("artist", "firstName lastName userName");
-    if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found" });
-    }
+      const artwork = await Artwork.findById(artworkId).populate(
+        "artist",
+        "firstName lastName userName"
+      );
+      if (!artwork) {
+        return res.status(404).json({ error: "Artwork not found" });
+      }
 
-    if (!artwork.video?.url) {
-      return res.status(400).json({ error: "This artwork has no video" });
-    }
+      if (!artwork.video?.url) {
+        return res.status(400).json({ error: "This artwork has no video" });
+      }
 
-    if (!artwork.video.isPaid) {
-      return res.status(400).json({ error: "This video is free, no purchase needed" });
-    }
+      if (!artwork.video.isPaid) {
+        return res.status(400).json({ error: "This video is free, no purchase needed" });
+      }
 
-    // Check if already purchased
-    const existingPurchase = await VideoPurchase.findOne({
-      user: req.user._id,
-      artwork: artworkId,
-    });
+      // Check if already purchased
+      const existingPurchase = await VideoPurchase.findOne({
+        user: req.user._id,
+        artwork: artworkId,
+      });
 
-    if (existingPurchase) {
-      return res.status(400).json({ error: "You already own this video" });
-    }
+      if (existingPurchase) {
+        return res.status(400).json({ error: "You already own this video" });
+      }
 
-    // Check if user is trying to buy their own video
-    if (artwork.artist._id.toString() === req.user._id.toString()) {
-      return res.status(400).json({ error: "You cannot purchase your own video" });
-    }
+      // Check if user is trying to buy their own video
+      if (artwork.artist._id.toString() === req.user._id.toString()) {
+        return res.status(400).json({ error: "You cannot purchase your own video" });
+      }
 
-    // TODO: Integrate with Stripe for real payment
-    // For now, simulate payment success with a mock payment ID
-    const mockPaymentId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // TODO: Integrate with Stripe for real payment
+      // For now, simulate payment success with a mock payment ID
+      const mockPaymentId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create purchase record
-    const purchase = await VideoPurchase.create({
-      user: req.user._id,
-      artwork: artworkId,
-      pricePaid: artwork.price,
-      paymentId: mockPaymentId,
-      purchaseType: "instant",
-    });
+      // Create purchase record
+      const purchase = await VideoPurchase.create({
+        user: req.user._id,
+        artwork: artworkId,
+        pricePaid: artwork.price,
+        paymentId: mockPaymentId,
+        purchaseType: "instant",
+      });
 
-    // Generate signed URL for immediate access
-    const key = getKeyFromUrl(artwork.video.url);
-    const signedUrl = await getSignedVideoUrl(key);
+      // Generate signed URL for immediate access
+      const key = getKeyFromUrl(artwork.video.url);
+      const signedUrl = await getSignedVideoUrl(key);
 
-    res.status(201).json({
-      data: {
-        purchase: {
-          id: purchase._id,
-          pricePaid: purchase.pricePaid,
-          purchasedAt: purchase.createdAt,
+      res.status(201).json({
+        data: {
+          purchase: {
+            id: purchase._id,
+            pricePaid: purchase.pricePaid,
+            purchasedAt: purchase.createdAt,
+          },
+          streamUrl: signedUrl,
+          expiresIn: 4 * 60 * 60,
+          artwork: {
+            id: artwork._id,
+            title: artwork.title,
+            artist: artwork.artist,
+          },
         },
-        streamUrl: signedUrl,
-        expiresIn: 4 * 60 * 60,
-        artwork: {
-          id: artwork._id,
-          title: artwork.title,
-          artist: artwork.artist,
-        },
-      },
-    });
-  } catch (error) {
-    // Handle duplicate purchase attempt (race condition)
-    if (error.code === 11000) {
-      return res.status(400).json({ error: "You already own this video" });
+      });
+    } catch (error) {
+      // Handle duplicate purchase attempt (race condition)
+      if (error.code === 11000) {
+        return res.status(400).json({ error: "You already own this video" });
+      }
+      next(error);
     }
-    next(error);
   }
-});
+);
 
 // GET /api/videos/purchased - Get user's purchased videos
 router.get("/purchased", isAuthenticated, attachUser, async (req, res, next) => {

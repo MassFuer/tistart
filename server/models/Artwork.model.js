@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { generateNGrams } = require("../utils/ngram");
 
 const dimensionsSchema = new Schema(
   {
@@ -101,11 +102,63 @@ const artworkSchema = new Schema(
       type: Number,
       default: 0,
     },
+    // Optimization for substring search
+    searchKeywords: {
+      type: [String],
+      select: false,
+    },
+    // Optimization for regex search (includes title, description, artist name)
+    searchString: {
+      type: String,
+      select: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Pre-save hook to populate searchKeywords and searchString
+artworkSchema.pre("save", async function (next) {
+  if (this.isModified("title") || this.isModified("description") || this.isModified("artist") || this.isNew) {
+    const title = this.title || "";
+    const desc = this.description || "";
+    
+    // N-Grams
+    const titleGrams = generateNGrams(title);
+    // Removed description from search
+    
+    let artistGrams = [];
+    let artistName = "";
+    
+    try {
+      // Need to fetch artist to get name. Use mongoose.model to avoid circular dependency
+      const User = model("User"); 
+      const artist = await User.findById(this.artist);
+      if (artist) {
+        const firstName = artist.firstName || "";
+        const lastName = artist.lastName || "";
+        const companyName = artist.artistInfo?.companyName || "";
+        
+        artistName = `${firstName} ${lastName} ${companyName}`.trim();
+        
+        const firstNameGrams = generateNGrams(firstName);
+        const lastNameGrams = generateNGrams(lastName);
+        const companyGrams = generateNGrams(companyName);
+        
+        artistGrams = [...firstNameGrams, ...lastNameGrams, ...companyGrams];
+      }
+    } catch (err) {
+      console.error("Error fetching artist for search indexing:", err);
+    }
+
+    this.searchKeywords = [...new Set([...titleGrams, ...artistGrams])];
+    
+    // Normalized search string for regex fallback
+    this.searchString = `${title} ${artistName}`.toLowerCase();
+  }
+  next();
+});
 
 // Indexes for efficient queries
 artworkSchema.index({ artist: 1 });
@@ -114,7 +167,10 @@ artworkSchema.index({ price: 1 });
 artworkSchema.index({ isForSale: 1 });
 artworkSchema.index({ createdAt: -1 });
 
-// Text index for search
+// Index for n-gram search optimization
+artworkSchema.index({ searchKeywords: 1 });
+
+// Text index for search (keeping it for legacy or alternative use)
 artworkSchema.index({ title: "text", description: "text" });
 
 const Artwork = model("Artwork", artworkSchema);

@@ -188,8 +188,9 @@ const GalleryPage = () => {
             <SearchBar
                 value={filters.search}
                 onSearch={(val) => updateFilter("search", val)}
-                placeholder="Search artworks by title..."
+                placeholder="Search by title, artist or company..."
             />
+            {/* </div> removed extra div from conflict */}
           </div>
 
           <div className="sort-container">

@@ -2,6 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const bcryptjs = require("bcryptjs");
 const { faker } = require("@faker-js/faker");
+const { generateNGrams } = require("../utils/ngram");
 
 const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
@@ -246,7 +247,7 @@ const createSpecificArtist = async () => {
         country: "Germany",
         location: {
           type: "Point",
-          coordinates: [13.4050, 52.5200], // Berlin coordinates
+          coordinates: [13.405, 52.52], // Berlin coordinates
         },
       },
       logo: faker.image.url(),
@@ -266,9 +267,15 @@ const createArtworks = async (artists, count = 30) => {
     const originalPrice = faker.number.int({ min: 100, max: 10000 });
     const hasDiscount = faker.datatype.boolean(0.3);
 
+    const title = faker.lorem.words({ min: 2, max: 5 });
+    const description = faker.lorem.paragraphs({ min: 1, max: 3 });
+    const titleGrams = generateNGrams(title);
+    const descGrams = generateNGrams(description);
+    const searchKeywords = [...new Set([...titleGrams, ...descGrams])];
+
     artworks.push({
-      title: faker.lorem.words({ min: 2, max: 5 }),
-      description: faker.lorem.paragraphs({ min: 1, max: 3 }),
+      title,
+      description,
       artist: artist._id,
       originalPrice,
       price: hasDiscount ? Math.round(originalPrice * 0.8) : originalPrice,
@@ -286,6 +293,7 @@ const createArtworks = async (artists, count = 30) => {
       totalInStock: faker.number.int({ min: 1, max: 5 }),
       averageRating: 0,
       numOfReviews: 0,
+      searchKeywords,
     });
   }
 
@@ -308,7 +316,9 @@ const createEvents = async (artists, users, count = 20) => {
     const attendees = [];
     if (users.length > 0) {
       const shuffledUsers = [...users].sort(() => 0.5 - Math.random());
-      attendees.push(...shuffledUsers.slice(0, Math.min(numAttendees, users.length)).map(u => u._id));
+      attendees.push(
+        ...shuffledUsers.slice(0, Math.min(numAttendees, users.length)).map((u) => u._id)
+      );
     }
 
     // Build location object - always include valid coordinates for the 2dsphere index
@@ -438,7 +448,7 @@ const seed = async () => {
     } catch (eventError) {
       console.error("   ❌ Error creating events:", eventError.message);
       if (eventError.errors) {
-        Object.keys(eventError.errors).forEach(key => {
+        Object.keys(eventError.errors).forEach((key) => {
           console.error(`      - ${key}: ${eventError.errors[key].message}`);
         });
       }

@@ -67,9 +67,28 @@ router.get("/", async (req, res, next) => {
     }
 
     if (search) {
-      // Use regex for case-insensitive partial/substring matching
-      const searchRegex = new RegExp(search, "i");
-      filter.$or = [{ title: searchRegex }, { description: searchRegex }];
+      // Optimized search using N-grams (handles substring matching efficiently)
+      const searchTokens = search
+        .toLowerCase()
+        .trim()
+        .split(/[\s\-_.,;?!]+/);
+      const validTokens = searchTokens.filter((t) => t.length > 0);
+
+      if (validTokens.length > 0) {
+        // If query contains very short tokens (<3 chars), fallback to regex
+        // because we only index 3-grams and above for performance.
+        const hasSmallTokens = validTokens.some((t) => t.length < 3);
+
+        if (hasSmallTokens) {
+          const searchRegex = new RegExp(search, "i");
+          // Use the pre-computed search string which includes title, desc, and artist
+          filter.searchString = { $regex: searchRegex };
+        } else {
+          // Use n-gram index for fast substring search
+          // $all ensures that for "blue sky", we find docs with "blue" AND "sky"
+          filter.searchKeywords = { $all: validTokens };
+        }
+      }
     }
 
     // Calculate pagination
