@@ -66,6 +66,11 @@ const ArtworkManager = ({ isAdmin = false }) => {
   const fetchArtworks = async () => {
     setIsLoading(true);
     try {
+        if (!isAdmin && user.artistStatus !== 'verified') {
+            setIsLoading(false);
+            return;
+        }
+
         if (isAdmin) {
             // Admin: Fetch ALL artworks from the platform
             const [artworksRes, statsRes] = await Promise.all([
@@ -99,6 +104,29 @@ const ArtworkManager = ({ isAdmin = false }) => {
   useEffect(() => {
     fetchArtworks();
   }, [isAdmin]);
+
+  if (!isAdmin && user.artistStatus !== 'verified') {
+      if (user.artistStatus === 'pending') {
+          return (
+            <EmptyState 
+                message="Application Under Review" 
+                description="We are currently reviewing your artist application. We'll notify you via email once a decision has been made."
+            />
+          );
+      }
+
+      return (
+          <EmptyState 
+            message="Artist Verification Required" 
+            description="You need to complete your artist profile and get verified before you can manage artworks."
+            action={
+                <Button asChild>
+                    <Link to="/apply-artist">Complete Application</Link>
+                </Button>
+            }
+          />
+      );
+  }
 
   const handleDelete = async () => {
     if (!deleteId) return;

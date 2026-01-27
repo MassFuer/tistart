@@ -35,6 +35,36 @@ const SignupPage = () => {
   
   const isArtistSignup = searchParams.get("role") === "artist";
 
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false,
+  });
+
+  useEffect(() => {
+    const pwd = formData.password;
+    setPasswordCriteria({
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /\d/.test(pwd),
+      specialChar: /[^A-Za-z0-9]/.test(pwd),
+    });
+  }, [formData.password]);
+
+  const getStrengthScore = () => {
+    return Object.values(passwordCriteria).filter(Boolean).length;
+  };
+
+  const getStrengthColor = () => {
+    const score = getStrengthScore();
+    if (score <= 2) return "bg-destructive";
+    if (score <= 4) return "bg-yellow-500";
+    return "bg-green-500";
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -47,8 +77,8 @@ const SignupPage = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (getStrengthScore() < 5) {
+      toast.error("Please meet all password requirements");
       return;
     }
 
@@ -158,6 +188,7 @@ const SignupPage = () => {
                         value={formData.firstName}
                         onChange={handleChange}
                         required
+                        autoComplete="given-name"
                     />
                 </div>
                 <div className="space-y-2">
@@ -169,6 +200,7 @@ const SignupPage = () => {
                         value={formData.lastName}
                         onChange={handleChange}
                         required
+                        autoComplete="family-name"
                     />
                 </div>
             </div>
@@ -182,6 +214,7 @@ const SignupPage = () => {
                     value={formData.userName}
                     onChange={handleChange}
                     required
+                    autoComplete="username"
                 />
             </div>
 
@@ -195,6 +228,7 @@ const SignupPage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    autoComplete="email"
                 />
             </div>
 
@@ -207,7 +241,42 @@ const SignupPage = () => {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    autoComplete="new-password"
                 />
+                
+                {/* Password Strength Indicator */}
+                {formData.password && (
+                  <div className="space-y-2 pt-1 transition-all">
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${getStrengthColor()} transition-all duration-300`} 
+                        style={{ width: `${(getStrengthScore() / 5) * 100}%` }} 
+                      />
+                    </div>
+                    <ul className="text-xs space-y-1 text-muted-foreground">
+                      <li className={`flex items-center gap-2 ${passwordCriteria.length ? "text-green-600" : ""}`}>
+                        {passwordCriteria.length ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
+                        At least 8 characters
+                      </li>
+                       <li className={`flex items-center gap-2 ${passwordCriteria.uppercase ? "text-green-600" : ""}`}>
+                        {passwordCriteria.uppercase ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
+                        At least one uppercase letter
+                      </li>
+                      <li className={`flex items-center gap-2 ${passwordCriteria.lowercase ? "text-green-600" : ""}`}>
+                        {passwordCriteria.lowercase ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
+                         At least one lowercase letter
+                      </li>
+                      <li className={`flex items-center gap-2 ${passwordCriteria.number ? "text-green-600" : ""}`}>
+                        {passwordCriteria.number ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
+                        At least one number
+                      </li>
+                      <li className={`flex items-center gap-2 ${passwordCriteria.specialChar ? "text-green-600" : ""}`}>
+                        {passwordCriteria.specialChar ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
+                        At least one special character
+                      </li>
+                    </ul>
+                  </div>
+                )}
             </div>
 
             <div className="space-y-2">
@@ -219,6 +288,7 @@ const SignupPage = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
+                    autoComplete="new-password"
                 />
             </div>
 
@@ -227,22 +297,19 @@ const SignupPage = () => {
             </Button>
           </form>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or sign up with
-              </span>
-            </div>
+          <div className="flex items-center gap-4 my-6">
+            <div className="h-px bg-border flex-1" />
+            <span className="text-xs uppercase text-muted-foreground font-medium">
+              Or sign up with
+            </span>
+            <div className="h-px bg-border flex-1" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-             <Button variant="outline" type="button" disabled>
+             <Button variant="outline" type="button">
                <FaGoogle className="mr-2 h-4 w-4" /> Google
             </Button>
-            <Button variant="outline" type="button" disabled>
+            <Button variant="outline" type="button">
                <FaGithub className="mr-2 h-4 w-4" /> Github
             </Button>
             <Button variant="outline" type="button" disabled>

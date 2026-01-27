@@ -237,11 +237,19 @@ const Navbar = () => {
                       )}
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
+                <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
+                    {(isVerifiedArtist || isAdmin) ? (
+                        <Link to="/dashboard?tab=artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
+                    ) : (
+                        <span className="flex items-center w-full"><Palette className="mr-2 h-4 w-4" /> Artworks</span>
+                    )}
                 </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=events"><Calendar className="mr-2 h-4 w-4" /> Events</Link>
+                 <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
+                    {(isVerifiedArtist || isAdmin) ? (
+                        <Link to="/dashboard?tab=events"><Calendar className="mr-2 h-4 w-4" /> Events</Link>
+                    ) : (
+                        <span className="flex items-center w-full"><Calendar className="mr-2 h-4 w-4" /> Events</span>
+                    )}
                 </DropdownMenuItem>
                 {isAdmin && (
                     <DropdownMenuItem asChild>

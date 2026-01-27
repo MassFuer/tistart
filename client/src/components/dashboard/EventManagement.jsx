@@ -4,6 +4,7 @@ import { eventsAPI, messagingAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import Loading from "../common/Loading";
+import EmptyState from "../common/EmptyState";
 import {
   Table,
   TableBody,
@@ -59,6 +60,11 @@ const EventManagement = ({ isAdmin = false }) => {
 
   const fetchEvents = async () => {
     try {
+      if (!isAdmin && user.artistStatus !== 'verified') {
+          setLoading(false);
+          return;
+      }
+
       if (isAdmin) {
         // Admin: Fetch ALL events from the platform (no artist filter)
         const response = await eventsAPI.getAll({ limit: 100 });
@@ -75,6 +81,33 @@ const EventManagement = ({ isAdmin = false }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEvents();
+  }, [user, isAdmin]);
+
+  if (!isAdmin && user.artistStatus !== 'verified') {
+      if (user.artistStatus === 'pending') {
+          return (
+            <EmptyState 
+                message="Application Under Review" 
+                description="We are currently reviewing your artist application. We'll notify you via email once a decision has been made."
+            />
+          );
+      }
+
+      return (
+          <EmptyState 
+            message="Artist Verification Required" 
+            description="You need to complete your artist profile and get verified before you can manage events."
+            action={
+                <Button asChild>
+                    <Link to="/apply-artist">Complete Application</Link>
+                </Button>
+            }
+          />
+      );
+  }
 
   const handleViewAttendees = async (event) => {
     setSelectedEvent(event);

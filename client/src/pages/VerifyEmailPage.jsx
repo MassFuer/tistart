@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authAPI } from "../services/api";
@@ -20,6 +20,7 @@ function VerifyEmailPage() {
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState(null);
   const [userData, setUserData] = useState(null);
+  const verifyCalled = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -27,6 +28,10 @@ function VerifyEmailPage() {
       setLoading(false);
       return;
     }
+
+    // Prevent double execution in React Strict Mode
+    if (verifyCalled.current) return;
+    verifyCalled.current = true;
 
     const verifyEmail = async () => {
       try {

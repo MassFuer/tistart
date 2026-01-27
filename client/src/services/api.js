@@ -65,6 +65,8 @@ export const authAPI = {
   verifyEmail: (data) => api.post("/auth/verify-email", data),
   resendVerificationEmail: (data) =>
     api.post("/auth/resend-verification-email", data),
+  forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
+  resetPassword: (data) => api.post("/auth/reset-password", data),
   applyArtist: (artistData) => api.post("/auth/apply-artist", artistData),
   updateArtistInfo: (artistInfo) =>
     api.patch("/auth/update-artist-info", artistInfo),

@@ -7,7 +7,7 @@ const User = require("../models/User.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { attachUser, isAdminRole } = require("../middleware/role.middleware");
 
-const { sendVerificationEmail, sendWelcomeEmail } = require("../utils/email");
+const { sendVerificationEmail, sendWelcomeEmail, sendArtistApplicationEmail, sendPasswordResetEmail } = require("../utils/email");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 const { authLimiter } = require("../middleware/rateLimit.middleware");
@@ -32,9 +32,9 @@ router.post(
     body("userName").notEmpty().withMessage("Username is required"),
     body("email").isEmail().withMessage("Please provide a valid email address"),
     body("password")
-      .matches(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/)
+      .matches(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}/)
       .withMessage(
-        "Password must have at least 8 characters and contain at least one number, one lowercase and one uppercase letter."
+        "Password must have at least 8 characters and contain at least one number, one lowercase, one uppercase letter and one special character."
       ),
     validate,
   ],
@@ -320,6 +320,80 @@ router.post("/resend-verification-email", authLimiter, async (req, res, next) =>
   }
 });
 
+// POST /auth/forgot-password - Request password reset
+router.post("/forgot-password", authLimiter, async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Generate reset token
+    const resetToken = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET, {
+      expiresIn: "1h",
+    });
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    const resetLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, user.firstName, resetLink);
+    } catch (emailError) {
+      console.error("Failed to send reset email:", emailError);
+      return res.status(500).json({ error: "Failed to send email." });
+    }
+
+    res.status(200).json({ message: "Password reset email sent." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /auth/reset-password - Reset password with token
+router.post("/reset-password", authLimiter, async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: "Missing credentials." });
+    }
+
+    // Validate password complexity
+    if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}/.test(password)) {
+        return res.status(400).json({ error: "Password does not meet complexity requirements." });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid token." });
+    }
+
+    const salt = await bcryptjs.genSalt(12);
+    const hashedPassword = await bcryptjs.hash(password, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully. You can now login." });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // POST /auth/apply-artist - Submit artist registration
 router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next) => {
   try {
@@ -357,6 +431,13 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
       },
       { new: true, runValidators: true }
     ).select("-password");
+
+    // Send application received email
+    try {
+      await sendArtistApplicationEmail(updatedUser.email, updatedUser.firstName);
+    } catch (emailError) {
+      console.error("Failed to send artist application email:", emailError);
+    }
 
     res.status(200).json({
       message: "Artist application submitted successfully. Awaiting verification.",

@@ -75,4 +75,53 @@ const sendOrderConfirmationEmail = async (email, firstName, order) => {
   }
 };
 
-module.exports = { sendVerificationEmail, sendWelcomeEmail, sendOrderConfirmationEmail };
+const sendArtistApplicationEmail = async (email, firstName) => {
+  try {
+    const html = renderTemplate("artist-application", {
+        firstName,
+    });
+
+    const info = await transporter.sendMail({
+      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Application Received - Nemesis",
+      html,
+    });
+
+    console.log(`Artist application email sent to ${email}: ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error("Nodemailer error:", error);
+    // Don't throw for non-critical email
+  }
+};
+
+const sendPasswordResetEmail = async (email, firstName, resetLink) => {
+  try {
+    const html = renderTemplate("password-reset", {
+        firstName,
+        resetLink,
+    });
+
+    const info = await transporter.sendMail({
+      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Reset Your Password - Nemesis",
+      html,
+    });
+
+    console.log(`Password reset email sent to ${email}: ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error("Nodemailer error:", error);
+    throw error;
+  }
+};
+
+module.exports = { 
+  sendVerificationEmail, 
+  sendWelcomeEmail, 
+  sendOrderConfirmationEmail, 
+  sendArtistApplicationEmail,
+  sendPasswordResetEmail
+};
