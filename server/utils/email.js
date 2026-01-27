@@ -4,17 +4,23 @@ const { renderTemplate } = require("./emailRenderer");
 // Create a transporter using Gmail service
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  port: 465, // SSL port often works better on cloud
+  secure: true, // true for 465
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  // Force IPv4 to avoid timeouts on some cloud providers
+  // Force IPv4
   family: 4,
 });
 
 const sendVerificationEmail = async (email, firstName, verificationLink) => {
+  // LOGGING FOR RENDER FREE TIER (Since SMTP is blocked)
+  console.log("\n========================================");
+  console.log(`[EMAIL-DEBUG] Sending verification to: ${email}`);
+  console.log(`[EMAIL-DEBUG] Link: ${verificationLink}`);
+  console.log("========================================\n");
+
   try {
     const html = renderTemplate("verification", {
       firstName,

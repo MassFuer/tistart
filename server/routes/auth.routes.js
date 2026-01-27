@@ -18,7 +18,8 @@ const saltRounds = 12;
 const getCookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  // Important: For Netlify (Frontend) + Render (Backend), we need 'none' to allow cross-site cookies
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 });
 
