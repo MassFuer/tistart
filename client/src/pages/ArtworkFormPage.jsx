@@ -3,20 +3,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import toast from "react-hot-toast";
 import MarkdownEditor from "../components/common/MarkdownEditor";
+import ImageUpload from "../components/common/ImageUpload";
 import { 
-  Upload, 
-  X, 
-  Image as ImageIcon, 
   Video, 
   Loader2, 
   ArrowLeft, 
-  Save 
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -28,11 +25,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { Trash2 } from "lucide-react";
 
@@ -46,7 +41,7 @@ const ArtworkFormPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [existingImages, setExistingImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
+
   // Video upload state
   const [existingVideo, setExistingVideo] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -85,10 +80,9 @@ const ArtworkFormPage = () => {
 
   useEffect(() => {
     return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
       if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     };
-  }, [previewUrls, videoPreviewUrl]);
+  }, [videoPreviewUrl]);
 
   const fetchArtwork = async () => {
     try {
@@ -161,37 +155,18 @@ const ArtworkFormPage = () => {
     }
   };
 
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    const maxFiles = 5 - existingImages.length - selectedFiles.length;
-    if (files.length > maxFiles) {
-      toast.error(`You can only upload ${maxFiles} more image(s)`);
-      return;
-    }
-    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    const invalidFiles = files.filter((file) => !validTypes.includes(file.type));
-    if (invalidFiles.length > 0) {
-      toast.error("Only JPG, PNG, and WebP images are allowed");
-      return;
-    }
-    const oversizedFiles = files.filter((file) => file.size > 5 * 1024 * 1024);
-    if (oversizedFiles.length > 0) {
-      toast.error("Each image must be under 5MB");
-      return;
-    }
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls([...previewUrls, ...newPreviewUrls]);
-    setSelectedFiles([...selectedFiles, ...files]);
+  const handleImagesSelect = (files) => {
+     // ImageUpload returns all currently selected files
+     // But since we are managing state here too (somewhat duplicated in ImageUpload state for preview)
+     // we need to be careful. The component is designed to return the *new list* of files.
+     // However, for this specific integration where we want to keep `selectedFiles` in sync:
+     // The component returns `[...selectedFiles, ...newFiles]` on selection
+     // and `filteredFiles` on removal.
+     setSelectedFiles(files);
   };
 
-  const removeSelectedFile = (index) => {
-    URL.revokeObjectURL(previewUrls[index]);
-    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
-    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
-  };
-
-  const removeExistingImage = (index) => {
-    setExistingImages(existingImages.filter((_, i) => i !== index));
+  const handleRemoveExistingImage = (index) => {
+      setExistingImages(existingImages.filter((_, i) => i !== index));
   };
 
   const handleVideoSelect = (e) => {
@@ -316,8 +291,6 @@ const ArtworkFormPage = () => {
     );
   }
 
-  const totalImages = existingImages.length + selectedFiles.length;
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
@@ -398,53 +371,14 @@ const ArtworkFormPage = () => {
             <CardContent className="space-y-8">
                 {/* Images */}
                 <div className="space-y-4">
-                    <Label className="text-base">Images ({totalImages}/5)</Label>
-                    
-                    <div className="flex flex-wrap gap-4">
-                        {/* Existing */}
-                        {existingImages.map((url, index) => (
-                            <div key={`existing-${index}`} className="relative group w-32 h-32 rounded-lg overflow-hidden border">
-                                <img src={url} alt={`Existing ${index}`} className="w-full h-full object-cover" />
-                                <button
-                                    type="button"
-                                    onClick={() => removeExistingImage(index)}
-                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            </div>
-                        ))}
-
-                        {/* New */}
-                        {previewUrls.map((url, index) => (
-                             <div key={`new-${index}`} className="relative group w-32 h-32 rounded-lg overflow-hidden border ring-2 ring-primary/20">
-                                <img src={url} alt={`New ${index}`} className="w-full h-full object-cover" />
-                                 <button
-                                    type="button"
-                                    onClick={() => removeSelectedFile(index)}
-                                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                                <Badge className="absolute bottom-1 left-1 h-5 text-[10px]" variant="secondary">New</Badge>
-                            </div>
-                        ))}
-
-                        {/* Upload Button */}
-                        {totalImages < 5 && (
-                             <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                                <span className="text-xs text-muted-foreground font-medium">Add Image</span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                    onChange={handleFileSelect}
-                                />
-                            </label>
-                        )}
-                    </div>
+                    <Label className="text-base">Images</Label>
+                    <ImageUpload
+                        existingImages={existingImages}
+                        onFileSelect={handleImagesSelect}
+                        onRemoveExisting={handleRemoveExistingImage}
+                        maxFiles={5}
+                        multiple={true}
+                    />
                 </div>
                 
                 {/* Video */}

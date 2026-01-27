@@ -33,6 +33,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import Pagination from "../components/common/Pagination";
 
 const SuperAdminPage = () => {
   const [activeTab, setActiveTab] = useState("settings");
@@ -461,23 +462,11 @@ const SuperAdminPage = () => {
                  </Table>
              </div>
 
-             <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Page {storagePagination.page} of {storagePagination.pages}</span>
-                  <div className="flex gap-2">
-                      <Button variant="outline" size="sm" 
-                        disabled={storagePagination.page === 1}
-                        onClick={() => setStoragePagination(p => ({ ...p, page: p.page - 1 }))}
-                      >
-                          Previous
-                      </Button>
-                      <Button variant="outline" size="sm" 
-                        disabled={storagePagination.page === storagePagination.pages}
-                        onClick={() => setStoragePagination(p => ({ ...p, page: p.page + 1 }))}
-                      >
-                          Next
-                      </Button>
-                  </div>
-             </div>
+             <Pagination
+                currentPage={storagePagination.page}
+                totalPages={storagePagination.pages}
+                onPageChange={(page) => setStoragePagination(p => ({ ...p, page }))}
+             />
         </TabsContent>
 
         {/* Users Tab */}
@@ -575,23 +564,11 @@ const SuperAdminPage = () => {
                  </Table>
             </div>
              
-             <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Page {userPagination.page} of {userPagination.pages}</span>
-                  <div className="flex gap-2">
-                      <Button variant="outline" size="sm" 
-                        disabled={userPagination.page === 1}
-                        onClick={() => setUserPagination(p => ({ ...p, page: p.page - 1 }))}
-                      >
-                          Previous
-                      </Button>
-                      <Button variant="outline" size="sm" 
-                        disabled={userPagination.page === userPagination.pages}
-                        onClick={() => setUserPagination(p => ({ ...p, page: p.page + 1 }))}
-                      >
-                          Next
-                      </Button>
-                  </div>
-             </div>
+             <Pagination
+                currentPage={userPagination.page}
+                totalPages={userPagination.pages}
+                onPageChange={(page) => setUserPagination(p => ({ ...p, page }))}
+             />
         </TabsContent>
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="space-y-6">

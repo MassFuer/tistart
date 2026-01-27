@@ -27,15 +27,7 @@ import {
   SheetFooter,
   SheetClose
 } from "@/components/ui/sheet";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import Pagination from "../components/common/Pagination";
 
 // Extracted Component imported
 import ArtworkFilters from "../components/artwork/ArtworkFilters";
@@ -148,59 +140,6 @@ const GalleryPage = () => {
       });
       setSort("-createdAt");
       toast.success("Filters cleared");
-  };
-
-  // Pagination Logic Helper
-  const renderPaginationItems = () => {
-      if (pagination.pages <= 1) return null;
-      
-      const items = [];
-      const current = pagination.page;
-      const total = pagination.pages;
-
-      // Previous
-      items.push(
-          <PaginationItem key="prev">
-              <PaginationPrevious 
-                onClick={() => current > 1 && setPage(current - 1)} 
-                className={current <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-          </PaginationItem>
-      );
-
-      // Simple simplified pagination for now (1, 2, 3 ... Last)
-      for (let i = 1; i <= total; i++) {
-          if (
-            i === 1 ||
-            i === total ||
-            (i >= current - 1 && i <= current + 1)
-          ) {
-            items.push(
-                <PaginationItem key={i}>
-                    <PaginationLink isActive={i === current} onClick={() => setPage(i)} className="cursor-pointer">
-                        {i}
-                    </PaginationLink>
-                </PaginationItem>
-            );
-          } else if (
-              i === current - 2 || 
-              i === current + 2
-          ) {
-              items.push(<PaginationItem key={`ellipsis-${i}`}><PaginationEllipsis /></PaginationItem>);
-          }
-      }
-
-      // Next
-       items.push(
-          <PaginationItem key="next">
-              <PaginationNext 
-                onClick={() => current < total && setPage(current + 1)}
-                className={current >= total ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-          </PaginationItem>
-      );
-
-      return items;
   };
 
   return (
@@ -322,11 +261,11 @@ const GalleryPage = () => {
                        </div>
                        
                        <div className="mt-12">
-                           <Pagination>
-                               <PaginationContent>
-                                   {renderPaginationItems()}
-                               </PaginationContent>
-                           </Pagination>
+                           <Pagination
+                               currentPage={pagination.page}
+                               totalPages={pagination.pages}
+                               onPageChange={setPage}
+                           />
                        </div>
                    </>
                )}

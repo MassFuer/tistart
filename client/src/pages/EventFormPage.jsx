@@ -6,10 +6,8 @@ import toast from "react-hot-toast";
 import AddressForm from "../components/map/AddressForm";
 import LocationMap from "../components/map/LocationMap";
 import MarkdownEditor from "../components/common/MarkdownEditor";
+import ImageUpload from "../components/common/ImageUpload";
 import { 
-  Upload, 
-  X, 
-  Image as ImageIcon, 
   Loader2, 
   ArrowLeft, 
   Calendar
@@ -18,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -30,11 +27,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const EventFormPage = () => {
   const { id } = useParams();
@@ -46,7 +41,6 @@ const EventFormPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [existingImage, setExistingImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -76,15 +70,6 @@ const EventFormPage = () => {
       fetchEvent();
     }
   }, [id]);
-
-  // Cleanup preview URL on unmount
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   const fetchEvent = async () => {
     try {
@@ -167,30 +152,8 @@ const EventFormPage = () => {
     }
   };
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    const validTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Only JPG, PNG, and WebP images are allowed");
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
-      return;
-    }
-
-    // Revoke previous preview URL
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
+  const handleImageSelect = (file) => {
     setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
   };
 
   // Address handlers
@@ -253,14 +216,6 @@ const EventFormPage = () => {
         console.error("Reverse geocode error:", error);
       }
     }
-  };
-
-  const removeSelectedFile = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setSelectedFile(null);
-    setPreviewUrl(null);
   };
 
   const removeExistingImage = () => {
@@ -348,8 +303,6 @@ const EventFormPage = () => {
     );
   }
 
-  const hasImage = existingImage || previewUrl;
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
@@ -429,50 +382,13 @@ const EventFormPage = () => {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
-                     {hasImage ? (
-                        <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border shadow-sm group">
-                            <img 
-                                src={previewUrl || existingImage} 
-                                alt="Event Preview" 
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                                <Button 
-                                    type="button" 
-                                    variant="secondary" 
-                                    onClick={() => document.getElementById('event-image').click()}
-                                >
-                                    Change
-                                </Button>
-                                <Button 
-                                    type="button" 
-                                    variant="destructive"
-                                    onClick={previewUrl ? removeSelectedFile : removeExistingImage}
-                                >
-                                    Remove
-                                </Button>
-                            </div>
-                        </div>
-                     ) : (
-                        <div className="text-center py-8">
-                             <ImageIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                             <p className="text-sm text-muted-foreground mb-4">
-                                Drag & drop or click to upload
-                             </p>
-                             <Button type="button" variant="secondary" onClick={() => document.getElementById('event-image').click()}>
-                                <Upload className="mr-2 h-4 w-4" /> Select Image
-                             </Button>
-                        </div>
-                     )}
-                     <input
-                        id="event-image"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        onChange={handleFileSelect}
-                    />
-                </div>
+                <ImageUpload
+                  existingImages={existingImage ? [existingImage] : []}
+                  onFileSelect={handleImageSelect}
+                  onRemoveExisting={removeExistingImage}
+                  maxFiles={1}
+                  multiple={false}
+                />
             </CardContent>
         </Card>
 
