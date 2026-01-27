@@ -29,7 +29,7 @@ import StatCard from "../components/dashboard/StatCard";
 import ProfileSettings from "../components/dashboard/ProfileSettings";
 import EventsMap from "../components/map/EventsMap"; // Reuse existing map for user view
 import ArtworkManager from "../components/dashboard/ArtworkManager";
-import EventManager from "../components/dashboard/EventManager";
+import EventManagement from "../components/dashboard/EventManagement";
 
 const DashboardPage = () => {
   const { user, isArtist, isAdmin } = useAuth();
@@ -314,11 +314,19 @@ const DashboardPage = () => {
 
         {/* EVENTS TAB */}
         <TabsContent value="events" className="space-y-6">
-             <div>
-                 <h2 className="text-xl font-semibold tracking-tight">Events</h2>
-                 <p className="text-sm text-muted-foreground">{isArtist ? "Manage your exhibitions and upcoming events." : "Events you are attending."}</p>
-             </div>
-            <EventManager />
+            {isArtist ? (
+                <>
+                    <Separator className="my-6" />
+                    <div className="space-y-4">
+                        <EventManagement />
+                    </div>
+                </>
+            ) : (
+                <div className="space-y-6">
+                    <h2 className="text-xl font-semibold">Events You're Interested In</h2>
+                    <p className="text-muted-foreground">Events feature coming soon...</p>
+                </div>
+            )}
         </TabsContent>
 
         {/* SETTINGS TAB */}

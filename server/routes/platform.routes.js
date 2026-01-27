@@ -21,6 +21,26 @@ router.get("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) =>
   }
 });
 
+// GET /api/platform/config - Get public platform config (Theme, etc.)
+router.get("/config", async (req, res, next) => {
+  try {
+    const settings = await PlatformSettings.getSettings();
+    // Return only public fields
+    const publicConfig = {
+      theme: settings.theme,
+      maintenance: {
+          enabled: settings.maintenance.enabled,
+          message: settings.maintenance.message
+      },
+      features: settings.features,
+      geolocation: settings.geolocation
+    };
+    res.status(200).json({ data: publicConfig });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // PATCH /api/platform/settings - Update platform settings
 router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) => {
   try {
@@ -33,6 +53,7 @@ router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) 
       "email",
       "geolocation",
       "maintenance",
+      "theme",
     ];
 
     const updateObj = {};

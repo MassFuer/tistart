@@ -193,6 +193,8 @@ export const videosAPI = {
 
 // Platform API (SuperAdmin)
 export const platformAPI = {
+  // Public Config
+  getConfig: () => api.get("/api/platform/config"),
   // Settings (SuperAdmin only)
   getSettings: () => api.get("/api/platform/settings"),
   updateSettings: (settings) => api.patch("/api/platform/settings", settings),
