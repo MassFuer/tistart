@@ -2,10 +2,21 @@ const { Schema, model } = require("mongoose");
 
 const orderItemSchema = new Schema(
   {
+    itemType: {
+      type: String,
+      enum: ["artwork", "ticket"],
+      default: "artwork",
+      required: true,
+    },
     artwork: {
       type: Schema.Types.ObjectId,
       ref: "Artwork",
-      required: true,
+      required: function() { return this.itemType === "artwork"; },
+    },
+    event: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
+      required: function() { return this.itemType === "ticket"; },
     },
     artist: {
       type: Schema.Types.ObjectId,
@@ -33,6 +44,10 @@ const orderItemSchema = new Schema(
       required: true,
       min: 0,
     },
+    // Ticket specific
+    ticketCode: {
+       type: String,
+    }
   },
   { _id: false }
 );

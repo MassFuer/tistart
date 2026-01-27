@@ -154,11 +154,16 @@ export const reviewsAPI = {
 // Cart API
 export const apiCart = {
   get: () => api.get("/api/cart"),
-  add: (artworkId, quantity) =>
-    api.post("/api/cart/add", { artworkId, quantity }),
-  update: (artworkId, quantity) =>
-    api.patch("/api/cart/update", { artworkId, quantity }),
-  remove: (artworkId) => api.delete(`/api/cart/remove/${artworkId}`),
+  // Support both old signature (id, qty) and new (object) for backward compat slightly, or just update callers
+  add: (dataOrId, quantity) => {
+      if (typeof dataOrId === 'object') return api.post("/api/cart/add", dataOrId);
+      return api.post("/api/cart/add", { artworkId: dataOrId, quantity });
+  },
+  update: (dataOrId, quantity) => {
+      if (typeof dataOrId === 'object') return api.patch("/api/cart/update", { ...dataOrId, quantity });
+      return api.patch("/api/cart/update", { artworkId: dataOrId, quantity });
+  },
+  remove: (itemId) => api.delete(`/api/cart/remove/${itemId}`),
   clear: () => api.delete("/api/cart/clear"),
 };
 

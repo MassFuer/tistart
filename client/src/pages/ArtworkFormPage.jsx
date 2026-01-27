@@ -120,7 +120,7 @@ const ArtworkFormPage = () => {
       }
     } catch (error) {
       toast.error("Failed to load artwork");
-      navigate("/my-artworks");
+      navigate("/gallery");
     } finally {
       setIsLoading(false);
     }
@@ -298,7 +298,7 @@ const ArtworkFormPage = () => {
       if (selectedFiles.length > 0) await uploadImages(artworkId);
       if (selectedVideo) await uploadVideo(artworkId);
 
-      navigate("/my-artworks");
+      navigate("/gallery");
     } catch (error) {
        console.error(error);
       const message = error.response?.data?.error || "Failed to save artwork";
@@ -322,7 +322,7 @@ const ArtworkFormPage = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/my-artworks")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/gallery")}>
                   <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-3xl font-bold tracking-tight">
@@ -644,7 +644,7 @@ const ArtworkFormPage = () => {
         </div>
 
         <div className="flex justify-end gap-4 pb-12">
-            <Button type="button" variant="outline" onClick={() => navigate("/my-artworks")}>
+            <Button type="button" variant="outline" onClick={() => navigate("/gallery")}>
                 Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || isUploading || isUploadingVideo}>

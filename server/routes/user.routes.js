@@ -153,14 +153,22 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
     if (stats.isArtist) {
       const [artworksCount, eventsCount, salesCount] = await Promise.all([
         Artwork.countDocuments({ artist: userId }),
-        // Check for Event model usage if available usually imported, assume Event model needed
         mongoose.model("Event").countDocuments({ artist: userId }), 
-        Order.countDocuments({ "items.artist": userId })
+        Order.countDocuments({ "items.artist": userId, status: { $in: ["paid", "shipped", "delivered"] } })
+      ]);
+
+      // Calculate Total Revenue
+      const revenueAgg = await Order.aggregate([
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] }, "items.artist": userId } },
+        { $unwind: "$items" },
+        { $match: { "items.artist": userId } },
+        { $group: { _id: null, total: { $sum: "$items.artistEarnings" } } }
       ]);
 
       stats.artworks = artworksCount;
       stats.events = eventsCount;
       stats.sales = salesCount;
+      stats.revenue = revenueAgg.length > 0 ? Math.round(revenueAgg[0].total * 100) / 100 : 0;
 
       // Calculate Average Rating across all artworks
       const ratingAgg = await mongoose.model("Review").aggregate([
@@ -196,6 +204,15 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
     stats.orders = ordersCount;
     stats.favorites = req.user.favorites.length;
     stats.attending = attendingCount;
+    
+    // Storage & Plan Stats
+    if (stats.isArtist) {
+        // Assuming req.user is attached and has storage field populated
+        const storage = req.user.storage || {};
+        stats.storageUsage = storage.totalBytes || 0;
+        stats.storageQuota = storage.quotaBytes || 5 * 1024 * 1024 * 1024; // 5GB default
+        stats.plan = req.user.subscriptionTier || 'free';
+    }
 
     res.status(200).json({ data: stats });
   } catch (error) {

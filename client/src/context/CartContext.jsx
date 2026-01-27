@@ -31,13 +31,13 @@ export const CartProvider = ({ children }) => {
     setCartCount(count);
   };
 
-  const addToCart = async (artworkId, quantity = 1) => {
+  const addToCart = async (itemOrId, quantity = 1) => {
     if (!isAuthenticated) {
       toast.error("Please login to add items to cart");
       return;
     }
     try {
-      const response = await api.cart.add(artworkId, quantity);
+      const response = await api.cart.add(itemOrId, quantity);
       setCart(response.data.data);
       calculateCount(response.data.data);
       toast.success("Added to cart!");
@@ -48,9 +48,9 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = async (artworkId, quantity) => {
+  const updateQuantity = async (itemOrId, quantity) => {
     try {
-      const response = await api.cart.update(artworkId, quantity);
+      const response = await api.cart.update(itemOrId, quantity);
       setCart(response.data.data);
       calculateCount(response.data.data);
     } catch (error) {

@@ -10,7 +10,9 @@ import {
   ShieldCheck, 
   Truck, 
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  Ticket,
+  Calendar
 } from "lucide-react";
 
 // Shadcn Components
@@ -34,7 +36,10 @@ const CartPage = () => {
   };
 
   const calculateTotal = () => {
-    return cart.reduce((total, item) => total + (item.artwork?.price || 0) * item.quantity, 0);
+    return cart.reduce((total, item) => {
+        const product = item.itemType === 'ticket' ? item.event : item.artwork;
+        return total + (product?.price || 0) * item.quantity;
+    }, 0);
   };
 
   const formatCurrency = (amount) => {
@@ -83,20 +88,31 @@ const CartPage = () => {
                       <CardDescription>Manage your selection before checkout</CardDescription>
                   </CardHeader>
                   <CardContent className="divide-y p-0">
-                      {cart.map((item) => (
-                          <div key={item._id} className="flex flex-col sm:flex-row gap-4 p-6 hover:bg-muted/20 transition-colors">
+                      {cart.map((item) => {
+                          const isTicket = item.itemType === "ticket";
+                          const product = isTicket ? item.event : item.artwork;
+                          if (!product) return null;
+
+                          return (
+                          <div key={isTicket ? `ticket-${product._id}` : `art-${product._id}`} className="flex flex-col sm:flex-row gap-4 p-6 hover:bg-muted/20 transition-colors">
                               {/* Image */}
-                              <Link to={`/artworks/${item.artwork?._id}`} className="shrink-0 w-full sm:w-32 aspect-square rounded-md overflow-hidden bg-muted border">
-                                  {item.artwork?.images?.[0] ? (
+                              <Link to={isTicket ? `/events/${product._id}` : `/artworks/${product._id}`} className="shrink-0 w-full sm:w-32 aspect-square rounded-md overflow-hidden bg-muted border relative">
+                                  {product.images?.[0] || product.image ? (
                                       <img 
-                                        src={item.artwork.images[0]} 
-                                        alt={item.artwork.title} 
+                                        src={isTicket ? product.image : product.images[0]} 
+                                        alt={product.title} 
                                         className="w-full h-full object-cover"
                                       />
                                   ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                                          No Image
+                                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground flex-col gap-1">
+                                          {isTicket ? <Ticket className="h-6 w-6 opacity-50"/> : "No Image"}
+                                          {isTicket && <span>Event</span>}
                                       </div>
+                                  )}
+                                  {isTicket && (
+                                     <div className="absolute top-1 right-1 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                         Ticket
+                                     </div>
                                   )}
                               </Link>
 
@@ -105,18 +121,23 @@ const CartPage = () => {
                                   <div>
                                        <div className="flex justify-between items-start">
                                             <div>
-                                                <Link to={`/artworks/${item.artwork?._id}`} className="font-semibold text-lg hover:underline truncate block">
-                                                    {item.artwork?.title}
+                                                <Link to={isTicket ? `/events/${product._id}` : `/artworks/${product._id}`} className="font-semibold text-lg hover:underline truncate block">
+                                                    {product.title}
                                                 </Link>
-                                                <Link to={`/artists/${item.artwork?.artist?._id}`} className="text-sm text-muted-foreground hover:text-foreground">
-                                                    by {item.artwork?.artist?.artistInfo?.companyName ||
-                                                        `${item.artwork?.artist?.firstName} ${item.artwork?.artist?.lastName}`}
+                                                <Link to={`/artists/${product.artist?._id}`} className="text-sm text-muted-foreground hover:text-foreground">
+                                                    by {product.artist?.artistInfo?.companyName ||
+                                                        `${product.artist?.firstName} ${product.artist?.lastName}`}
                                                 </Link>
+                                                {isTicket && (
+                                                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                                        <Calendar className="h-3 w-3" /> {new Date(product.startDateTime).toLocaleDateString()}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-lg">{formatCurrency((item.artwork?.price || 0) * item.quantity)}</p>
+                                                <p className="font-bold text-lg">{formatCurrency((product.price || 0) * item.quantity)}</p>
                                                 {item.quantity > 1 && (
-                                                    <p className="text-xs text-muted-foreground">{formatCurrency(item.artwork?.price)} each</p>
+                                                    <p className="text-xs text-muted-foreground">{formatCurrency(product.price)} each</p>
                                                 )}
                                             </div>
                                        </div>
@@ -129,7 +150,7 @@ const CartPage = () => {
                                                 variant="ghost" 
                                                 size="icon" 
                                                 className="h-8 w-8 rounded-r-none"
-                                                onClick={() => updateQuantity(item.artwork._id, item.quantity - 1)}
+                                                onClick={() => updateQuantity(isTicket ? { eventId: product._id } : { artworkId: product._id }, item.quantity - 1)}
                                                 disabled={item.quantity <= 1}
                                             >
                                                 <Minus className="h-3 w-3" />
@@ -139,8 +160,8 @@ const CartPage = () => {
                                                 variant="ghost" 
                                                 size="icon" 
                                                 className="h-8 w-8 rounded-l-none"
-                                                onClick={() => updateQuantity(item.artwork._id, item.quantity + 1)}
-                                                disabled={item.quantity >= (item.artwork?.totalInStock || 1)}
+                                                onClick={() => updateQuantity(isTicket ? { eventId: product._id } : { artworkId: product._id }, item.quantity + 1)}
+                                                disabled={item.quantity >= (isTicket ? (product.maxCapacity > 0 ? Math.min(3, product.maxCapacity) : 3) : (product.totalInStock || 1))}
                                             >
                                                 <Plus className="h-3 w-3" />
                                             </Button>
@@ -148,16 +169,17 @@ const CartPage = () => {
                                        
                                        <Button 
                                             variant="ghost" 
-                                            size="sm" 
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => handleRemove(item.artwork._id)}
-                                        >
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-destructive"
+                                            onClick={() => removeFromCart(product._id)}
+                                       >
                                            <Trash2 className="h-4 w-4 mr-2" /> Remove
                                        </Button>
                                   </div>
                               </div>
                           </div>
-                      ))}
+                          );
+                      })}
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-4 flex justify-between">
                       <Button variant="ghost" size="sm" asChild>

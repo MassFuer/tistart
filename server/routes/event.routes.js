@@ -58,6 +58,7 @@ router.get("/", async (req, res, next) => {
       search,
       city,
       company,
+      attendee,
     } = req.query;
 
     // Build filter object
@@ -93,6 +94,10 @@ router.get("/", async (req, res, next) => {
 
     if (artist) {
       filter.artist = artist;
+    }
+
+    if (attendee) {
+      filter["attendees.user"] = attendee;
     }
 
     // Only show public events by default
@@ -488,7 +493,7 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user already joined
-    const isAttending = event.attendees?.some((id) => id.toString() === userId.toString());
+    const isAttending = event.attendees?.some((a) => a.user.toString() === userId.toString());
 
     if (isAttending) {
       return res.status(400).json({ error: "You have already joined this event." });
@@ -498,7 +503,7 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     // This ensures only maxCapacity users can join even with concurrent requests
     const query = {
       _id: req.params.id,
-      attendees: { $ne: userId }, // User not already in attendees
+      "attendees.user": { $ne: userId }, // User not already in attendees
     };
 
     // Add capacity check to query if maxCapacity is set
@@ -508,9 +513,9 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
 
     const updatedEvent = await Event.findOneAndUpdate(
       query,
-      { $addToSet: { attendees: userId } },
+      { $addToSet: { attendees: { user: userId, status: "confirmed" } } },
       { new: true }
-    );
+    ).populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
 
     if (!updatedEvent) {
       // Check why it failed
@@ -521,6 +526,10 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
       ) {
         return res.status(400).json({ error: "Event is full." });
       }
+       // Double check for race condition where user was added in between
+       if (currentEvent.attendees.some(a => a.user.toString() === userId.toString())) {
+             return res.status(400).json({ error: "You have already joined this event." });
+       }
       return res.status(400).json({ error: "Could not join event. Please try again." });
     }
 
@@ -531,7 +540,6 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// DELETE /api/events/:id/attend - Leave event (authenticated users)
 // DELETE /api/events/:id/attend - Leave event (authenticated users)
 router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
   try {
@@ -547,15 +555,18 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user is in attendees (robust comparison)
-    const isAttending = event.attendees.some((id) => id.toString() === req.payload._id.toString());
+    const isAttending = event.attendees.some((a) => a.user.toString() === req.payload._id.toString());
 
     if (!isAttending) {
       return res.status(400).json({ error: "You are not registered for this event." });
     }
 
     // Remove user
-    event.attendees = event.attendees.filter((id) => id.toString() !== req.payload._id.toString());
+    event.attendees = event.attendees.filter((a) => a.user.toString() !== req.payload._id.toString());
     await event.save();
+
+    // Populate artist before sending response
+    await event.populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
 
     res.status(200).json({ message: "Successfully left event.", data: event });
   } catch (error) {
@@ -568,7 +579,7 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
 router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id).populate(
-      "attendees",
+      "attendees.user",
       "firstName lastName userName email profilePicture"
     );
 

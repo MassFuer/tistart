@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import logo from "../../assets/logo.jpg";
 import {
   Menu,
+  Calendar,
   ShoppingCart,
   User,
   LogOut,
@@ -74,14 +75,28 @@ const Navbar = () => {
     }
   };
 
+  const handleNavClick = () => {
+    window.scrollTo(0, 0);
+    setIsSheetOpen(false);
+  };
+
   const NavItems = ({ mobile = false }) => (
     <>
+      <NavLink 
+        to="/" 
+        className={({ isActive }) => 
+          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+        }
+        onClick={handleNavClick}
+      >
+        Home
+      </NavLink>
       <NavLink 
         to="/gallery" 
         className={({ isActive }) => 
           `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
-        onClick={() => setIsSheetOpen(false)}
+        onClick={handleNavClick}
       >
         Gallery
       </NavLink>
@@ -90,7 +105,7 @@ const Navbar = () => {
         className={({ isActive }) => 
           `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
-        onClick={() => setIsSheetOpen(false)}
+        onClick={handleNavClick}
       >
         Events
       </NavLink>
@@ -101,11 +116,20 @@ const Navbar = () => {
             className={({ isActive }) => 
             `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
             }
-            onClick={() => setIsSheetOpen(false)}
+            onClick={handleNavClick}
         >
             Favorites
         </NavLink>
       )}
+      <NavLink 
+        to="/pricing" 
+        className={({ isActive }) => 
+          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+        }
+        onClick={handleNavClick}
+      >
+        Plans
+      </NavLink>
     </>
   );
 
@@ -121,7 +145,7 @@ const Navbar = () => {
     >
       <div className="w-full flex h-16 items-center px-4 md:px-12">
         {/* LOGO - Left */}
-        <Link to="/" className="mr-6 flex items-center space-x-2 flex-none" onClick={() => setIsSheetOpen(false)}>
+        <Link to="/" className="mr-6 flex items-center space-x-2 flex-none" onClick={handleNavClick}>
           <img src={logo} alt="Nemesis" className="h-8 w-8 rounded-full object-cover" />
           <span className="hidden font-bold sm:inline-block text-xl tracking-tight">Nemesis</span>
         </Link>
@@ -194,11 +218,14 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
                 {(isVerifiedArtist || isAdmin || isSuperAdmin) && (
                     <DropdownMenuItem asChild>
-                        <Link to={`/artists/${user._id}`}><User className="mr-2 h-4 w-4" /> My Public Profile</Link>
+                        <Link to={`/artists/${user._id}`}><User className="mr-2 h-4 w-4" /> Public Profile</Link>
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                    <Link to="/dashboard?tab=overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link to="/dashboard?tab=activity"><Package className="mr-2 h-4 w-4" /> Orders</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link to="/messages" className="flex items-center">
@@ -211,18 +238,14 @@ const Navbar = () => {
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=activity"><Package className="mr-2 h-4 w-4" /> My Orders</Link>
+                    <Link to="/dashboard?tab=artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
                 </DropdownMenuItem>
-                
-                {(isVerifiedArtist || isAdmin) && (
-                    <DropdownMenuItem asChild>
-                            <Link to="/dashboard?tab=content"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
-                    </DropdownMenuItem>
-                )}
-
+                 <DropdownMenuItem asChild>
+                    <Link to="/dashboard?tab=events"><Calendar className="mr-2 h-4 w-4" /> Events</Link>
+                </DropdownMenuItem>
                 {isAdmin && (
                     <DropdownMenuItem asChild>
-                         <Link to="/admin"><ShieldAlert className="mr-2 h-4 w-4" /> Admin</Link>
+                        <Link to="/admin">Admin Panel</Link>
                     </DropdownMenuItem>
                 )}
                 

@@ -14,7 +14,8 @@ import {
   CreditCard,
   Users,
   Eye,
-  Star
+  Star,
+  Box,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import StatCard from "../components/dashboard/StatCard";
 import ProfileSettings from "../components/dashboard/ProfileSettings";
 import EventsMap from "../components/map/EventsMap"; // Reuse existing map for user view
 import ArtworkManager from "../components/dashboard/ArtworkManager";
+import EventManager from "../components/dashboard/EventManager";
 
 const DashboardPage = () => {
   const { user, isArtist, isAdmin } = useAuth();
@@ -122,10 +124,11 @@ const DashboardPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-[700px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="activity">{isArtist ? "Sales & Orders" : "Orders"}</TabsTrigger>
-          <TabsTrigger value="content">{isArtist ? "Artworks & Events" : "Events"}</TabsTrigger>
+          <TabsTrigger value="activity">{isArtist ? "Sales" : "Orders"}</TabsTrigger>
+          {isArtist && <TabsTrigger value="artworks">Artworks</TabsTrigger>}
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -136,10 +139,10 @@ const DashboardPage = () => {
             {isArtist ? (
               <>
                  <StatCard 
-                    title="Total Sales" 
-                    value={stats?.sales || 0} 
+                    title="Total Revenue" 
+                    value={stats?.revenue ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(stats.revenue) : "€0.00"} 
                     icon={TrendingUp} 
-                    description="Lifetime sales count" 
+                    description={`${stats?.sales || 0} orders completed`} 
                  />
                  <StatCard 
                     title="Artworks" 
@@ -158,6 +161,18 @@ const DashboardPage = () => {
                     value={stats?.events || 0} 
                     icon={Calendar} 
                     description="Hosted events" 
+                 />
+                 <StatCard 
+                    title="Storage Used" 
+                    value={stats?.storageQuota ? `${Math.round((stats.storageUsage / stats.storageQuota) * 100)}%` : "0%"} 
+                    icon={Box} 
+                    description={`${(stats?.storageUsage / (1024*1024)).toFixed(0)}MB / ${(stats?.storageQuota / (1024*1024*1024)).toFixed(0)}GB`} 
+                 />
+                 <StatCard 
+                    title="Plan" 
+                    value={stats?.plan ? stats.plan.toUpperCase() : "FREE"} 
+                    icon={CreditCard} 
+                    description={<Link to="/pricing" className="text-primary hover:underline">Upgrade Plan</Link>} 
                  />
               </>
             ) : (
@@ -237,11 +252,17 @@ const DashboardPage = () => {
                   <CardContent>
                       <div className="space-y-4 text-sm text-muted-foreground">
                           <p>Welcome to your new dashboard!</p>
-                          {isArtist && (
-                              <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-                                  <Star className="h-4 w-4 text-primary" />
-                                  <span>Complete your artist profile to get verified.</span>
-                              </div>
+                          {isArtist && user?.artistStatus !== "verified" && (
+                              <Link to="/apply-artist">
+                                  <div className="flex items-center gap-2 p-3 bg-muted rounded-md hover:bg-muted/80 transition-colors cursor-pointer">
+                                      <Star className="h-4 w-4 text-primary" />
+                                      <span>
+                                          {user?.artistStatus === "pending" 
+                                            ? "Application pending review." 
+                                            : "Complete your artist profile to get verified."}
+                                      </span>
+                                  </div>
+                              </Link>
                           )}
                       </div>
                   </CardContent>
@@ -280,43 +301,24 @@ const DashboardPage = () => {
         </TabsContent>
 
         {/* CONTENT TAB (Artworks/Events) */}
-        <TabsContent value="content" className="space-y-8">
-            {isArtist ? (
-                <>
-                    <div className="space-y-4">
-                         <div>
-                             <h2 className="text-xl font-semibold tracking-tight">Artworks</h2>
-                             <p className="text-sm text-muted-foreground">Manage your portfolio, update pricing, and track inventory.</p>
-                         </div>
-                        <ArtworkManager />
-                    </div>
+        {/* ARTWORKS TAB */}
+        {isArtist && (
+            <TabsContent value="artworks" className="space-y-6">
+                 <div>
+                     <h2 className="text-xl font-semibold tracking-tight">Artworks</h2>
+                     <p className="text-sm text-muted-foreground">Manage your portfolio, update pricing, and track inventory.</p>
+                 </div>
+                <ArtworkManager />
+            </TabsContent>
+        )}
 
-                    <Separator className="my-6" />
-
-                    <div className="space-y-4">
-                         <div>
-                             <h2 className="text-xl font-semibold tracking-tight">Events</h2>
-                             <p className="text-sm text-muted-foreground">Manage your exhibitions and upcoming events.</p>
-                         </div>
-                        <div className="p-4 border rounded-lg bg-muted/20">
-                           <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium">Event Management</p>
-                                    <p className="text-sm text-muted-foreground">Create and manage your events from the events page.</p>
-                                </div>
-                                <Button asChild variant="secondary">
-                                    <Link to="/events">Go to Events</Link>
-                                </Button>
-                           </div>
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <div className="space-y-6">
-                    <h2 className="text-xl font-semibold">Events You're Interested In</h2>
-                    <p className="text-muted-foreground">Events feature coming soon...</p>
-                </div>
-            )}
+        {/* EVENTS TAB */}
+        <TabsContent value="events" className="space-y-6">
+             <div>
+                 <h2 className="text-xl font-semibold tracking-tight">Events</h2>
+                 <p className="text-sm text-muted-foreground">{isArtist ? "Manage your exhibitions and upcoming events." : "Events you are attending."}</p>
+             </div>
+            <EventManager />
         </TabsContent>
 
         {/* SETTINGS TAB */}

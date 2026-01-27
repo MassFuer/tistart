@@ -148,9 +148,19 @@ const userSchema = new Schema(
     ],
     cart: [
       {
+        itemType: {
+          type: String,
+          enum: ["artwork", "ticket"],
+          default: "artwork",
+          required: true,
+        },
         artwork: {
           type: Schema.Types.ObjectId,
           ref: "Artwork",
+        },
+        event: {
+          type: Schema.Types.ObjectId,
+          ref: "Event",
         },
         quantity: {
           type: Number,

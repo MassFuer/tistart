@@ -22,6 +22,7 @@ import EventDetailPage from "./pages/EventDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ApplyArtistPage from "./pages/ApplyArtistPage";
+import PricingPage from "./pages/PricingPage";
 
 import ArtworkFormPage from "./pages/ArtworkFormPage";
 import EventFormPage from "./pages/EventFormPage";
@@ -203,6 +204,8 @@ function App() {
                     }
                   />
 
+                  <Route path="/pricing" element={<PricingPage />} />
+                  
                   {/* 404 */}
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>

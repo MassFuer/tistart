@@ -74,8 +74,22 @@ const eventSchema = new Schema(
     },
     attendees: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "User",
+        user: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+        status: {
+          type: String,
+          enum: ["pending", "confirmed", "cancelled"],
+          default: "confirmed",
+        },
+        ticketCode: {
+          type: String,
+        },
+        purchasedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     category: {

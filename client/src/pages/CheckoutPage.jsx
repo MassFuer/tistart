@@ -8,6 +8,8 @@ import api, { paymentsAPI } from "../services/api";
 import { toast } from "sonner";
 import Loading from "../components/common/Loading";
 import PaymentForm from "../components/payment/PaymentForm";
+import AddressForm from "../components/map/AddressForm";
+import LocationMap from "../components/map/LocationMap";
 import {
   MapPin,
   CreditCard,
@@ -81,14 +83,14 @@ const CheckoutPage = () => {
     setShippingAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  const totalPrice = cart.reduce(
-    (total, item) => total + (item.artwork?.price || 0) * item.quantity,
-    0,
-  );
+  const totalPrice = cart.reduce((total, item) => {
+    const product = item.itemType === 'ticket' ? item.event : item.artwork;
+    return total + (product?.price || 0) * item.quantity;
+  }, 0);
 
   // Step 1: Create order and get PaymentIntent
   const handleShippingSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (cart.length === 0) {
       toast.error("Cart is empty");
@@ -231,86 +233,65 @@ const CheckoutPage = () => {
             {/* MAIN FORM AREA */}
             <div className="flex-1 space-y-6">
                 {step === "shipping" ? (
-                   <Card>
-                       <CardHeader>
-                           <CardTitle className="flex items-center gap-2">
-                               <MapPin className="h-5 w-5" /> Shipping Address
-                           </CardTitle>
-                           <CardDescription>
-                               Where should we send your artwork?
-                           </CardDescription>
-                       </CardHeader>
-                       <CardContent>
-                           <form id="shipping-form" onSubmit={handleShippingSubmit} className="space-y-4">
-                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                   <div className="md:col-span-1">
-                                       <Label htmlFor="streetNum">Street Number</Label>
-                                       <Input 
-                                            id="streetNum" 
-                                            name="streetNum" 
-                                            value={shippingAddress.streetNum} 
-                                            onChange={handleChange} 
-                                            placeholder="123"
-                                            required
-                                        />
-                                   </div>
-                                   <div className="md:col-span-2">
-                                       <Label htmlFor="street">Street Name</Label>
-                                       <Input 
-                                            id="street" 
-                                            name="street" 
-                                            value={shippingAddress.street} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="Fuer Street"
-                                        />
-                                   </div>
-                               </div>
-                               
-                               <div className="grid grid-cols-2 gap-4">
-                                   <div className="grid gap-2">
-                                       <Label htmlFor="city">City</Label>
-                                       <Input 
-                                            id="city" 
-                                            name="city" 
-                                            value={shippingAddress.city} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="Marseille"
-                                        />
-                                   </div>
-                                    <div className="grid gap-2">
-                                       <Label htmlFor="zipCode">Zip Code</Label>
-                                       <Input 
-                                            id="zipCode" 
-                                            name="zipCode" 
-                                            value={shippingAddress.zipCode} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="13000"
-                                        />
-                                   </div>
-                               </div>
-                               
-                               <div className="grid gap-2">
-                                   <Label htmlFor="country">Country</Label>
-                                   <Input 
-                                        id="country" 
-                                        name="country" 
-                                        value={shippingAddress.country} 
-                                        onChange={handleChange} 
-                                        required 
-                                        placeholder="France"
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="h-5 w-5" /> Shipping Address
+                            </CardTitle>
+                            <CardDescription>
+                                Enter your delivery address for shipping and billing.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Address Form Column */}
+                                <div className="space-y-6">
+                                    <AddressForm
+                                        address={shippingAddress}
+                                        onChange={(newAddress) => setShippingAddress(prev => ({...prev, ...newAddress}))}
+                                        onGeocode={(location) => {
+                                            setShippingAddress(prev => ({
+                                                ...prev,
+                                                country: location.address ? location.address.split(",").pop().trim() : prev.country,
+                                                coordinates: [location.lng, location.lat]
+                                            }));
+                                        }}
+                                        showVenue={false}
                                     />
-                               </div>
-                           </form>
-                       </CardContent>
-                       <CardFooter>
-                           <Button type="submit" form="shipping-form" className="w-full" size="lg">
-                               Continue to Payment
-                           </Button>
-                       </CardFooter>
-                   </Card>
+                                </div>
+
+                                {/* Map Column */}
+                                <div className="h-[400px] w-full rounded-md overflow-hidden border">
+                                    <LocationMap 
+                                        coordinates={
+                                            shippingAddress.coordinates && shippingAddress.coordinates.length === 2
+                                            ? { lat: shippingAddress.coordinates[1], lng: shippingAddress.coordinates[0] }
+                                            : null
+                                        } 
+                                        interactive={true}
+                                        editable={true}
+                                        showSearch={true}
+                                        onLocationChange={(location) => {
+                                            setShippingAddress(prev => ({
+                                                ...prev,
+                                                coordinates: [location.lng, location.lat]
+                                            }));
+                                            if (location.address) {
+                                                // Optional: try to populate address fields from map search result
+                                                // This is a rough approximation as we get a full string
+                                                // For now, updating coordinates is the primary goal
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button onClick={handleShippingSubmit} className="w-full" size="lg">
+                                Continue to Payment
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 ) : (
                     <Card>
                         <CardHeader>
@@ -344,17 +325,21 @@ const CheckoutPage = () => {
                       <CardTitle>Order Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {cart.map((item) => (
+                      {cart.map((item) => {
+                           const product = item.itemType === 'ticket' ? item.event : item.artwork;
+                           if (!product) return null;
+                           return (
                            <div key={item._id} className="flex justify-between items-start text-sm">
                                 <div>
-                                    <p className="font-medium">{item.artwork?.title} <span className="text-muted-foreground">x{item.quantity}</span></p>
-                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{item.artwork?.artist?.artistInfo?.companyName || item.artwork?.artist?.lastName}</p>
+                                    <p className="font-medium">{product.title} <span className="text-muted-foreground">x{item.quantity}</span></p>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{product.artist?.artistInfo?.companyName || product.artist?.lastName}</p>
                                 </div>
                                 <p className="font-medium">
-                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format((item.artwork?.price || 0) * item.quantity)}
+                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format((product.price || 0) * item.quantity)}
                                 </p>
                            </div>
-                      ))}
+                           );
+                      })}
                       
                       <Separator />
                       

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { eventsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LocationDisplay from "../components/map/LocationDisplay";
@@ -17,7 +18,9 @@ import {
   CheckCircle2, 
   AlertCircle,
   ExternalLink,
-  Info
+  Info,
+  Loader2,
+  ShoppingCart
 } from "lucide-react";
 
 // Shadcn Components
@@ -54,6 +57,7 @@ const EventDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { addToCart } = useCart();
   const [event, setEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -84,6 +88,23 @@ const EventDetailPage = () => {
   const isAttending = event?.attendees?.some(id => id === user?._id || id?._id === user?._id);
   // Check if user is admin or owner
   const canManage = isAuthenticated && (user?.role === "admin" || user?._id === event?.artist?._id);
+
+  const handleBuyTicket = async () => {
+      if (!isAuthenticated) {
+          toast.error("Please login to purchase tickets");
+          navigate("/login");
+          return;
+      }
+      setIsJoining(true); // Reuse state for loading
+      try {
+          await addToCart({ eventId: event._id, quantity: 1 });
+          navigate("/cart");
+      } catch (error) {
+          console.error("Failed to add ticket to cart:", error);
+      } finally {
+          setIsJoining(false);
+      }
+  };
 
   const handleJoin = async () => {
     if (!isAuthenticated) return toast.error("Please login to join this event");
@@ -370,10 +391,17 @@ const EventDetailPage = () => {
                                     Event Ended
                                 </Button>
                             ) : (
-                                <Button onClick={handleJoin} className="w-full" size="lg" disabled={isJoining}>
-                                    {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    {isJoining ? "Joining..." : "Join Event"}
-                                </Button>
+                                event.price > 0 ? (
+                                    <Button onClick={handleBuyTicket} className="w-full" size="lg" disabled={isJoining}>
+                                        {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
+                                        {isJoining ? "Processing..." : "Buy Ticket"}
+                                    </Button>
+                                ) : (
+                                    <Button onClick={handleJoin} className="w-full" size="lg" disabled={isJoining}>
+                                        {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        {isJoining ? "Joining..." : "Join Event"}
+                                    </Button>
+                                )
                             )}
                        </div>
                    </CardContent>
