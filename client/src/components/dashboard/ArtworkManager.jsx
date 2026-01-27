@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { artworksAPI } from "../../services/api";
+import { artworksAPI, platformAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { 
@@ -51,24 +51,43 @@ import Loading from "../common/Loading";
 import EmptyState from "../common/EmptyState";
 import StatCard from "./StatCard";
 
-const ArtworkManager = () => {
+const ArtworkManager = ({ isAdmin = false }) => {
   const { user } = useAuth();
   const [artworks, setArtworks] = useState([]);
   const [kpis, setKpis] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Filtering & Sorting State
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
-  
+
   const [deleteId, setDeleteId] = useState(null);
 
   const fetchArtworks = async () => {
     setIsLoading(true);
     try {
-        const response = await artworksAPI.getArtistStats();
-        setArtworks(response.data.data);
-        setKpis(response.data.kpis);
+        if (isAdmin) {
+            // Admin: Fetch ALL artworks from the platform
+            const [artworksRes, statsRes] = await Promise.all([
+                artworksAPI.getAll({ limit: 100 }),
+                platformAPI.getStats("all")
+            ]);
+            setArtworks(artworksRes.data.data);
+            // Map platform stats to KPI format
+            const platformStats = statsRes.data.data;
+            setKpis({
+                totalRevenue: platformStats.orders?.totalRevenue || 0,
+                totalSold: platformStats.orders?.total || 0,
+                avgRating: "N/A",
+                totalArtworks: platformStats.artworks?.total || 0,
+                totalReviews: 0,
+            });
+        } else {
+            // Artist: Fetch only their own artworks with stats
+            const response = await artworksAPI.getArtistStats();
+            setArtworks(response.data.data);
+            setKpis(response.data.kpis);
+        }
     } catch (error) {
         console.error("Failed to fetch artworks:", error);
         toast.error("Failed to load artworks");
@@ -79,7 +98,7 @@ const ArtworkManager = () => {
 
   useEffect(() => {
     fetchArtworks();
-  }, []);
+  }, [isAdmin]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -168,10 +187,10 @@ const ArtworkManager = () => {
       <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search titles..." 
+          <Input
+            placeholder={isAdmin ? "Search all artworks..." : "Search titles..."}
             className="pl-8"
-            value={search}  
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
@@ -193,6 +212,7 @@ const ArtworkManager = () => {
                     Title {sortConfig.key === "title" && <ArrowUpDown className="ml-2 h-3 w-3" />}
                 </div>
               </TableHead>
+              {isAdmin && <TableHead>Artist</TableHead>}
               <TableHead className="cursor-pointer" onClick={() => handleSort("sales")}>
                  <div className="flex items-center">
                     Sales {sortConfig.key === "sales" && <ArrowUpDown className="ml-2 h-3 w-3" />}
@@ -216,13 +236,13 @@ const ArtworkManager = () => {
           <TableBody>
             {isLoading ? (
                <TableRow>
-                 <TableCell colSpan={8} className="h-24 text-center">
+                 <TableCell colSpan={isAdmin ? 9 : 8} className="h-24 text-center">
                     <Loading message="Loading artworks..." />
                  </TableCell>
                </TableRow>
             ) : filteredArtworks.length === 0 ? (
                <TableRow>
-                 <TableCell colSpan={8} className="h-32 text-center">
+                 <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                     <EmptyState message="No artworks found" />
                  </TableCell>
                </TableRow>
@@ -231,9 +251,9 @@ const ArtworkManager = () => {
                     <TableRow key={artwork._id}>
                         <TableCell>
                              <div className="h-12 w-12 rounded overflow-hidden bg-muted">
-                                <img 
-                                    src={artwork.images?.[0] || "/placeholder.jpg"} 
-                                    alt="" 
+                                <img
+                                    src={artwork.images?.[0] || "/placeholder.jpg"}
+                                    alt=""
                                     className="h-full w-full object-cover"
                                 />
                              </div>
@@ -244,6 +264,18 @@ const ArtworkManager = () => {
                                 <span className="text-xs text-muted-foreground">{formatPrice(artwork.price)}</span>
                             </div>
                         </TableCell>
+                        {isAdmin && (
+                            <TableCell>
+                                <Link
+                                    to={`/artists/${artwork.artist?._id}`}
+                                    className="text-sm hover:underline text-primary"
+                                >
+                                    {artwork.artist?.artistInfo?.companyName ||
+                                     `${artwork.artist?.firstName || ''} ${artwork.artist?.lastName || ''}`.trim() ||
+                                     'Unknown Artist'}
+                                </Link>
+                            </TableCell>
+                        )}
                         <TableCell>
                             <div className="flex flex-col">
                                 <span className="font-medium">{artwork.stats?.totalSold || 0}</span>
@@ -289,7 +321,7 @@ const ArtworkManager = () => {
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
+                                    <DropdownMenuItem
                                         className="text-destructive focus:text-destructive"
                                         onClick={() => setDeleteId(artwork._id)}
                                     >

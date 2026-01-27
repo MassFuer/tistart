@@ -127,8 +127,8 @@ const DashboardPage = () => {
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-[700px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="activity">{isArtist ? "Sales" : "Orders"}</TabsTrigger>
-          {isArtist && <TabsTrigger value="artworks">Artworks</TabsTrigger>}
-          <TabsTrigger value="events">Events</TabsTrigger>
+          {(isArtist || isAdmin) && <TabsTrigger value="artworks">Artworks</TabsTrigger>}
+          {(isArtist || isAdmin) && <TabsTrigger value="events">Events</TabsTrigger>}
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -302,32 +302,36 @@ const DashboardPage = () => {
 
         {/* CONTENT TAB (Artworks/Events) */}
         {/* ARTWORKS TAB */}
-        {isArtist && (
+        {(isArtist || isAdmin) && (
             <TabsContent value="artworks" className="space-y-6">
-                 <div>
-                     <h2 className="text-xl font-semibold tracking-tight">Artworks</h2>
-                     <p className="text-sm text-muted-foreground">Manage your portfolio, update pricing, and track inventory.</p>
+                 <div className="flex items-center gap-3">
+                     <div>
+                         <h2 className="text-xl font-semibold tracking-tight">Artworks</h2>
+                         <p className="text-sm text-muted-foreground">
+                             {isAdmin ? "Manage all platform artworks." : "Manage your portfolio, update pricing, and track inventory."}
+                         </p>
+                     </div>
+                     {isAdmin && <Badge variant="secondary">Admin View</Badge>}
                  </div>
-                <ArtworkManager />
+                <ArtworkManager isAdmin={isAdmin} />
             </TabsContent>
         )}
 
         {/* EVENTS TAB */}
-        <TabsContent value="events" className="space-y-6">
-            {isArtist ? (
-                <>
-                    <Separator className="my-6" />
-                    <div className="space-y-4">
-                        <EventManagement />
+        {(isArtist || isAdmin) && (
+            <TabsContent value="events" className="space-y-6">
+                <div className="flex items-center gap-3">
+                    <div>
+                        <h2 className="text-xl font-semibold tracking-tight">Events</h2>
+                        <p className="text-sm text-muted-foreground">
+                            {isAdmin ? "Manage all platform events." : "Manage your exhibitions and track attendees."}
+                        </p>
                     </div>
-                </>
-            ) : (
-                <div className="space-y-6">
-                    <h2 className="text-xl font-semibold">Events You're Interested In</h2>
-                    <p className="text-muted-foreground">Events feature coming soon...</p>
+                    {isAdmin && <Badge variant="secondary">Admin View</Badge>}
                 </div>
-            )}
-        </TabsContent>
+                <EventManagement isAdmin={isAdmin} />
+            </TabsContent>
+        )}
 
         {/* SETTINGS TAB */}
         <TabsContent value="settings">

@@ -41,7 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const EventManagement = () => {
+const EventManagement = ({ isAdmin = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
@@ -55,17 +55,22 @@ const EventManagement = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const fetchEvents = async () => {
     try {
-      // Assuming GET /api/events supports filtering by artist
-      // If not, we might need a specific endpoint like /api/events/mine
-      const response = await eventsAPI.getAll({ artist: user._id, limit: 100 });
-      setEvents(response.data.data);
+      if (isAdmin) {
+        // Admin: Fetch ALL events from the platform (no artist filter)
+        const response = await eventsAPI.getAll({ limit: 100 });
+        setEvents(response.data.data);
+      } else {
+        // Artist: Fetch only their own events
+        const response = await eventsAPI.getAll({ artist: user._id, limit: 100 });
+        setEvents(response.data.data);
+      }
     } catch (error) {
       console.error("Failed to fetch events", error);
-      toast.error("Failed to load your events");
+      toast.error("Failed to load events");
     } finally {
       setLoading(false);
     }
@@ -126,8 +131,10 @@ const EventManagement = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-           <h3 className="text-lg font-medium">Your Events</h3>
-           <p className="text-sm text-muted-foreground">Manage your exhibitions and view attendee lists.</p>
+           <h3 className="text-lg font-medium">{isAdmin ? "All Events" : "Your Events"}</h3>
+           <p className="text-sm text-muted-foreground">
+               {isAdmin ? "Manage all platform events and view attendee lists." : "Manage your exhibitions and view attendee lists."}
+           </p>
         </div>
         <Button onClick={() => navigate("/events/new")}>
             <Plus className="mr-2 h-4 w-4" /> Create Event
@@ -139,6 +146,7 @@ const EventManagement = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Event Name</TableHead>
+              {isAdmin && <TableHead>Organizer</TableHead>}
               <TableHead>Date</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Attendees</TableHead>
@@ -148,8 +156,8 @@ const EventManagement = () => {
           <TableBody>
             {events.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  You haven't created any events yet.
+                <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                  {isAdmin ? "No events found." : "You haven't created any events yet."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -165,6 +173,18 @@ const EventManagement = () => {
                           </Link>
                       </div>
                   </TableCell>
+                  {isAdmin && (
+                      <TableCell>
+                          <Link
+                              to={`/artists/${event.artist?._id}`}
+                              className="text-sm hover:underline text-primary"
+                          >
+                              {event.artist?.artistInfo?.companyName ||
+                               `${event.artist?.firstName || ''} ${event.artist?.lastName || ''}`.trim() ||
+                               'Unknown Organizer'}
+                          </Link>
+                      </TableCell>
+                  )}
                   <TableCell>
                       <div className="flex flex-col text-sm">
                           <span className="flex items-center gap-1">
@@ -235,27 +255,49 @@ const EventManagement = () => {
                       </div>
                   ) : (
                       <div className="space-y-4">
-                          {attendees.map((attendee) => (
-                              <div key={attendee._id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                                  <div className="flex items-center gap-3">
-                                      <Avatar>
-                                          <AvatarImage src={attendee.profilePicture} />
-                                          <AvatarFallback>{attendee.firstName?.[0]}</AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                          <p className="font-medium text-sm">{attendee.firstName} {attendee.lastName}</p>
-                                          <p className="text-xs text-muted-foreground">{attendee.email}</p>
+                          {attendees.map((attendee) => {
+                              // API returns { user: {...}, status: "confirmed" }
+                              // Handle case where user might be null (deleted user)
+                              const user = attendee.user;
+                              
+                              if (!user) {
+                                  return (
+                                      <div key={attendee._id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                                          <div className="flex items-center gap-3">
+                                              <Avatar>
+                                                  <AvatarFallback>?</AvatarFallback>
+                                              </Avatar>
+                                              <div>
+                                                  <p className="font-medium text-sm text-muted-foreground">Unknown User</p>
+                                                  <p className="text-xs text-muted-foreground">User may have been deleted</p>
+                                              </div>
+                                          </div>
                                       </div>
+                                  );
+                              }
+
+                              return (
+                                  <div key={user._id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                                      <div className="flex items-center gap-3">
+                                          <Avatar>
+                                              <AvatarImage src={user.profilePicture} />
+                                              <AvatarFallback>{user.firstName?.[0] || "?"}</AvatarFallback>
+                                          </Avatar>
+                                          <div>
+                                              <p className="font-medium text-sm">{user.firstName} {user.lastName}</p>
+                                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                                          </div>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleMessageAttendee(user)}
+                                      >
+                                          <MessageCircle className="h-4 w-4" />
+                                      </Button>
                                   </div>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleMessageAttendee(attendee)}
-                                  >
-                                      <MessageCircle className="h-4 w-4" />
-                                  </Button>
-                              </div>
-                          ))}
+                              );
+                          })}
                       </div>
                   )}
               </div>
