@@ -214,7 +214,7 @@ const EventDetailPage = () => {
        </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           {/* MAIN CONTENT */}
+           {/* LEFT COLUMN - PART 1 (About) */}
            <div className="lg:col-span-2 space-y-8">
                {/* About */}
                <section>
@@ -227,14 +227,178 @@ const EventDetailPage = () => {
                </section>
 
                 <Separator />
+           </div>
 
+           {/* SIDEBAR (Registration & Manage) */}
+           {/* Mobile: 2nd position. Desktop: Right column spanning 2 rows */}
+           <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2 space-y-6">
+                <div className="sticky top-24 space-y-6">
+                    {/* Registration Card */}
+                   <Card className="border-0 bg-muted/30 shadow-xl z-20">
+                       <CardHeader>
+                           <CardTitle>Registration</CardTitle>
+                           <CardDescription>Secure your spot for this event</CardDescription>
+                       </CardHeader>
+                       <CardContent className="space-y-6">
+                           <div className="flex justify-between items-end">
+                               <div>
+                                   <p className="text-sm text-muted-foreground">Price</p>
+                                   <p className="text-3xl font-bold text-foreground">{formatPrice(event.price)}</p>
+                               </div>
+                               <div className="text-right">
+                                   <p className="text-sm text-muted-foreground mb-1">Capacity</p>
+                                   <div className="flex items-center gap-2">
+                                       <Users className="h-4 w-4" />
+                                       <span className="font-semibold">
+                                            {event.maxCapacity ? `${event.currentAttendees} / ${event.maxCapacity}` : "Unlimited"}
+                                       </span>
+                                   </div>
+                               </div>
+                           </div>
+
+                           {event.maxCapacity > 0 && (
+                               <div className="space-y-1">
+                                   <Progress value={progress} className="h-2" />
+                                   <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}% full</p>
+                               </div>
+                           )}
+
+                           <div className="pt-2">
+                                {!isAuthenticated ? (
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-center text-muted-foreground">Please login to register.</p>
+                                        <Button asChild className="w-full">
+                                            <Link to="/login">Login to Join</Link>
+                                        </Button>
+                                    </div>
+                                ) : isAttending ? (
+                                    <div className="space-y-3">
+                                         <div className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-md flex items-center justify-center gap-2 font-medium border border-green-200 dark:border-green-900">
+                                             <CheckCircle2 className="h-5 w-5" /> You are registered
+                                         </div>
+                                         <AlertDialog>
+                                             <AlertDialogTrigger asChild>
+                                                 <Button variant="outline" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10" disabled={isJoining || isPast}>
+                                                     Cancel Registration
+                                                 </Button>
+                                             </AlertDialogTrigger>
+                                             <AlertDialogContent>
+                                                 <AlertDialogHeader>
+                                                     <AlertDialogTitle>Cancel Registration?</AlertDialogTitle>
+                                                     <AlertDialogDescription>
+                                                         This action cannot be undone. You will lose your spot in the event.
+                                                     </AlertDialogDescription>
+                                                 </AlertDialogHeader>
+                                                 <AlertDialogFooter>
+                                                     <AlertDialogCancel>Go Back</AlertDialogCancel>
+                                                     <AlertDialogAction onClick={handleLeave} className="bg-destructive hover:bg-destructive/90">Yes, Cancel</AlertDialogAction>
+                                                 </AlertDialogFooter>
+                                             </AlertDialogContent>
+                                         </AlertDialog>
+                                    </div>
+                                ) : isFull ? (
+                                    <Button className="w-full" variant="secondary" disabled>
+                                        Sold Out
+                                    </Button>
+                                ) : isPast ? (
+                                    <Button className="w-full" variant="secondary" disabled>
+                                        Event Ended
+                                    </Button>
+                                ) : (
+                                    event.price > 0 ? (
+                                        <Button onClick={handleBuyTicket} className="w-full" size="lg" disabled={isJoining}>
+                                            {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
+                                            {isJoining ? "Processing..." : "Buy Ticket"}
+                                        </Button>
+                                    ) : (
+                                        <Button onClick={handleJoin} className="w-full" size="lg" disabled={isJoining}>
+                                            {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            {isJoining ? "Joining..." : "Join Event"}
+                                        </Button>
+                                    )
+                                )}
+                           </div>
+                       </CardContent>
+                       <CardFooter className="bg-muted/50 p-4 text-xs text-muted-foreground text-center">
+                            Typically replies within a few hours. Refunds available up to 24h before event.
+                       </CardFooter>
+                   </Card>
+                   
+                   {/* Admin Actions */}
+                   {canManage && (
+                       <Card className="bg-muted/30 border-0 shadow-md">
+                           <CardHeader>
+                               <CardTitle>Manage Event</CardTitle>
+                           </CardHeader>
+                           <CardContent className="space-y-3">
+                               <Button asChild variant="outline" className="w-full">
+                                   <Link to={`/events/${id}/edit`}>
+                                       <Edit className="mr-2 h-4 w-4" /> Edit Event
+                                   </Link>
+                               </Button>
+                               
+                               <Button variant="outline" className="w-full" onClick={toggleAttendees}>
+                                   <Users className="mr-2 h-4 w-4" /> {showAttendees ? "Hide" : "View"} Attendees
+                               </Button>
+
+                               <AlertDialog>
+                                     <AlertDialogTrigger asChild>
+                                         <Button variant="destructive" className="w-full">
+                                             <Trash2 className="mr-2 h-4 w-4" /> Delete Event
+                                         </Button>
+                                     </AlertDialogTrigger>
+                                     <AlertDialogContent>
+                                         <AlertDialogHeader>
+                                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                             <AlertDialogDescription>
+                                                 This action cannot be undone. This will permanently delete the event and remove all attendee data.
+                                             </AlertDialogDescription>
+                                         </AlertDialogHeader>
+                                         <AlertDialogFooter>
+                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                         </AlertDialogFooter>
+                                     </AlertDialogContent>
+                                 </AlertDialog>
+                               
+                               {showAttendees && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <h4 className="font-semibold mb-2 text-sm">Registered Users ({attendees.length})</h4>
+                                        {attendees.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">No attendees yet.</p>
+                                        ) : (
+                                            <ul className="space-y-3">
+                                                {attendees.map(att => (
+                                                    <li key={att._id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={att.profilePicture} />
+                                                            <AvatarFallback>{att.firstName?.[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1 overflow-hidden">
+                                                            <p className="text-sm font-medium truncate">{att.firstName} {att.lastName}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{att.email}</p>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                               )}
+                           </CardContent>
+                       </Card>
+                   )}
+                </div>
+           </div>
+
+           {/* LEFT COLUMN - PART 2 (Date & Location) */}
+           <div className="lg:col-span-2 space-y-8">
                {/* Date & Time */}
                <section>
                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                        <Calendar className="h-5 w-5" /> Date & Time
                    </h2>
                    <div className="grid gap-4 md:grid-cols-2">
-                       <Card className="bg-muted/30 border-0">
+                       <Card className="bg-muted/30 border-0 shadow-sm">
                            <CardContent className="p-4 flex items-center gap-4">
                                <div className="p-2 rounded-full bg-muted text-foreground">
                                    <Calendar className="h-6 w-6" />
@@ -246,7 +410,7 @@ const EventDetailPage = () => {
                                </div>
                            </CardContent>
                        </Card>
-                       <Card className="bg-muted/30 border-0">
+                       <Card className="bg-muted/30 border-0 shadow-sm">
                            <CardContent className="p-4 flex items-center gap-4">
                                <div className="p-2 rounded-full bg-muted text-foreground">
                                    <CheckCircle2 className="h-6 w-6" />
@@ -288,7 +452,7 @@ const EventDetailPage = () => {
                            </CardContent>
                        </Card>
                    ) : (
-                       <Card className="overflow-hidden">
+                       <Card className="overflow-hidden bg-muted/30 border-0 shadow-sm">
                            <CardContent className="p-0">
                                <LocationDisplay
                                   address={{
@@ -309,170 +473,12 @@ const EventDetailPage = () => {
                                   }
                                   showMap={true}
                                   height="350px"
-                                  layout="vertical"
+                                  layout="horizontal"
                                 />
                            </CardContent>
                        </Card>
                    )}
                </section>
-           </div>
-
-           {/* SIDEBAR */}
-           <div className="space-y-6">
-                {/* Registration Card */}
-               <Card className="sticky top-24 border-2 border-primary/10 shadow-lg">
-                   <CardHeader>
-                       <CardTitle>Registration</CardTitle>
-                       <CardDescription>Secure your spot for this event</CardDescription>
-                   </CardHeader>
-                   <CardContent className="space-y-6">
-                       <div className="flex justify-between items-end">
-                           <div>
-                               <p className="text-sm text-muted-foreground">Price</p>
-                               <p className="text-3xl font-bold text-foreground">{formatPrice(event.price)}</p>
-                           </div>
-                           <div className="text-right">
-                               <p className="text-sm text-muted-foreground mb-1">Capacity</p>
-                               <div className="flex items-center gap-2">
-                                   <Users className="h-4 w-4" />
-                                   <span className="font-semibold">
-                                       {event.maxCapacity ? `${event.currentAttendees} / ${event.maxCapacity}` : "Unlimited"}
-                                   </span>
-                               </div>
-                           </div>
-                       </div>
-
-                       {event.maxCapacity > 0 && (
-                           <div className="space-y-1">
-                               <Progress value={progress} className="h-2" />
-                               <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}% full</p>
-                           </div>
-                       )}
-
-                       <div className="pt-2">
-                            {!isAuthenticated ? (
-                                <div className="space-y-3">
-                                    <p className="text-sm text-center text-muted-foreground">Please login to register.</p>
-                                    <Button asChild className="w-full">
-                                        <Link to="/login">Login to Join</Link>
-                                    </Button>
-                                </div>
-                            ) : isAttending ? (
-                                <div className="space-y-3">
-                                     <div className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-md flex items-center justify-center gap-2 font-medium border border-green-200 dark:border-green-900">
-                                         <CheckCircle2 className="h-5 w-5" /> You are registered
-                                     </div>
-                                     <AlertDialog>
-                                         <AlertDialogTrigger asChild>
-                                             <Button variant="outline" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10" disabled={isJoining || isPast}>
-                                                 Cancel Registration
-                                             </Button>
-                                         </AlertDialogTrigger>
-                                         <AlertDialogContent>
-                                             <AlertDialogHeader>
-                                                 <AlertDialogTitle>Cancel Registration?</AlertDialogTitle>
-                                                 <AlertDialogDescription>
-                                                     This action cannot be undone. You will lose your spot in the event.
-                                                 </AlertDialogDescription>
-                                             </AlertDialogHeader>
-                                             <AlertDialogFooter>
-                                                 <AlertDialogCancel>Go Back</AlertDialogCancel>
-                                                 <AlertDialogAction onClick={handleLeave} className="bg-destructive hover:bg-destructive/90">Yes, Cancel</AlertDialogAction>
-                                             </AlertDialogFooter>
-                                         </AlertDialogContent>
-                                     </AlertDialog>
-                                </div>
-                            ) : isFull ? (
-                                <Button className="w-full" variant="secondary" disabled>
-                                    Sold Out
-                                </Button>
-                            ) : isPast ? (
-                                <Button className="w-full" variant="secondary" disabled>
-                                    Event Ended
-                                </Button>
-                            ) : (
-                                event.price > 0 ? (
-                                    <Button onClick={handleBuyTicket} className="w-full" size="lg" disabled={isJoining}>
-                                        {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
-                                        {isJoining ? "Processing..." : "Buy Ticket"}
-                                    </Button>
-                                ) : (
-                                    <Button onClick={handleJoin} className="w-full" size="lg" disabled={isJoining}>
-                                        {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        {isJoining ? "Joining..." : "Join Event"}
-                                    </Button>
-                                )
-                            )}
-                       </div>
-                   </CardContent>
-                   <CardFooter className="bg-muted/50 p-4 text-xs text-muted-foreground text-center">
-                        Typically replies within a few hours. Refunds available up to 24h before event.
-                   </CardFooter>
-               </Card>
-               
-               {/* Admin Actions */}
-               {canManage && (
-                   <Card>
-                       <CardHeader>
-                           <CardTitle>Manage Event</CardTitle>
-                       </CardHeader>
-                       <CardContent className="space-y-3">
-                           <Button asChild variant="outline" className="w-full">
-                               <Link to={`/events/${id}/edit`}>
-                                   <Edit className="mr-2 h-4 w-4" /> Edit Event
-                               </Link>
-                           </Button>
-                           
-                           <Button variant="outline" className="w-full" onClick={toggleAttendees}>
-                               <Users className="mr-2 h-4 w-4" /> {showAttendees ? "Hide" : "View"} Attendees
-                           </Button>
-
-                           <AlertDialog>
-                                 <AlertDialogTrigger asChild>
-                                     <Button variant="destructive" className="w-full">
-                                         <Trash2 className="mr-2 h-4 w-4" /> Delete Event
-                                     </Button>
-                                 </AlertDialogTrigger>
-                                 <AlertDialogContent>
-                                     <AlertDialogHeader>
-                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                         <AlertDialogDescription>
-                                             This action cannot be undone. This will permanently delete the event and remove all attendee data.
-                                         </AlertDialogDescription>
-                                     </AlertDialogHeader>
-                                     <AlertDialogFooter>
-                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                         <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                     </AlertDialogFooter>
-                                 </AlertDialogContent>
-                             </AlertDialog>
-                           
-                           {showAttendees && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <h4 className="font-semibold mb-2 text-sm">Registered Users ({attendees.length})</h4>
-                                    {attendees.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">No attendees yet.</p>
-                                    ) : (
-                                        <ul className="space-y-3">
-                                            {attendees.map(att => (
-                                                <li key={att._id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={att.profilePicture} />
-                                                        <AvatarFallback>{att.firstName?.[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1 overflow-hidden">
-                                                        <p className="text-sm font-medium truncate">{att.firstName} {att.lastName}</p>
-                                                        <p className="text-xs text-muted-foreground truncate">{att.email}</p>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                           )}
-                       </CardContent>
-                   </Card>
-               )}
            </div>
        </div>
     </div>
