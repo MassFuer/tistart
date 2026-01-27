@@ -11,6 +11,7 @@ const {
   uploadVideo,
   processAndUploadArtwork,
   processAndUploadVideo,
+  streamAndUploadVideo,
   checkStorageQuota,
   updateUserStorage,
   deleteFile,
@@ -444,9 +445,7 @@ router.post(
   "/:id/video",
   isAuthenticated,
   isVerifiedArtist,
-  uploadVideo.single("video"),
-  checkStorageQuota,
-  processAndUploadVideo,
+  streamAndUploadVideo,
   async (req, res, next) => {
     try {
       const artwork = await Artwork.findById(req.params.id);
@@ -479,8 +478,7 @@ router.post(
       };
       await artwork.save();
 
-      // Update storage tracking
-      await updateUserStorage(artwork.artist.toString(), req.uploadedVideo.size, "video");
+      // Storage tracking is handled by streamAndUploadVideo middleware
 
       res.status(200).json({ data: artwork });
     } catch (error) {

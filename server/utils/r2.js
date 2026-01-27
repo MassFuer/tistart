@@ -5,8 +5,10 @@ const {
   HeadObjectCommand,
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
+const { Upload } = require("@aws-sdk/lib-storage");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const multer = require("multer");
+const Busboy = require("busboy");
 const path = require("path");
 const crypto = require("crypto");
 const sharp = require("sharp");
@@ -35,7 +37,7 @@ const FILE_CONFIGS = {
   video: {
     allowedMimes: ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"],
     allowedExtensions: [".mp4", ".webm", ".mov", ".avi"],
-    maxSize: 500 * 1024 * 1024, // 500MB
+    maxSize: 2 * 1024 * 1024 * 1024, // 2GB
   },
   logo: {
     allowedMimes: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
@@ -220,6 +222,128 @@ const uploadProfile = createUploader("image", 1);
 const uploadEvent = createUploader("image", 1);
 const uploadLogo = createUploader("logo", 1);
 const uploadVideo = createUploader("video", 1);
+
+// Streaming Video Upload Middleware
+const streamAndUploadVideo = async (req, res, next) => {
+  try {
+    // 1. Check User and Quota (Early fail)
+    const User = require("../models/User.model");
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const currentUsage = user.storage?.totalBytes || 0;
+    const quota = user.storage?.quotaBytes || 5 * 1024 * 1024 * 1024; // 5GB default
+
+    // Approximate size check using Content-Length
+    const contentLength = parseInt(req.headers["content-length"] || "0", 10);
+    // Allow if content-length is missing (chunked) or within limits
+    // Note: Content-Length includes whole body, not just file, but good for upper bound check
+    if (contentLength > 0 && currentUsage + contentLength > quota) {
+      const usedGB = (currentUsage / (1024 * 1024 * 1024)).toFixed(2);
+      const quotaGB = (quota / (1024 * 1024 * 1024)).toFixed(2);
+      return res.status(400).json({
+         error: `Storage quota exceeded (estimated). Used: ${usedGB}GB / ${quotaGB}GB.`
+      });
+    }
+
+    const bb = Busboy({ headers: req.headers });
+    let uploadPromise = null;
+    let fileFound = false;
+
+    bb.on("file", (name, file, info) => {
+      const { filename, mimeType } = info;
+
+      // Only interested in the 'video' field
+      if (name !== "video") {
+        file.resume(); // Drain stream
+        return;
+      }
+
+      fileFound = true;
+
+      // Validate Mime Type
+      if (!FILE_CONFIGS.video.allowedMimes.includes(mimeType)) {
+        return next(new Error(`Invalid video type: ${mimeType}`));
+      }
+
+      // Generate Key
+      const folder = `videos/${req.user._id}`;
+      const videoKey = generateFilename(filename, folder);
+
+      // Start Streaming Upload to R2
+      const parallelUploads3 = new Upload({
+        client: r2Client,
+        params: {
+          Bucket: BUCKET_NAME,
+          Key: videoKey,
+          Body: file,
+          ContentType: mimeType,
+        },
+        leavePartsOnError: false, // Cleanup multipart upload on failure
+      });
+
+      uploadPromise = parallelUploads3.done().then((result) => {
+        // Result typically contains Location, Key, Bucket
+        // Note: result.Location might not be the public URL depending on S3 client config
+        // We construct the public URL manually to be consistent
+        const publicUrl = `${PUBLIC_URL}/${videoKey}`;
+
+        // Populate req.uploadedVideo
+        req.uploadedVideo = {
+            url: publicUrl,
+            key: videoKey,
+            // Size is not directly returned by Upload result in all cases,
+            // but we might get it if we inspect the response or trust content-length.
+            // For now, we might need to HEAD the object or use a pass-through stream to count bytes.
+            // However, doing a HEAD request is extra latency.
+            // Let's assume we can get it from result or we do a HEAD check.
+            mimeType: mimeType,
+        };
+        return req.uploadedVideo;
+      });
+    });
+
+    bb.on("field", (name, val, info) => {
+      // Collect other fields into req.body if needed
+      if (!req.body) req.body = {};
+      req.body[name] = val;
+    });
+
+    bb.on("close", async () => {
+      if (!fileFound) {
+        return res.status(400).json({ error: "No video file provided." });
+      }
+
+      try {
+        const uploadedVideo = await uploadPromise;
+
+        // Get actual size from R2 to update quota accurately
+        const fileInfo = await getFileInfo(uploadedVideo.key);
+        if (fileInfo) {
+            uploadedVideo.size = fileInfo.size;
+            await updateUserStorage(req.user._id, fileInfo.size, "video");
+        }
+
+        next();
+      } catch (err) {
+        console.error("Streaming upload failed:", err);
+        next(err);
+      }
+    });
+
+    bb.on("error", (err) => {
+        console.error("Busboy error:", err);
+        next(err);
+    });
+
+    req.pipe(bb);
+
+  } catch (error) {
+    next(error);
+  }
+};
 
 // Process and upload middleware for artwork images
 const processAndUploadArtwork = async (req, res, next) => {
@@ -500,6 +624,7 @@ module.exports = {
   processAndUploadEvent,
   processAndUploadLogo,
   processAndUploadVideo,
+  streamAndUploadVideo, // New streaming middleware
   checkStorageQuota,
   // Video-specific
   getSignedVideoUrl,
