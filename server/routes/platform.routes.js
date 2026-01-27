@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const PlatformSettings = require("../models/PlatformSettings.model");
+const PlatformStats = require("../models/PlatformStats.model");
 const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
 const Event = require("../models/Event.model");
@@ -100,6 +101,65 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
         break;
       default:
         dateFilter = null;
+    }
+
+    // Fetch cached stats for 'all' period
+    let cachedStats = null;
+    if (period === "all") {
+      let stats = await PlatformStats.getStats();
+
+      // Lazy Initialization if not yet synced
+      if (!stats.initialized) {
+        try {
+          const [
+            usersTotal,
+            usersArtists,
+            artworksTotal,
+            artworksForSale,
+            eventsTotal,
+            orderStats,
+          ] = await Promise.all([
+            User.countDocuments(),
+            User.countDocuments({ role: "artist" }),
+            Artwork.countDocuments(),
+            Artwork.countDocuments({ isForSale: true }),
+            Event.countDocuments(),
+            Order.aggregate([
+              { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+              {
+                $group: {
+                  _id: null,
+                  total: { $sum: 1 },
+                  revenue: { $sum: "$totalAmount" },
+                  fees: { $sum: "$platformFeeTotal" },
+                },
+              },
+            ]),
+          ]);
+
+          stats.users.total = usersTotal;
+          stats.users.artists = usersArtists;
+          stats.artworks.total = artworksTotal;
+          stats.artworks.forSale = artworksForSale;
+          stats.events.total = eventsTotal;
+
+          if (orderStats.length > 0) {
+            stats.orders.total = orderStats[0].total;
+            stats.orders.totalRevenue = orderStats[0].revenue;
+            stats.orders.totalPlatformFees = orderStats[0].fees;
+          }
+
+          stats.initialized = true;
+          await stats.save();
+        } catch (err) {
+          console.error("Failed to lazy initialize PlatformStats:", err);
+          // Continue without cache
+        }
+      }
+
+      if (stats.initialized) {
+        cachedStats = stats;
+      }
     }
 
     // Aggregation pipelines
@@ -299,35 +359,48 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
     res.status(200).json({
       data: {
         users: {
-          total: userStats[0].total[0]?.count || 0,
+          total: cachedStats ? cachedStats.users.total : userStats[0].total[0]?.count || 0,
           byRole: userStats[0].byRole,
           byArtistStatus: userStats[0].byArtistStatus,
           recentSignups: userStats[0].recentSignups[0]?.count || 0,
         },
         artworks: {
-          total: artworkStats[0].total[0]?.count || 0,
-          forSale: artworkStats[0].forSale[0]?.count || 0,
+          total: cachedStats ? cachedStats.artworks.total : artworkStats[0].total[0]?.count || 0,
+          forSale: cachedStats
+            ? cachedStats.artworks.forSale
+            : artworkStats[0].forSale[0]?.count || 0,
           byCategory: artworkStats[0].byCategory,
           totalValue: artworkStats[0].totalValue[0]?.total || 0,
         },
         events: {
-          total: eventStats[0].total[0]?.count || 0,
+          total: cachedStats ? cachedStats.events.total : eventStats[0].total[0]?.count || 0,
           upcoming: eventStats[0].upcoming[0]?.count || 0,
           byCategory: eventStats[0].byCategory,
           totalAttendees: eventStats[0].totalAttendees[0]?.total || 0,
         },
         orders: {
-          total: orderStats[0].total[0]?.count || 0,
+          total: cachedStats ? cachedStats.orders.total : orderStats[0].total[0]?.count || 0,
           byStatus: orderStats[0].byStatus,
-          totalRevenue: orderStats[0].totalRevenue[0]?.total || 0,
+          totalRevenue: cachedStats
+            ? cachedStats.orders.totalRevenue
+            : orderStats[0].totalRevenue[0]?.total || 0,
           recentOrders: orderStats[0].recentOrders[0]?.count || 0,
         },
-        commission: commissionStats[0] || {
-          totalPlatformFees: 0,
-          totalArtistEarnings: 0,
-          totalRevenue: 0,
-          orderCount: 0,
-        },
+        commission:
+          cachedStats && period === "all"
+            ? {
+                totalPlatformFees: cachedStats.orders.totalPlatformFees,
+                totalArtistEarnings:
+                  cachedStats.orders.totalRevenue - cachedStats.orders.totalPlatformFees,
+                totalRevenue: cachedStats.orders.totalRevenue,
+                orderCount: cachedStats.orders.total,
+              }
+            : commissionStats[0] || {
+                totalPlatformFees: 0,
+                totalArtistEarnings: 0,
+                totalRevenue: 0,
+                orderCount: 0,
+              },
         revenueByMonth,
         topArtists,
         topArtworks,

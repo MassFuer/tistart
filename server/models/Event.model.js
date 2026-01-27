@@ -221,6 +221,53 @@ eventSchema.index({ category: 1 });
 eventSchema.index({ isPublic: 1 });
 eventSchema.index({ "location.coordinates": "2dsphere" }); // Geospatial index
 
+// Flag new document for post-save hook
+eventSchema.pre("save", function (next) {
+  this.wasNew = this.isNew;
+  next();
+});
+
+eventSchema.post("save", async function (doc) {
+  try {
+    if (this.wasNew) {
+      const User = model("User");
+      const PlatformStats = require("./PlatformStats.model");
+
+      // Update Artist Stats
+      await User.findByIdAndUpdate(doc.artist, { $inc: { "stats.events": 1 } });
+
+      // Update Platform Stats
+      await PlatformStats.updateOne(
+        { _id: "global" },
+        { $inc: { "events.total": 1 } },
+        { upsert: true }
+      );
+    }
+  } catch (err) {
+    console.error("Error updating stats in Event post-save hook:", err);
+  }
+});
+
+eventSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    try {
+      const User = model("User");
+      const PlatformStats = require("./PlatformStats.model");
+
+      // Update Artist Stats
+      await User.findByIdAndUpdate(doc.artist, { $inc: { "stats.events": -1 } });
+
+      // Update Platform Stats
+      await PlatformStats.updateOne(
+        { _id: "global" },
+        { $inc: { "events.total": -1 } }
+      );
+    } catch (err) {
+      console.error("Error updating stats in Event post-delete hook:", err);
+    }
+  }
+});
+
 const Event = model("Event", eventSchema);
 
 module.exports = Event;

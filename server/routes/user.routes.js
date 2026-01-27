@@ -143,67 +143,91 @@ router.post(
 // GET /api/users/stats - Get user statistics for dashboard
 router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const role = req.user.role;
+    const user = req.user;
+    const role = user.role;
+    let userStats = user.stats;
+
+    // Lazy Migration / Fallback: If stats are missing or not initialized
+    if (!userStats || !userStats.initialized) {
+      const userId = user._id;
+
+      const [artworksCount, eventsCount, ordersCount, salesCount, ratingAgg] = await Promise.all([
+        Artwork.countDocuments({ artist: userId }),
+        mongoose.model("Event").countDocuments({ artist: userId }),
+        Order.countDocuments({ user: userId }),
+        Order.countDocuments({ "items.artist": userId }),
+        mongoose.model("Review").aggregate([
+          {
+            $lookup: {
+              from: "artworks",
+              localField: "artwork",
+              foreignField: "_id",
+              as: "artwork",
+            },
+          },
+          { $unwind: "$artwork" },
+          { $match: { "artwork.artist": userId } },
+          {
+            $group: {
+              _id: null,
+              avgRating: { $avg: "$rating" },
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+      ]);
+
+      const avgRating =
+        ratingAgg.length > 0 ? Math.round(ratingAgg[0].avgRating * 10) / 10 : 0;
+      const reviewCount = ratingAgg.length > 0 ? ratingAgg[0].count : 0;
+
+      userStats = {
+        initialized: true,
+        artworks: artworksCount,
+        events: eventsCount,
+        sales: salesCount,
+        orders: ordersCount,
+        avgRating,
+        reviewCount,
+        favorites: user.favorites ? user.favorites.length : 0,
+        attending: 0, // Placeholder, calculated below
+      };
+
+      // Asynchronously save calculated stats to user profile
+      User.findByIdAndUpdate(userId, { stats: userStats }).catch((err) =>
+        console.error("Lazy stats sync failed:", err)
+      );
+    }
+
     const stats = {
       isArtist: role === "artist" || role === "admin" || role === "superAdmin",
     };
 
     // Artist Stats
     if (stats.isArtist) {
-      const [artworksCount, eventsCount, salesCount] = await Promise.all([
-        Artwork.countDocuments({ artist: userId }),
-        mongoose.model("Event").countDocuments({ artist: userId }), 
-        Order.countDocuments({ "items.artist": userId, status: { $in: ["paid", "shipped", "delivered"] } })
-      ]);
+      // Use cached stats for performance where possible
+      stats.artworks = userStats.artworks;
+      stats.events = userStats.events;
+      stats.sales = userStats.sales;
+      stats.avgRating = userStats.avgRating;
+      stats.reviewCount = userStats.reviewCount;
 
-      // Calculate Total Revenue
+      // Calculate Total Revenue (not cached yet)
       const revenueAgg = await Order.aggregate([
-        { $match: { status: { $in: ["paid", "shipped", "delivered"] }, "items.artist": userId } },
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] }, "items.artist": user._id } },
         { $unwind: "$items" },
-        { $match: { "items.artist": userId } },
+        { $match: { "items.artist": user._id } },
         { $group: { _id: null, total: { $sum: "$items.artistEarnings" } } }
       ]);
-
-      stats.artworks = artworksCount;
-      stats.events = eventsCount;
-      stats.sales = salesCount;
       stats.revenue = revenueAgg.length > 0 ? Math.round(revenueAgg[0].total * 100) / 100 : 0;
-
-      // Calculate Average Rating across all artworks
-      const ratingAgg = await mongoose.model("Review").aggregate([
-        { 
-          $lookup: {
-            from: "artworks",
-            localField: "artwork",
-            foreignField: "_id",
-            as: "artwork"
-          }
-        },
-        { $unwind: "$artwork" },
-        { $match: { "artwork.artist": userId } },
-        {
-          $group: {
-            _id: null,
-            avgRating: { $avg: "$rating" },
-            count: { $sum: 1 }
-          }
-        }
-      ]);
-
-      stats.avgRating = ratingAgg.length > 0 ? Math.round(ratingAgg[0].avgRating * 10) / 10 : 0;
-      stats.reviewCount = ratingAgg.length > 0 ? ratingAgg[0].count : 0;
     }
 
-    // User Stats (Everyone has these)
-    const [ordersCount, attendingCount] = await Promise.all([
-      Order.countDocuments({ user: userId }),
-      mongoose.model("Event").countDocuments({ attendees: userId })
-    ]);
-
-    stats.orders = ordersCount;
+    // User Stats
+    stats.orders = userStats.orders;
     stats.favorites = req.user.favorites.length;
-    stats.attending = attendingCount;
+    
+    // Always calculate attending count via query as hooks don't track attendees array changes
+    stats.attending = await mongoose.model("Event").countDocuments({ attendees: user._id });
     
     // Storage & Plan Stats
     if (stats.isArtist) {
