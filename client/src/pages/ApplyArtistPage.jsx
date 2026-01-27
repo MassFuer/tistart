@@ -50,10 +50,10 @@ const ApplyArtistPage = () => {
   });
 
   // Redirect/Status View if already applied
-  if (user?.artistStatus !== "none") {
+  if (user?.artistStatus !== "none" && user?.artistStatus !== "incomplete") {
     return (
-      <div className="container max-w-2xl py-20 px-4">
-        <Card className="text-center shadow-lg border-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto max-w-2xl py-20 px-4">
+        <Card className="text-center shadow-lg border-0">
           <CardHeader>
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               {user?.artistStatus === "verified" ? (
@@ -142,9 +142,9 @@ const ApplyArtistPage = () => {
   };
 
   return (
-    <div className="container max-w-4xl py-12 px-4">
+    <div className="container mx-auto max-w-4xl py-12 px-4">
       <div className="mb-10 text-center space-y-4">
-        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Become an Artist</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Onboard as an Artist</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Join our curated community of creators. Fill out the application below to start exhibiting and selling your work to collectors worldwide.
         </p>

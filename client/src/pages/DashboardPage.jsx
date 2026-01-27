@@ -136,7 +136,7 @@ const DashboardPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-           {isArtist && (
+           {isArtist && user?.artistStatus === "verified" && (
              <>
                <Button asChild variant="outline">
                  <Link to="/artworks/new"><Plus className="mr-2 h-4 w-4" /> New Artwork</Link>
@@ -291,6 +291,8 @@ const DashboardPage = () => {
                                       <span>
                                           {user?.artistStatus === "pending" 
                                             ? "Application pending review." 
+                                            : user?.artistStatus === "incomplete"
+                                            ? "Complete your artist application."
                                             : "Complete your artist profile to get verified."}
                                       </span>
                                   </div>

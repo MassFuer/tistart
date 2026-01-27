@@ -56,6 +56,9 @@ const SignupPage = () => {
 
     try {
       const { confirmPassword, ...userData } = formData;
+      if (isArtistSignup) {
+          userData.intent = 'apply_artist';
+      }
       await signup(userData);
       setSignupSuccess(true);
       toast.success(

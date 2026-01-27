@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Ghost, ArrowLeft, RefreshCw } from "lucide-react";
+import WirePhysicsAnimation from "@/components/codepen-challenge/WirePhysicsAnimation";
 
 const NotFoundPage = () => {
   const [quote, setQuote] = useState("");
@@ -25,10 +26,12 @@ const NotFoundPage = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center space-y-8 animate-in fade-in zoom-in duration-500">
+    <div className="relative min-h-[70vh] flex flex-col items-center justify-center px-4 text-center space-y-8 animate-in fade-in zoom-in duration-500 overflow-hidden">
+      
+      <WirePhysicsAnimation />
 
       {/* EASTER EGG */}
-      <div className="mt-12 pt-8 border-t max-w-lg w-full">
+      <div className="mt-12 pt-8 border-t max-w-lg w-full relative z-10">
           <p className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">Wisdom from the Void (Yeezy)</p>
           <blockquote className="text-xl italic font-serif text-foreground/80 mb-6 min-h-[3rem]">
               "{quote}"
@@ -46,12 +49,12 @@ const NotFoundPage = () => {
       </div>
 
             
-      <div className="relative border-t pt-8 max-w-lg w-full flex justify-center">
+      <div className="relative border-t pt-8 max-w-lg w-full flex justify-center z-10">
         <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
         <Ghost className="h-32 w-32 text-primary  relative z-10 animate-bounce-slow" />
       </div>
 
-      <div className="space-y-4 max-w-md">
+      <div className="space-y-4 max-w-md relative z-10">
         <h1 className="text-8xl font-black tracking-tighter bg-gradient-to-br from-primary to-primary/50 bg-clip-text text-transparent select-none">
           404
         </h1>
@@ -61,7 +64,7 @@ const NotFoundPage = () => {
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 relative z-10">
         <Button asChild size="lg" className="gap-2">
             <Link to="/">
                 <ArrowLeft className="h-4 w-4" /> Back to Home
@@ -73,7 +76,6 @@ const NotFoundPage = () => {
             </Link>
         </Button>
       </div>
-
     </div>
   );
 };

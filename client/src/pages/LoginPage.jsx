@@ -36,7 +36,10 @@ const LoginPage = () => {
     try {
       await login(formData);
       toast.success("Welcome back!");
-      navigate("/");
+      
+      const searchParams = new URLSearchParams(window.location.search);
+      const next = searchParams.get("next");
+      navigate(next ? next : "/");
     } catch (error) {
       const message =
         error.response?.data?.message ||

@@ -38,8 +38,11 @@ function VerifyEmailPage() {
         toast.success("Email verified successfully!");
 
         // Redirect to login after 3 seconds
+        const searchParams = new URLSearchParams(window.location.search);
+        const next = searchParams.get("next");
+        
         setTimeout(() => {
-          navigate("/login");
+          navigate(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
         }, 3000);
       } catch (err) {
         console.error("Email verification error:", err);

@@ -40,7 +40,7 @@ router.post(
   ],
   async (req, res, next) => {
     try {
-      const { firstName, lastName, userName, email, password } = req.body;
+      const { firstName, lastName, userName, email, password, intent } = req.body;
 
       // Check if user already exists
       const existingUser = await User.findOne({
@@ -57,13 +57,16 @@ router.post(
       // Hash password
       const hashedPassword = await bcryptjs.hash(password, saltRounds);
 
-      // Create user instance to generate _id
+      // Create user instance
       const newUser = new User({
         firstName,
         lastName,
         userName: userName.toLowerCase(),
         email: email.toLowerCase(),
         password: hashedPassword,
+        // If intent is to apply as artist, set role to artist and status to incomplete
+        role: intent === 'apply_artist' ? 'artist' : 'user',
+        artistStatus: intent === 'apply_artist' ? 'incomplete' : 'none',
       });
 
       // Generate email verification token using the new user's _id
@@ -79,7 +82,12 @@ router.post(
       await newUser.save();
 
       // Send verification email
-      const verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+      let verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+      
+      // Append redirect intent if provided (e.g. for artist application)
+      if (intent === 'apply_artist') {
+          verificationLink += '?next=/apply-artist';
+      }
 
       try {
         await sendVerificationEmail(newUser.email, newUser.firstName, verificationLink);
@@ -319,7 +327,7 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
       req.body;
 
     // Check if user is already an artist or has pending application
-    if (req.user.artistStatus !== "none") {
+    if (req.user.artistStatus !== "none" && req.user.artistStatus !== "incomplete") {
       return res.status(400).json({
         error: `You already have an artist application with status: ${req.user.artistStatus}`,
       });
