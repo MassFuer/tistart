@@ -89,12 +89,13 @@ router.post(
           verificationLink += '?next=/apply-artist';
       }
 
-      try {
-        await sendVerificationEmail(newUser.email, newUser.firstName, verificationLink);
-      } catch (emailError) {
-        console.error("Failed to send verification email:", emailError);
-        // Continue even if email fails, user can request resend later
-      }
+      // Send verification email asynchronously (fire and forget)
+      // This prevents the signup process from hanging if the email service is slow/down
+      sendVerificationEmail(newUser.email, newUser.firstName, verificationLink)
+        .catch(emailError => {
+          console.error("Failed to send verification email:", emailError);
+          // Email failure shouldn't block signup success
+        });
 
       // Remove password from response
       const userResponse = {

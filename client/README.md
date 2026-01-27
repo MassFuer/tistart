@@ -20,7 +20,7 @@ npm install
 Create a `.env` file in the `client` directory:
 
 ```env
-VITE_API_URL=http://localhost:5005
+VITE_API_URL=http://localhost:5005 # On Netlify: https://tistart.onrender.com (No trailing slash)
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...  # Optional (for payments)
 ```
 

@@ -125,9 +125,7 @@ This project is licensed under the MIT License.
 
 ## Links
 
-> [!CAUTION]
-> project not deployed yet  
-
-- [Frontend](https://tistart.netlify.app/)
-- [Backend](https://tistart.onrender.com/)
-- [Database](https://www.mongodb.com/cloud/atlas)   
+- [Frontend (Live)](https://tistart.netlify.app/)
+- [Backend (API)](https://tistart.onrender.com/)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Database](https://www.mongodb.com/cloud/atlas)

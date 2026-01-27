@@ -39,13 +39,13 @@ R2_PUBLIC_URL=https://your-bucket.r2.dev
 
 # Email (Gmail SMTP)
 EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+EMAIL_PASS=your-app-password-no-spaces  # Use Google App Password (remove spaces!)
 
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-NODE_ENV=development
+NODE_ENV=development # Set to 'production' on Render
 ```
 
 ### Running Locally
