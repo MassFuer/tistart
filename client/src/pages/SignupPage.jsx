@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle2, User, Palette } from "lucide-react";
+import { CheckCircle2, User, Palette, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SignupPage = () => {
@@ -298,7 +298,14 @@ const SignupPage = () => {
             </div>
 
             <Button className="w-full" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : isArtistSignup ? "Continue to Step 2" : "Sign Up"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                isArtistSignup ? "Continue to Step 2" : "Sign Up"
+              )}
             </Button>
           </form>
 

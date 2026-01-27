@@ -15,6 +15,8 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ResendEmailPage from "./pages/ResendEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import GalleryPage from "./pages/GalleryPage";
 import ArtworkDetailPage from "./pages/ArtworkDetailPage";
 import EventsPage from "./pages/EventsPage";
@@ -68,6 +70,8 @@ function App() {
                     path="/verify-email/:token"
                     element={<VerifyEmailPage />}
                   />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                   <Route path="/resend-email" element={<ResendEmailPage />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/artworks/:id" element={<ArtworkDetailPage />} />
