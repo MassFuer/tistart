@@ -23,6 +23,13 @@ Nemesis is a full-stack art marketplace and community platform where:
 - **Unified Dashboards**: Tailored experiences for Artists (Analytics, Sales) and Collectors (Orders, Favorites).
 - **Role-Based Access**: User, Artist (verified), Admin, and SuperAdmin roles.
 
+## 🔄 Recent Updates (Merged Features)
+
+- **Frontend Refactoring**: Reduced code duplication across the client application.
+- **Enhanced Mobile UI/UX**: Improved dashboard responsiveness and introduced a streamlined `EventManagement` component.
+- **Security Improvements**: Hardened streaming upload endpoints.
+- **Optimized Stats**: Improved caching and calculation strategies for user and artist statistics (including on-the-fly revenue calculation).
+
 ## 🛠️ Tech Stack
 
 **Frontend:**

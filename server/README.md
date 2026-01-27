@@ -8,6 +8,8 @@ The backend API for Nemesis, built with **Express.js** and **MongoDB**.
 - Node.js (v18+)
 - MongoDB (Local or Atlas)
 - Cloudflare R2 Bucket (for image/video storage)
+    - "@aws-sdk/lib-storage": "^3.975.0"
+    - "@aws-sdk/s3-request-presigner": "^3.972.0"
 - Stripe Account (for payments)
 
 ### Installation
@@ -70,7 +72,7 @@ npm run seed
 - **Auth**: JWT-based authentication using HTTP-only cookies.
 - **Search**: N-gram based search optimization for titles and artist names.
 - **Storage**: Direct upload to R2/S3 using AWS SDK.
-- **Security**: Helmet, Rate Limiting, XSS Sanitzation, CORS.
+- **Security**: Helmet, Rate Limiting, XSS Sanitzation, CORS, Secure Streaming Uploads.
 
 ## 🔌 API Endpoints
 
