@@ -245,7 +245,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
                 {isAdmin && (
                     <DropdownMenuItem asChild>
-                        <Link to="/admin">Admin Panel</Link>
+                        <Link to="/admin"><ShieldAlert className="mr-2 h-4 w-4" /> Admin Panel</Link>
                     </DropdownMenuItem>
                 )}
                 

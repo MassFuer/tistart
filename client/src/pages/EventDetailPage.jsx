@@ -236,7 +236,7 @@ const EventDetailPage = () => {
                    <div className="grid gap-4 md:grid-cols-2">
                        <Card className="bg-muted/30 border-0">
                            <CardContent className="p-4 flex items-center gap-4">
-                               <div className="p-2 rounded-full bg-primary/10 text-primary">
+                               <div className="p-2 rounded-full bg-muted text-foreground">
                                    <Calendar className="h-6 w-6" />
                                </div>
                                <div>
@@ -248,7 +248,7 @@ const EventDetailPage = () => {
                        </Card>
                        <Card className="bg-muted/30 border-0">
                            <CardContent className="p-4 flex items-center gap-4">
-                               <div className="p-2 rounded-full bg-primary/10 text-primary">
+                               <div className="p-2 rounded-full bg-muted text-foreground">
                                    <CheckCircle2 className="h-6 w-6" />
                                </div>
                                <div>

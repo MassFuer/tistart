@@ -88,4 +88,13 @@
   }
 }
 
-/* Custom overwrites can go here */
+/* Custom overwrites */
+.leaflet-popup-content-wrapper, 
+.leaflet-popup-tip {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: hsl(var(--muted-foreground)) !important;
+}

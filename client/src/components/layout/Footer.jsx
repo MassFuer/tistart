@@ -28,24 +28,24 @@ const Footer = () => {
   return (
     <footer className="bg-muted/40 border-t mt-auto">
       <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center md:text-left">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-8 text-center md:text-left">
           
           {/* BRAND */}
-          <div className="space-y-4 flex flex-col items-center md:items-start">
-            <Link to="/" className="inline-block">
-                <span className="text-2xl font-bold text-foreground">
+          <div className="col-span-1 space-y-4 flex flex-col items-center md:items-start">
+            <Link to="/" className="inline-block" onClick={() => window.scrollTo(0, 0)}>
+                <span className="text-xl md:text-2xl font-bold text-foreground">
                   Nemesis
                 </span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto md:mx-0">
+            <p className="text-muted-foreground text-xs md:text-sm leading-relaxed max-w-xs mx-auto md:mx-0">
               The premier platform for discovering and collecting extraordinary artworks from talented artists worldwide.
             </p>
           </div>
 
           {/* LINKS */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground flex flex-col items-center md:items-start">
+          <div className="col-span-1 space-y-4">
+            <h4 className="font-semibold text-foreground text-sm md:text-base">Quick Links</h4>
+            <ul className="space-y-2 text-xs md:text-sm text-muted-foreground flex flex-col items-center md:items-start">
               <li>
                 <Link to="/gallery" className="hover:text-primary transition-colors flex items-center gap-2">
                   Gallery
@@ -70,26 +70,26 @@ const Footer = () => {
           </div>
 
           {/* CONTACT */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-foreground">Contact Us</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground flex flex-col items-center md:items-start">
-              <li className="flex items-center gap-3">
+          <div className="col-span-1 space-y-4">
+            <h4 className="font-semibold text-foreground text-sm md:text-base">Contact Us</h4>
+            <ul className="space-y-3 text-xs md:text-sm text-muted-foreground flex flex-col items-center md:items-start">
+              <li className="flex flex-col md:flex-row items-center gap-1 md:gap-3">
                 <Mail className="h-4 w-4 text-foreground shrink-0" />
-                <span>mass@fuer.fr</span>
+                <span className="break-all md:break-normal">mass@fuer.fr</span>
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex flex-col md:flex-row items-center gap-1 md:gap-3">
                 <Phone className="h-4 w-4 text-foreground shrink-0" />
                 <span>+33 (6) 03 77 41 72</span>
               </li>
-              <li className="flex items-center gap-3">
+              <li className="flex flex-col md:flex-row items-center gap-1 md:gap-3">
                 <MapPin className="h-4 w-4 text-foreground shrink-0" />
-                <span>13000 Marseille, France</span>
+                <span>Marseille, FR</span>
               </li>
             </ul>
           </div>
 
           {/* MAP */}
-          <div className="h-[200px] w-full rounded-xl overflow-hidden border bg-background shadow-sm">
+          <div className="col-span-3 md:col-span-1 h-[200px] w-full rounded-xl overflow-hidden border bg-background shadow-sm mb-4 md:mb-0 mt-4 md:mt-0">
              <MapContainer 
                 center={position} 
                 zoom={13} 
@@ -109,7 +109,7 @@ const Footer = () => {
                 />
                 <Marker position={position}>
                 <Popup>
-                    <div className="text-center p-1 text-black">
+                    <div className="text-center p-1 text-popover-foreground">
                         <b>Nemesis Studio</b><br />Marseille, FR
                     </div>
                 </Popup>
