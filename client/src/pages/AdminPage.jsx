@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { adminAPI, ordersAPI, platformAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
@@ -29,8 +29,10 @@ const AdminPage = () => {
   const [statsPeriod, setStatsPeriod] = useState("all");
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Tab State - synced with Shadcn Tabs
-  const [activeTab, setActiveTab] = useState("stats");
+  // Tab State - synced with Shadcn Tabs & URL
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabParam || "stats");
   
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -38,6 +40,19 @@ const AdminPage = () => {
   const isSuperAdmin = currentUser?.role === "superAdmin";
   const artistStatuses = ["none", "pending", "incomplete", "verified", "suspended"];
   const roles = isSuperAdmin ? ["user", "artist", "admin", "superAdmin"] : ["user", "artist", "admin"];
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  // Update URL when active tab changes
+  const handleTabChange = (val) => {
+    setActiveTab(val);
+    setSearchParams({ tab: val });
+  };
 
   // --- STATS LOGIC ---
   const fetchStats = async () => {
@@ -193,8 +208,8 @@ const AdminPage = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-[800px]">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
           <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
           <TabsTrigger value="users">Users & Artists</TabsTrigger>
           <TabsTrigger value="orders">Orders Management</TabsTrigger>
@@ -396,8 +411,8 @@ const AdminPage = () => {
           )}
         </TabsContent>
 
-        {/* --- USERS TAB --- */}
-        <TabsContent value="users" className="space-y-4">
+         {/* --- USERS TAB --- */}
+         <TabsContent value="users" className="space-y-4">
              <div className="flex items-center gap-4 bg-background p-4 rounded-lg border">
                  <Filter className="h-4 w-4 text-muted-foreground" />
                  <span className="text-sm font-medium">Filter by Status:</span>
@@ -430,8 +445,8 @@ const AdminPage = () => {
              ) : (
                  <Card>
                      <Table>
-                         <TableHeader>
-                             <TableRow>
+                         <TableHeader className="bg-muted/40">
+                             <TableRow className="border-b-0 hover:bg-transparent">
                                  <TableHead>User</TableHead>
                                  <TableHead>Role</TableHead>
                                  <TableHead>Status</TableHead>
@@ -448,7 +463,7 @@ const AdminPage = () => {
                                  </TableRow>
                              ) : (
                                  users.map((user) => (
-                                    <TableRow key={user._id}>
+                                    <TableRow key={user._id} className="border-b-0 hover:bg-muted/30">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
@@ -534,7 +549,7 @@ const AdminPage = () => {
 
         {/* --- THEME TAB --- */}
         <TabsContent value="theme">
-             <div className="max-w-2xl mx-auto">
+             <div className="w-full">
                  <ThemeEditor />
              </div>
         </TabsContent>
@@ -567,8 +582,8 @@ const AdminPage = () => {
              ) : (
                  <Card>
                      <Table>
-                         <TableHeader>
-                             <TableRow>
+                         <TableHeader className="bg-muted/40">
+                             <TableRow className="border-b-0 hover:bg-transparent">
                                  <TableHead>Order ID</TableHead>
                                  <TableHead>Customer</TableHead>
                                  <TableHead>Date</TableHead>
@@ -587,7 +602,7 @@ const AdminPage = () => {
                                  orders.map((order) => (
                                      <TableRow 
                                         key={order._id}
-                                        className="cursor-pointer hover:bg-muted/50"
+                                        className="cursor-pointer border-b-0 hover:bg-muted/30"
                                         onClick={() => setSelectedOrderId(order._id)}
                                      >
                                          <TableCell className="font-mono text-xs">{order._id.slice(-6).toUpperCase()}</TableCell>

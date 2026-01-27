@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowRight, Palette, ShieldCheck, Users } from "lucide-react"; // Icons
+import ArtworkCard from "../components/artwork/ArtworkCard";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -86,21 +87,21 @@ const HomePage = () => {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
                     <Palette className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Curated Excellence</h3>
                 <p className="text-muted-foreground">Hand-picked artworks from emerging and established talents worldwide.</p>
             </div>
             <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+               <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
                     <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Secure Collections</h3>
                 <p className="text-muted-foreground">Certified authenticity and secure transactions powered by Stripe.</p>
             </div>
             <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+               <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
                     <Users className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Vibrant Community</h3>
@@ -133,32 +134,9 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                className="h-full"
               >
-                <Link to={`/artworks/${artwork._id}`} className="block group h-full">
-                  <Card className="h-full overflow-hidden border-0 shadow-lg bg-card transition-all duration-300 hover:shadow-2xl">
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                        <img 
-                          src={artwork.images[0]} 
-                          alt={artwork.title}
-                          loading="lazy"
-                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                    </div>
-                    <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-2">
-                             <h3 className="font-bold text-xl line-clamp-1 group-hover:text-primary transition-colors">{artwork.title}</h3>
-                             <span className="font-semibold text-lg">{artwork.price}€</span>
-                        </div>
-                        <p className="text-muted-foreground mb-4">
-                          by {artwork.artist?.firstName} {artwork.artist?.lastName}
-                        </p>
-                        <span className="inline-flex px-3 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full capitalize">
-                            {artwork.category}
-                        </span>
-                    </CardContent>
-                  </Card>
-                </Link>
+                  <ArtworkCard artwork={artwork} showActions={false} />
               </motion.div>
             ))}
           </div>
@@ -206,11 +184,11 @@ const HomePage = () => {
                         </Card>
                     </>
                 ) : (
-                   <div className="col-span-1 md:col-span-2">
+                    <div className="col-span-1 md:col-span-2">
                         {user?.artistStatus === "none" && (
-                            <Card className="bg-primary-foreground text-primary">
+                            <Card className="bg-card border-primary/20 shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Become an Artist</CardTitle>
+                                    <CardTitle className="text-foreground">Become an Artist</CardTitle>
                                     <CardDescription>Share your creations with our global audience.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -221,17 +199,17 @@ const HomePage = () => {
                             </Card>
                         )}
                         {user?.artistStatus === "pending" && (
-                             <Card className="bg-yellow-500/20 border-yellow-400/50 text-white">
+                             <Card className="bg-yellow-500/10 border-yellow-500/50">
                                 <CardHeader>
-                                    <CardTitle>Application Pending</CardTitle>
-                                    <CardDescription className="text-white/80">We are reviewing your portfolio. Stay tuned!</CardDescription>
+                                    <CardTitle className="text-yellow-600 dark:text-yellow-400">Application Pending</CardTitle>
+                                    <CardDescription>We are reviewing your portfolio. Stay tuned!</CardDescription>
                                 </CardHeader>
                             </Card>
                         )}
                          {user?.artistStatus === "verified" && (
-                             <Card className="bg-primary-foreground text-primary">
+                             <Card className="bg-card border-primary/20 shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Welcome Back, {user.firstName}</CardTitle>
+                                    <CardTitle className="text-foreground">Welcome Back, {user.firstName}</CardTitle>
                                     <CardDescription>Ready to upload new masterpieces?</CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -241,7 +219,7 @@ const HomePage = () => {
                                 </CardContent>
                             </Card>
                         )}
-                   </div>
+                    </div>
                 )}
             </div>
         </div>

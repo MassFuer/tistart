@@ -7,30 +7,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RefreshCcw, Save } from "lucide-react";
 
 const ThemeEditor = () => {
   const { updateThemePreview, themeSettings } = useTheme();
-  const [primaryColor, setPrimaryColor] = useState("#000000");
+  
+  const [primaryColor, setPrimaryColor] = useState("#0f172a");
   const [radius, setRadius] = useState(0.5);
+  const [fontFamily, setFontFamily] = useState("Inter");
   const [isLoading, setIsLoading] = useState(false);
+
+  const fontOptions = [
+      { label: "Inter (Default)", value: "Inter" },
+      { label: "Manrope", value: "Manrope" },
+      { label: "Poppins", value: "Poppins" },
+      { label: "Roboto", value: "Roboto" },
+      { label: "System UI", value: "system-ui" },
+  ];
 
   // Helper: HSL string to Hex
   const hslToHex = (hslString) => {
       if (!hslString) return "#000000";
-      // Expect "h s% l%"
-      const [h, sStr, lStr] = hslString.split(" ");
-      if(!h || !sStr || !lStr) return "#000000";
+      const parts = hslString.replace(/,/g, "").split(" ").filter(Boolean);
+      if (parts.length < 3) return "#000000";
 
-      const s = parseInt(sStr) / 100;
-      const l = parseInt(lStr) / 100;
+      const h = parseFloat(parts[0]);
+      const s = parseFloat(parts[1]) / 100;
+      const l = parseFloat(parts[2]) / 100;
 
       let c = (1 - Math.abs(2 * l - 1)) * s,
           x = c * (1 - Math.abs(((h / 60) % 2) - 1)),
           m = l - c / 2,
-          r = 0,
-          g = 0,
-          b = 0;
+          r = 0, g = 0, b = 0;
 
       if (0 <= h && h < 60) { r = c; g = x; b = 0; }
       else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
@@ -43,16 +52,11 @@ const ThemeEditor = () => {
       g = Math.round((g + m) * 255).toString(16);
       b = Math.round((b + m) * 255).toString(16);
 
-      if (r.length === 1) r = "0" + r;
-      if (g.length === 1) g = "0" + g;
-      if (b.length === 1) b = "0" + b;
-
-      return "#" + r + g + b;
+      return "#" + (r.length===1?"0"+r:r) + (g.length===1?"0"+g:g) + (b.length===1?"0"+b:b);
   };
 
   // Helper: Hex to HSL string
   const hexToHSL = (H) => {
-    // Convert hex to RGB first
     let r = 0, g = 0, b = 0;
     if (H.length === 4) {
       r = "0x" + H[1] + H[1];
@@ -63,16 +67,11 @@ const ThemeEditor = () => {
       g = "0x" + H[3] + H[4];
       b = "0x" + H[5] + H[6];
     }
-    // Then to HSL
-    r /= 255;
-    g /= 255;
-    b /= 255;
+    r /= 255; g /= 255; b /= 255;
     let cmin = Math.min(r,g,b),
         cmax = Math.max(r,g,b),
         delta = cmax - cmin,
-        h = 0,
-        s = 0,
-        l = 0;
+        h = 0, s = 0, l = 0;
 
     if (delta === 0) h = 0;
     else if (cmax === r) h = ((g - b) / delta) % 6;
@@ -90,45 +89,113 @@ const ThemeEditor = () => {
     return `${h} ${s}% ${l}%`;
   };
 
-  // Initialize from context
+  // Helper: Calculate foreground (Black/White)
+  const calculateForeground = (h, s, l) => {
+      if (l > 60) return "222.2 84% 4.9%";
+      return "210 40% 98%";
+  };
+  const parseHSL = (hslString) => {
+     if (!hslString) return { h: 0, s: 0, l: 0 };
+     const parts = hslString.replace(/,/g, "").split(" ").filter(Boolean);
+     if (parts.length < 3) return { h: 0, s: 0, l: 0 };
+     return { h: parseFloat(parts[0]), s: parseFloat(parts[1]), l: parseFloat(parts[2]) };
+  };
+
+  // Initialize
   useEffect(() => {
-    if (themeSettings?.primary) {
-        try {
+    if (themeSettings) {
+        if (themeSettings.primary) {
             setPrimaryColor(hslToHex(themeSettings.primary));
-        } catch(e) {
-            console.error("Error parsing primary color", e);
         }
-    }
-    if (themeSettings?.radius) {
-        setRadius(parseFloat(themeSettings.radius) || 0.5);
+        if (themeSettings.radius) setRadius(parseFloat(themeSettings.radius) || 0.5);
+        if (themeSettings.fontFamily) setFontFamily(themeSettings.fontFamily);
     }
   }, [themeSettings]);
 
-  // Handle changes (Live Preview)
+  // Handle changes
   const handleColorChange = (e) => {
       const hex = e.target.value;
       setPrimaryColor(hex);
+      
       const hsl = hexToHSL(hex);
-      updateThemePreview({ ...themeSettings, primary: hsl, radius: `${radius}rem` });
+      const p = parseHSL(hsl);
+      const fg = calculateForeground(p.h, p.s, p.l);
+
+      // We ONLY update primary/radius/font preview
+      // We explicitly send empty cssVars to clear any previous clutter in preview
+      updateThemePreview({ 
+          ...themeSettings, 
+          primary: hsl, 
+          radius: `${radius}rem`, 
+          fontFamily,
+          cssVars: { "--primary-foreground": fg } 
+      });
   };
 
   const handleRadiusChange = (val) => {
       const r = val[0];
       setRadius(r);
-      updateThemePreview({ ...themeSettings, primary: hexToHSL(primaryColor), radius: `${r}rem` });
+      
+      const hsl = hexToHSL(primaryColor);
+      const p = parseHSL(hsl);
+      const fg = calculateForeground(p.h, p.s, p.l);
+
+      updateThemePreview({ 
+          ...themeSettings, 
+          primary: hsl,
+          radius: `${r}rem`, 
+          fontFamily,
+          cssVars: { "--primary-foreground": fg }
+      });
+  };
+
+  const handleFontChange = (val) => {
+      setFontFamily(val);
+      
+      const hsl = hexToHSL(primaryColor);
+      const p = parseHSL(hsl);
+      const fg = calculateForeground(p.h, p.s, p.l);
+
+      updateThemePreview({ 
+          ...themeSettings, 
+          primary: hsl,
+          radius: `${radius}rem`, 
+          fontFamily: val,
+          cssVars: { "--primary-foreground": fg }
+      });
   };
 
   const handleSave = async () => {
       setIsLoading(true);
       try {
+          const primaryHSL = hexToHSL(primaryColor);
+          const p = parseHSL(primaryHSL);
+          const fg = calculateForeground(p.h, p.s, p.l);
+
           const payload = {
               theme: {
-                  primary: hexToHSL(primaryColor),
-                  radius: `${radius}rem`
+                  primary: primaryHSL,
+                  radius: `${radius}rem`,
+                  fontFamily,
+                  // AGGRESSIVE CLEANUP: Explicitly set all known variable keys to null 
+                  // to force the backend/frontend to fallback to system defaults.
+                  // This assumes the backend supports partial updates or we are replacing the whole map.
+                  // If the backend merges, setting to null should delete the key in Mongoose Map.
+                  cssVars: {
+                      "--primary-foreground": fg,
+                      "--secondary": null, "--secondary-foreground": null,
+                      "--accent": null, "--accent-foreground": null,
+                      "--muted": null, "--muted-foreground": null,
+                      "--destructive": null, "--destructive-foreground": null,
+                      "--card": null, "--card-foreground": null,
+                      "--popover": null, "--popover-foreground": null,
+                      "--background": null, "--foreground": null,
+                      "--border": null, "--input": null, "--ring": null
+                  }
               }
           };
           await platformAPI.updateSettings(payload);
-          toast.success("Theme saved successfully!");
+          toast.success("Theme restored significantly! Please reload.");
       } catch (error) {
           console.error("Failed to save theme", error);
           toast.error("Failed to save theme changes.");
@@ -138,21 +205,30 @@ const ThemeEditor = () => {
   };
 
   const handleReset = () => {
-     // Default Shadcn values
-     const defaultPrimary = "#0f172a"; // approx for 240 5.9% 10%
+     const defaultPrimary = "#0f172a";
      setPrimaryColor(defaultPrimary);
      setRadius(0.5);
+     setFontFamily("Inter");
+     
      const hsl = hexToHSL(defaultPrimary);
-     updateThemePreview({ primary: "240 5.9% 10%", radius: "0.5rem" });
+     // Resetting sends clean state
+     updateThemePreview({ 
+         primary: hsl, 
+         radius: "0.5rem", 
+         fontFamily: "Inter",
+         cssVars: { "--primary-foreground": "210 40% 98%" }
+     });
   };
 
   return (
-    <Card>
+    <Card className="w-full">
         <CardHeader>
             <CardTitle>Theme Customization</CardTitle>
-            <CardDescription>Customize the look and feel of your platform. Changes apply live.</CardDescription>
+            <CardDescription>Customize the primary brand color and typography.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
+            
+            {/* Primary Color */}
             <div className="space-y-2">
                 <Label htmlFor="primary-color">Primary Brand Color</Label>
                 <div className="flex items-center gap-4">
@@ -166,39 +242,63 @@ const ThemeEditor = () => {
                     <Input
                         value={primaryColor}
                         onChange={handleColorChange}
-                        className="font-mono"
+                        className="font-mono text-sm w-32"
                     />
                 </div>
-                <p className="text-xs text-muted-foreground">Sets the --primary color variable.</p>
+                <p className="text-sm text-muted-foreground">
+                    This color will be used for main buttons, active states, and highlights.
+                </p>
             </div>
 
-            <div className="space-y-4">
-                <div className="flex justify-between">
+            <div className="h-px bg-border" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
                     <Label htmlFor="radius">Border Radius: {radius}rem</Label>
+                    <Slider
+                        id="radius"
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        value={[radius]}
+                        onValueChange={handleRadiusChange}
+                    />
                 </div>
-                <Slider
-                    id="radius"
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    value={[radius]}
-                    onValueChange={handleRadiusChange}
-                />
+
+                <div className="space-y-2">
+                    <Label htmlFor="font-family">Font Family</Label>
+                    <Select value={fontFamily} onValueChange={handleFontChange}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a font" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {fontOptions.map((font) => (
+                                <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                                    {font.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
-            <div className="p-4 border rounded-lg bg-muted/50">
-                <h4 className="text-sm font-medium mb-3">Preview Elements</h4>
-                <div className="flex flex-wrap gap-2">
-                    <Button>Primary Button</Button>
-                    <Button variant="secondary">Secondary</Button>
-                    <Button variant="outline">Outline</Button>
-                    <Button variant="destructive">Destructive</Button>
+            <div className="p-6 border rounded-lg bg-card text-card-foreground shadow-sm">
+                <h4 className="text-sm font-medium mb-4">Preview Elements</h4>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap gap-3">
+                        <Button>Primary Action</Button>
+                        <Button variant="secondary">Secondary</Button>
+                        <Button variant="outline">Outline</Button>
+                        <Button variant="destructive">Destructive</Button>
+                        <Button variant="ghost">Ghost</Button>
+                    </div>
                 </div>
             </div>
+
         </CardContent>
         <CardFooter className="flex justify-between">
             <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
-                <RefreshCcw className="mr-2 h-4 w-4" /> Reset
+                <RefreshCcw className="mr-2 h-4 w-4" /> Reset to Defaults
             </Button>
             <Button onClick={handleSave} disabled={isLoading}>
                 <Save className="mr-2 h-4 w-4" /> Save Changes

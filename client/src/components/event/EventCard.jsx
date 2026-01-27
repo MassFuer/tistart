@@ -64,6 +64,9 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
                 <Calendar className="mr-1 h-3 w-3" />
                 <span>{formatDate(event.startDateTime)} • {formatTime(event.startDateTime)}</span>
              </div>
+             <div className="font-bold text-lg text-foreground">
+                {formatPrice(event.price)}
+             </div>
         </div>
         <CardTitle className="text-xl line-clamp-1 leading-tight">
             <Link to={`/events/${event._id}`} className="hover:underline">
@@ -99,11 +102,7 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 flex justify-between items-center border-t bg-muted/20 mt-auto">
-        <div className="font-semibold text-primary">
-            {formatPrice(event.price)}
-        </div>
-        
+      <CardFooter className="p-4 flex justify-end items-center border-t bg-muted/20 mt-auto">
         {showActions ? (
            <div className="flex gap-2">
                <Button variant="ghost" size="icon" asChild>
@@ -118,7 +117,7 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
                )}
            </div>
         ) : (
-             <Button size="sm" asChild>
+             <Button size="sm" className="w-full" asChild>
                 <Link to={`/events/${event._id}`}>Details</Link>
              </Button>
         )}

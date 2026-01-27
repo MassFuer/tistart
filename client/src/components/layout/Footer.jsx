@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
+import { useTheme } from "../../context/ThemeContext";
+
 let DefaultIcon = L.icon({
     iconUrl: icon,
     shadowUrl: iconShadow,
@@ -19,22 +21,23 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const Footer = () => {
+  const { isDarkMode } = useTheme();
   const currentYear = new Date().getFullYear();
   const position = [43.2965, 5.3698]; // Marseille
 
   return (
     <footer className="bg-muted/40 border-t mt-auto">
       <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center md:text-left">
           
           {/* BRAND */}
-          <div className="space-y-4">
+          <div className="space-y-4 flex flex-col items-center md:items-start">
             <Link to="/" className="inline-block">
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold text-foreground">
                   Nemesis
                 </span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto md:mx-0">
               The premier platform for discovering and collecting extraordinary artworks from talented artists worldwide.
             </p>
           </div>
@@ -42,7 +45,7 @@ const Footer = () => {
           {/* LINKS */}
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-muted-foreground flex flex-col items-center md:items-start">
               <li>
                 <Link to="/gallery" className="hover:text-primary transition-colors flex items-center gap-2">
                   Gallery
@@ -69,17 +72,17 @@ const Footer = () => {
           {/* CONTACT */}
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Contact Us</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-3 text-sm text-muted-foreground flex flex-col items-center md:items-start">
               <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
+                <Mail className="h-4 w-4 text-foreground shrink-0" />
                 <span>mass@fuer.fr</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
+                <Phone className="h-4 w-4 text-foreground shrink-0" />
                 <span>+33 (6) 03 77 41 72</span>
               </li>
               <li className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-primary shrink-0" />
+                <MapPin className="h-4 w-4 text-foreground shrink-0" />
                 <span>13000 Marseille, France</span>
               </li>
             </ul>
@@ -95,12 +98,18 @@ const Footer = () => {
                 className="z-0"
              >
                 <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution={isDarkMode 
+                        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }
+                    url={isDarkMode 
+                        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                        : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    }
                 />
                 <Marker position={position}>
                 <Popup>
-                    <div className="text-center p-1">
+                    <div className="text-center p-1 text-black">
                         <b>Nemesis Studio</b><br />Marseille, FR
                     </div>
                 </Popup>
@@ -112,29 +121,31 @@ const Footer = () => {
         <Separator className="my-8" />
 
         {/* BOTTOM */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>
+        <div className="flex flex-col-reverse md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground">
+          <p className="text-center md:text-left">
             &copy; {currentYear} Nemesis. All rights reserved.
           </p>
           
-          <div className="flex gap-6">
-             <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-          </div>
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+             <div className="flex gap-6">
+                <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+                <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+             </div>
 
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 rounded-full h-9 w-9">
-                <Facebook className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 rounded-full h-9 w-9">
-                <Instagram className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 rounded-full h-9 w-9">
-                <Twitter className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 rounded-full h-9 w-9">
-                <Github className="h-4 w-4" />
-            </Button>
+             <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-primary-foreground rounded-full h-9 w-9">
+                    <Facebook className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-primary-foreground rounded-full h-9 w-9">
+                    <Instagram className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-primary-foreground rounded-full h-9 w-9">
+                    <Twitter className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-primary-foreground rounded-full h-9 w-9">
+                    <Github className="h-4 w-4" />
+                </Button>
+             </div>
           </div>
         </div>
       </div>

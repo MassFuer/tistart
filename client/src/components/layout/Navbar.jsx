@@ -85,7 +85,7 @@ const Navbar = () => {
       <NavLink 
         to="/" 
         className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
         onClick={handleNavClick}
       >
@@ -94,7 +94,7 @@ const Navbar = () => {
       <NavLink 
         to="/gallery" 
         className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
         onClick={handleNavClick}
       >
@@ -103,7 +103,7 @@ const Navbar = () => {
       <NavLink 
         to="/events" 
         className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
         onClick={handleNavClick}
       >
@@ -114,7 +114,7 @@ const Navbar = () => {
         <NavLink 
             to="/favorites" 
             className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+            `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
             }
             onClick={handleNavClick}
         >
@@ -124,7 +124,7 @@ const Navbar = () => {
       <NavLink 
         to="/pricing" 
         className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
         }
         onClick={handleNavClick}
       >
@@ -151,7 +151,7 @@ const Navbar = () => {
         </Link>
 
         {/* DESKTOP NAV - Center */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-8 text-sm">
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-12 text-sm">
           <NavItems />
         </nav>
 

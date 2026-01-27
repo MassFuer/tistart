@@ -329,7 +329,7 @@ const EventDetailPage = () => {
                        <div className="flex justify-between items-end">
                            <div>
                                <p className="text-sm text-muted-foreground">Price</p>
-                               <p className="text-3xl font-bold text-primary">{formatPrice(event.price)}</p>
+                               <p className="text-3xl font-bold text-foreground">{formatPrice(event.price)}</p>
                            </div>
                            <div className="text-right">
                                <p className="text-sm text-muted-foreground mb-1">Capacity</p>

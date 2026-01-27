@@ -42,10 +42,39 @@ export const ThemeProvider = ({ children }) => {
       if (theme.radius) {
           root.style.setProperty("--radius", theme.radius);
       }
+      
+      if (theme.fontFamily) {
+          // If system-ui is selected, use the standard system font stack
+          // Otherwise use the font name fallbacked to sans-serif
+          const fontValue = theme.fontFamily === 'system-ui' 
+            ? "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+            : `"${theme.fontFamily}", sans-serif`;
+            
+          root.style.setProperty("--font-sans", fontValue);
+      }
 
       if (theme.cssVars) {
+          const unsafeKeys = [
+              "--background", "--foreground", 
+              "--card", "--card-foreground",
+              "--popover", "--popover-foreground",
+              "--secondary", "--secondary-foreground",
+              "--muted", "--muted-foreground",
+              "--accent", "--accent-foreground",
+              "--destructive", "--destructive-foreground",
+              "--input", "--border", "--ring"
+          ];
+          // We decided to only allow BRAND colors for now to preserve dark mode integrity
+          // Or we can allow specific ones.
+          // The critical ones to block are background/foreground/card.
+          // Let's block the structural ones.
+          
+          const structuralKeys = ["--background", "--foreground", "--card", "--card-foreground", "--popover", "--popover-foreground"];
+
           Object.entries(theme.cssVars).forEach(([key, value]) => {
-              root.style.setProperty(key, value);
+              if (!structuralKeys.includes(key)) {
+                  root.style.setProperty(key, value);
+              }
           });
       }
   };

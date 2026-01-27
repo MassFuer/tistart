@@ -217,7 +217,7 @@ const ArtworkDetailPage = () => {
 
                 <div className="flex items-center justify-between">
                      <div className="flex items-end gap-3">
-                        <span className="text-3xl font-bold text-primary">
+                        <span className="text-3xl font-bold text-foreground">
                             {artwork.isForSale ? formatPrice(artwork.price) : "N/A"}
                         </span>
                          {artwork.isForSale && artwork.originalPrice && artwork.price < artwork.originalPrice && (
