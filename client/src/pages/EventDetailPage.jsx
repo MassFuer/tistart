@@ -186,9 +186,9 @@ const EventDetailPage = () => {
   const progress = event.maxCapacity > 0 ? (event.currentAttendees / event.maxCapacity) * 100 : 0;
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen max-w-6xl">
+    <div className="container mx-auto px-0 sm:px-4 py-4 sm:py-8 min-h-screen max-w-6xl">
        {/* Hero Section */}
-       <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden mb-8 shadow-lg border bg-muted">
+       <div className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] sm:rounded-xl overflow-hidden mb-6 sm:mb-8 shadow-lg sm:border bg-muted">
            {event.image ? (
                <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
            ) : (
@@ -213,9 +213,9 @@ const EventDetailPage = () => {
             </div>
        </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 px-4 sm:px-0">
            {/* LEFT COLUMN - PART 1 (About) */}
-           <div className="lg:col-span-2 space-y-8">
+           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
                {/* About */}
                <section>
                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -391,7 +391,7 @@ const EventDetailPage = () => {
            </div>
 
            {/* LEFT COLUMN - PART 2 (Date & Location) */}
-           <div className="lg:col-span-2 space-y-8">
+           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
                {/* Date & Time */}
                <section>
                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -481,6 +481,47 @@ const EventDetailPage = () => {
                </section>
            </div>
        </div>
+
+       {/* Mobile Sticky Action Bar */}
+       {!canManage && !isPast && !isFull && (
+         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t shadow-lg sm:hidden z-50">
+           <div className="flex items-center gap-3">
+             <div className="flex-shrink-0">
+               <p className="text-lg font-bold">{formatPrice(event.price)}</p>
+             </div>
+             <div className="flex-1">
+               {!isAuthenticated ? (
+                 <Button asChild className="w-full">
+                   <Link to="/login">Login to Join</Link>
+                 </Button>
+               ) : isAttending ? (
+                 <Button variant="outline" className="w-full text-green-600" disabled>
+                   <CheckCircle2 className="mr-2 h-4 w-4" /> Registered
+                 </Button>
+               ) : event.price > 0 ? (
+                 <Button onClick={handleBuyTicket} className="w-full" disabled={isJoining}>
+                   {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
+                   Buy Ticket
+                 </Button>
+               ) : (
+                 <Button onClick={handleJoin} className="w-full" disabled={isJoining}>
+                   {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                   Join Event
+                 </Button>
+               )}
+             </div>
+             <Button variant="outline" size="icon" onClick={() => {
+               navigator.clipboard.writeText(window.location.href);
+               toast.success("Link copied to clipboard");
+             }}>
+               <Share2 className="h-5 w-5" />
+             </Button>
+           </div>
+         </div>
+       )}
+
+       {/* Bottom padding for sticky bar */}
+       <div className="h-20 sm:hidden" />
     </div>
   );
 };

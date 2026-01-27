@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Calendar, MapPin, Users, Edit, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Users, Edit, Trash2, Ticket } from "lucide-react";
 
 import {
   Card,
@@ -102,24 +102,32 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 flex justify-end items-center border-t bg-muted/20 mt-auto">
+      <CardFooter className="p-2.5 md:p-4 flex gap-1.5 md:gap-2 border-t bg-muted/20 mt-auto">
         {showActions ? (
-           <div className="flex gap-2">
-               <Button variant="ghost" size="icon" asChild>
+           <>
+               <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
                    <Link to={`/events/${event._id}/edit`}>
-                       <Edit className="h-4 w-4" />
+                       <Edit className="h-3 w-3 md:mr-1.5" /> <span className="hidden md:inline">Edit</span>
                    </Link>
                </Button>
                {onDelete && (
-                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => onDelete(event._id)}>
-                       <Trash2 className="h-4 w-4" />
+                   <Button variant="destructive" size="sm" className="h-8 px-2.5" onClick={() => onDelete(event._id)}>
+                       <Trash2 className="h-3 w-3" />
                    </Button>
                )}
-           </div>
+           </>
         ) : (
-             <Button size="sm" className="w-full" asChild>
-                <Link to={`/events/${event._id}`}>Details</Link>
-             </Button>
+           <>
+               <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
+                   <Link to={`/events/${event._id}`}>View</Link>
+               </Button>
+               <Button size="sm" className="flex-1 h-8 text-xs" asChild disabled={isFull}>
+                   <Link to={`/events/${event._id}`}>
+                       <Ticket className="h-3 w-3 md:mr-1.5" /> <span className="hidden md:inline">{isFull ? "Sold Out" : "Register"}</span>
+                       <span className="md:hidden">{isFull ? "Full" : "Register"}</span>
+                   </Link>
+               </Button>
+           </>
         )}
       </CardFooter>
     </Card>

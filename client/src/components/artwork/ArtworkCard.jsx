@@ -92,78 +92,65 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
              )}
         </Link>
 
-        <CardContent className="flex-1 p-3 md:p-4">
-             <div className="flex flex-col md:flex-row md:justify-between items-start gap-1 md:gap-2 mb-2">
-                 <div className="min-w-0 w-full">
-                     <h3 className="font-semibold text-base md:text-lg leading-tight truncate" title={artwork.title}>
-                         <Link to={`/artworks/${artwork._id}`} className="hover:underline hover:text-primary transition-colors">
-                             {artwork.title}
+        <CardContent className="flex-1 p-2.5 md:p-4">
+             <div className="space-y-1">
+                 <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2" title={artwork.title}>
+                     <Link to={`/artworks/${artwork._id}`} className="hover:underline hover:text-primary transition-colors">
+                         {artwork.title}
+                     </Link>
+                 </h3>
+                 <p className="text-xs text-muted-foreground truncate">
+                     {artwork.artist?.artistInfo?.companyName ? (
+                         <Link to={`/artists/${artwork.artist._id}`} className="hover:underline hover:text-foreground transition-colors">
+                             {artwork.artist.artistInfo.companyName}
                          </Link>
-                     </h3>
-                     <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5 md:mt-1">
-                         {artwork.artist?.artistInfo?.companyName ? (
-                             <Link to={`/artists/${artwork.artist._id}`} className="hover:underline hover:text-foreground transition-colors">
-                                 {artwork.artist.artistInfo.companyName}
-                             </Link>
-                         ) : (
-                             <Link to={`/artists/${artwork.artist?._id}`} className="hover:underline hover:text-foreground transition-colors">
-                                 {artwork.artist?.firstName} {artwork.artist?.lastName}
-                             </Link>
-                         )}
-                     </p>
-                 </div>
-                 <div className="text-left md:text-right flex-shrink-0 mt-1 md:mt-0">
-                     <div className="font-bold text-base md:text-lg">{formatPrice(artwork.price)}</div>
-                     {isSale && (
-                         <div className="text-[10px] md:text-xs text-muted-foreground line-through">
-                             {formatPrice(artwork.originalPrice)}
-                         </div>
+                     ) : (
+                         <Link to={`/artists/${artwork.artist?._id}`} className="hover:underline hover:text-foreground transition-colors">
+                             {artwork.artist?.firstName} {artwork.artist?.lastName}
+                         </Link>
                      )}
+                 </p>
+                 <div className="flex items-center justify-between pt-1">
+                     <div>
+                         <span className="font-bold text-sm md:text-base">{formatPrice(artwork.price)}</span>
+                         {isSale && (
+                             <span className="text-[10px] ml-1.5 text-muted-foreground line-through">
+                                 {formatPrice(artwork.originalPrice)}
+                             </span>
+                         )}
+                     </div>
+                     <div className="flex items-center text-yellow-500">
+                         <Star className="h-3 w-3 fill-current" />
+                         <span className="text-[10px] font-medium ml-0.5 text-foreground">
+                             {artwork.averageRating > 0 ? artwork.averageRating.toFixed(1) : "New"}
+                         </span>
+                     </div>
                  </div>
-             </div>
-             
-             <div className="flex items-center gap-2 mt-2 md:mt-3">
-                 <div className="flex items-center text-yellow-500">
-                     <Star className="h-3 w-3 fill-current" />
-                     <span className="text-[10px] md:text-xs font-medium ml-1 text-foreground">
-                         {artwork.averageRating > 0 ? (
-                            <>
-                                {artwork.averageRating.toFixed(1)} 
-                                <span className="text-muted-foreground ml-1">({artwork.numOfReviews})</span>
-                            </>
-                         ) : "New"}
-                     </span>
-                 </div>
-                 <span className="text-[10px] md:text-xs text-muted-foreground">•</span>
-                 <span className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide truncate max-w-[80px] md:max-w-none">
-                     {artwork.category}
-                 </span>
              </div>
         </CardContent>
 
-        <CardFooter className="p-3 pt-0 md:p-4 md:pt-0 gap-2">
+        <CardFooter className="p-2.5 pt-0 md:p-4 md:pt-0 flex gap-1.5 md:gap-2">
              {showActions && isOwner ? (
                  <>
-                    <Button variant="outline" size="sm" className="flex-1 h-8 md:h-9 text-xs md:text-sm" asChild>
+                    <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
                         <Link to={`/artworks/${artwork._id}/edit`}>
-                            <Pencil className="h-3 w-3 mr-2" /> Edit
+                            <Pencil className="h-3 w-3 md:mr-1.5" /> <span className="hidden md:inline">Edit</span>
                         </Link>
                     </Button>
                     {onDelete && (
-                        <Button variant="destructive" size="sm" className="h-8 md:h-9" onClick={() => onDelete(artwork._id)}>
+                        <Button variant="destructive" size="sm" className="h-8 px-2.5" onClick={() => onDelete(artwork._id)}>
                              <Trash2 className="h-3 w-3" />
                         </Button>
                     )}
                  </>
              ) : (
                  <>
-                     <Button variant="outline" size="default" className="flex-1 h-8 md:h-10 text-xs md:text-sm" asChild>
-                         <Link to={`/artworks/${artwork._id}`}>Details</Link>
+                     <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
+                         <Link to={`/artworks/${artwork._id}`}>View</Link>
                      </Button>
-                     {/* Use the AddToCartButton component to handle logic and styling */}
                      {!isOwner && (
                         <div className="flex-1">
-                             <AddToCartButton artwork={artwork} className="w-full h-8 md:h-10 text-xs md:text-sm" />
+                             <AddToCartButton artwork={artwork} className="w-full h-8 text-xs" size="sm" />
                         </div>
                      )}
                  </>

@@ -69,7 +69,7 @@ const HomePage = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.6 }}
             >
-              <Button asChild size="lg" className="h-14 px-8 text-lg bg-white text-black hover:bg-gray-100 hover:text-black shadow-xl">
+              <Button asChild size="lg" className="h-14 px-8 text-lg bg-white text-black hover:bg-gray hover:text-black shadow-xl">
                 <Link to="/gallery">
                   Explore Gallery
                 </Link>
@@ -84,8 +84,8 @@ const HomePage = () => {
       </section>
 
       {/* VALUE PROPOSITION */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      <section className="py-12 bg-muted/30">
+        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
                 <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
                     <Palette className="w-6 h-6" />
@@ -112,8 +112,8 @@ const HomePage = () => {
 
       {/* FEATURED ARTWORKS */}
       {!loading && featuredArtworks.length > 0 && (
-        <section className="py-24 container mx-auto px-4">
-          <div className="flex justify-between items-end mb-12">
+        <section className="py-16 container mx-auto px-4">
+          <div className="flex justify-between items-end mb-8">
             <div>
                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Trending Now</h2>
                  <p className="text-muted-foreground">Fresh from the studio to your collection.</p>
@@ -125,7 +125,7 @@ const HomePage = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {featuredArtworks.map((artwork, i) => (
               <motion.div
                 key={artwork._id}
@@ -150,8 +150,8 @@ const HomePage = () => {
       )}
 
       {/* CALL TO ACTION */}
-      <section className="py-20 bg-muted/50 mt-auto">
-        <div className="container mx-auto px-4 text-center space-y-8">
+      <section className="py-12 bg-muted/50 mt-auto">
+        <div className="container mx-auto px-4 text-center space-y-6">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">Ready to start your journey?</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Join thousands of artists and collectors shaping the modern art world.

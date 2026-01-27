@@ -143,22 +143,67 @@ const EventsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-4 px-4 mb-8 border-b">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-                  <p className="text-muted-foreground">Discover upcoming art events and exhibitions</p>
-              </div>
-              {(isVerifiedArtist || isAdmin) && (
-                 <Button asChild>
-                    <Link to="/events/new">Create Event</Link>
-                 </Button>
-              )}
-          </div>
-      </div>
+      <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
+        {/* HEADER */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-4 px-4 mb-8 border-b">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+                    <p className="text-muted-foreground">Discover upcoming art events and exhibitions</p>
+                </div>
 
-       <div className="flex flex-col lg:flex-row gap-8 relative items-start">
+                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                    {/* View Mode Tabs */}
+                    <TabsList>
+                        <TabsTrigger value="grid" className="px-3">
+                            <ListIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">List</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="map" className="px-3">
+                            <MapIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Map</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="calendar" className="px-3">
+                            <CalendarIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Calendar</span>
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Mobile Filter */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="sm" className="lg:hidden">
+                                <Filter className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Filters</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left">
+                            <SheetHeader>
+                                <SheetTitle>Filter Events</SheetTitle>
+                                <SheetDescription>Refine your search</SheetDescription>
+                            </SheetHeader>
+                            <div className="py-4">
+                                <EventFilters
+                                    filters={filters}
+                                    updateFilter={updateFilter}
+                                    clearAllFilters={clearAllFilters}
+                                    meta={meta}
+                                />
+                            </div>
+                            <SheetFooter>
+                                <SheetClose asChild>
+                                    <Button className="w-full">Show Results</Button>
+                                </SheetClose>
+                            </SheetFooter>
+                        </SheetContent>
+                    </Sheet>
+
+                    {(isVerifiedArtist || isAdmin) && (
+                       <Button asChild size="sm">
+                          <Link to="/events/new">Create Event</Link>
+                       </Button>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8 relative items-start">
             {/* DESKTOP SIDEBAR */}
             <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm">
                 <EventFilters
@@ -170,49 +215,7 @@ const EventsPage = () => {
             </aside>
 
             {/* MAIN CONTENT */}
-            <main className="flex-1 min-w-0">
-                <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
-                    <div className="flex justify-between items-center mb-6">
-                        <TabsList>
-                            <TabsTrigger value="grid" className="px-4">
-                                <ListIcon className="w-4 h-4 mr-2" /> List
-                            </TabsTrigger>
-                            <TabsTrigger value="map" className="px-4">
-                                <MapIcon className="w-4 h-4 mr-2" /> Map
-                            </TabsTrigger>
-                            <TabsTrigger value="calendar" className="px-4">
-                                <CalendarIcon className="w-4 h-4 mr-2" /> Calendar
-                            </TabsTrigger>
-                        </TabsList>
-
-                        {/* Mobile Filter */}
-                         <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="outline" size="sm" className="lg:hidden">
-                                    <Filter className="mr-2 h-4 w-4" /> Filters
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left">
-                                <SheetHeader>
-                                    <SheetTitle>Filter Events</SheetTitle>
-                                    <SheetDescription>Refine your search</SheetDescription>
-                                </SheetHeader>
-                                <div className="py-4">
-                                    <EventFilters
-                                        filters={filters}
-                                        updateFilter={updateFilter}
-                                        clearAllFilters={clearAllFilters}
-                                        meta={meta}
-                                    />
-                                </div>
-                                <SheetFooter>
-                                    <SheetClose asChild>
-                                        <Button className="w-full">Show Results</Button>
-                                    </SheetClose>
-                                </SheetFooter>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
+            <main className="w-full lg:flex-1 lg:min-w-0">
 
                     <TabsContent value="grid" className="mt-0 space-y-8">
                         {isLoading ? (
@@ -225,7 +228,7 @@ const EventsPage = () => {
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-3 md:gap-6">
                                     {events.map(event => (
                                         <EventCard key={event._id} event={event} />
                                     ))}
@@ -239,8 +242,8 @@ const EventsPage = () => {
                         )}
                     </TabsContent>
 
-                    <TabsContent value="map" className="mt-0">
-                        <div className="border rounded-lg overflow-hidden h-[600px] bg-muted/20">
+                    <TabsContent value="map" className="mt-0 w-full">
+                        <div className="border rounded-lg overflow-hidden h-[60vh] sm:h-[70vh] md:h-[600px] bg-muted/20">
                              <EventsMap
                                 events={allEventsForMap}
                                 height="100%"
@@ -268,10 +271,9 @@ const EventsPage = () => {
                               />
                          </div>
                     </TabsContent>
-
-                </Tabs>
             </main>
-       </div>
+        </div>
+      </Tabs>
     </div>
   );
 };

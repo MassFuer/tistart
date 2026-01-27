@@ -128,18 +128,18 @@ const ArtworkDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl animate-in fade-in duration-500">
-      <Button variant="ghost" className="mb-6 pl-0 hover:bg-transparent hover:text-primary" asChild>
+    <div className="container mx-auto px-0 sm:px-4 lg:px-8 py-4 sm:py-8 max-w-7xl animate-in fade-in duration-500">
+      <Button variant="ghost" className="mb-4 sm:mb-6 mx-4 sm:mx-0 pl-0 hover:bg-transparent hover:text-primary" asChild>
         <Link to="/gallery" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Gallery
         </Link>
       </Button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
         {/* Left Column: Gallery */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
             <Card className="overflow-hidden border-0 shadow-none bg-transparent">
-                <div className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-muted/20 border shadow-sm">
+                <div className="relative aspect-square sm:aspect-[4/3] w-full sm:rounded-xl overflow-hidden bg-muted/20 sm:border shadow-sm">
                      {artwork.video?.url ? (
                         <div className="w-full h-full">
                              <VideoPlayer artwork={artwork} onPurchaseComplete={fetchArtwork} />
@@ -160,8 +160,9 @@ const ArtworkDetailPage = () => {
 
             {/* Thumbnails */}
             {artwork.images?.length > 1 && (
-                <ScrollArea className="w-full whitespace-nowrap rounded-md border text-center">
-                    <div className="flex w-max space-x-4 p-4">
+                <div className="px-4 sm:px-0">
+                <ScrollArea className="w-full whitespace-nowrap rounded-md sm:border text-center">
+                    <div className="flex w-max space-x-3 sm:space-x-4 p-2 sm:p-4">
                         {artwork.images.map((img, index) => (
                             <button
                                 key={index}
@@ -180,11 +181,12 @@ const ArtworkDetailPage = () => {
                     </div>
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
+                </div>
             )}
         </div>
 
         {/* Right Column: Details */}
-        <div className="space-y-6">
+        <div className="space-y-6 px-4 sm:px-0">
             <div>
                 <div className="flex flex-wrap gap-2 mb-4">
                     <Badge variant="secondary" className="text-sm px-3 py-1 capitalize">
@@ -342,10 +344,41 @@ const ArtworkDetailPage = () => {
         </div>
       </div>
 
-      <Separator className="my-12" />
+      <Separator className="my-8 sm:my-12 mx-4 sm:mx-0" />
 
       {/* Reviews Section */}
-      <ReviewSection artworkId={artwork._id} artistId={artwork.artist?._id} />
+      <div className="px-4 sm:px-0">
+        <ReviewSection artworkId={artwork._id} artistId={artwork.artist?._id} />
+      </div>
+
+      {/* Mobile Sticky Action Bar */}
+      {artwork.isForSale && !isOwner && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t shadow-lg sm:hidden z-50">
+          <div className="flex gap-2">
+            <AddToCartButton artwork={artwork} className="flex-1" />
+            {isAuthenticated && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleFavorite}
+                disabled={favoriteLoading}
+                className={isFavorite ? "text-red-500 border-red-200 bg-red-50" : ""}
+              >
+                <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
+              </Button>
+            )}
+            <Button variant="outline" size="icon" onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast.success("Link copied to clipboard");
+            }}>
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom padding for sticky bar */}
+      <div className="h-20 sm:hidden" />
     </div>
   );
 };

@@ -35,6 +35,11 @@ const SignupPage = () => {
   
   const isArtistSignup = searchParams.get("role") === "artist";
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [passwordCriteria, setPasswordCriteria] = useState({
     length: false,
     uppercase: false,
