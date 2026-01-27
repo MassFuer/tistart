@@ -5,7 +5,8 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
-const { attachUser } = require("../middleware/role.middleware");
+const { attachUser, isAdminRole } = require("../middleware/role.middleware");
+
 const { sendVerificationEmail, sendWelcomeEmail } = require("../utils/email");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
@@ -361,9 +362,9 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
 // PATCH /auth/update-artist-info - Update artist profile info (for artists)
 router.patch("/update-artist-info", isAuthenticated, attachUser, async (req, res, next) => {
   try {
-    // Only artists can update artist info
-    if (req.user.role !== "artist") {
-      return res.status(403).json({ error: "Only artists can update artist info." });
+    // Allow artists, admins, and superAdmins
+    if (req.user.role !== "artist" && !isAdminRole(req.user.role)) {
+      return res.status(403).json({ error: "Only artists and admins can update this info." });
     }
 
     const user = await User.findById(req.user._id);

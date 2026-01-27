@@ -74,5 +74,7 @@ Access the app at `http://localhost:5173`.
 - **Direct Messaging**: Internal chat system between collectors and artists.
 - **Custom Video Player**: Simplified, elegant video playback experience.
 - **Unified Dashboards**: Dedicated views for Artists (Sales, Analytics) and Collectors (Purchases, Favorites).
+    - *New*: Role Badges for clear user status identification.
     - *New*: Streamlined **EventManagement** interface.
     - *New*: Enhanced mobile responsiveness for dashboard tabs.
+    - *New*: **Storage Usage** indicators for artists.

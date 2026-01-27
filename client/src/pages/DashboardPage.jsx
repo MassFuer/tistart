@@ -30,6 +30,7 @@ import ProfileSettings from "../components/dashboard/ProfileSettings";
 import EventsMap from "../components/map/EventsMap"; // Reuse existing map for user view
 import ArtworkManager from "../components/dashboard/ArtworkManager";
 import EventManagement from "../components/dashboard/EventManagement";
+import ArtistApplications from "../components/dashboard/ArtistApplications";
 
 const DashboardPage = () => {
   const { user, isArtist, isAdmin } = useAuth();
@@ -90,6 +91,33 @@ const DashboardPage = () => {
     }
   }, [user, isArtist]);
 
+  // Role Badge Helper
+  const getRoleBadge = () => {
+    if (!user) return null;
+    
+    switch (user.role) {
+      case "superAdmin":
+        return <Badge className="bg-purple-600 hover:bg-purple-700">Super Admin</Badge>;
+      case "admin":
+        return <Badge className="bg-blue-600 hover:bg-blue-700">Admin</Badge>;
+      case "artist":
+        const statusColors = {
+          verified: "bg-green-600 hover:bg-green-700",
+          pending: "bg-yellow-600 hover:bg-yellow-700",
+          incomplete: "bg-orange-600 hover:bg-orange-700",
+          suspended: "bg-red-600 hover:bg-red-700",
+          none: "bg-gray-600 hover:bg-gray-700"
+        };
+        return (
+          <Badge className={statusColors[user.artistStatus] || "bg-gray-600"}>
+            Artist ({user.artistStatus})
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">User</Badge>;
+    }
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading dashboard...</div>;
   }
@@ -99,7 +127,10 @@ const DashboardPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            {getRoleBadge()}
+          </div>
           <p className="text-muted-foreground">
             Welcome back, {user.firstName}! Here's what's happening.
           </p>
@@ -124,12 +155,13 @@ const DashboardPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-[700px]">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="activity">{isArtist ? "Sales" : "Orders"}</TabsTrigger>
-          {(isArtist || isAdmin) && <TabsTrigger value="artworks">Artworks</TabsTrigger>}
-          {(isArtist || isAdmin) && <TabsTrigger value="events">Events</TabsTrigger>}
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-auto md:flex">
+          <TabsTrigger value="overview" className="md:flex-1">Overview</TabsTrigger>
+          <TabsTrigger value="activity" className="md:flex-1">{isArtist ? "Sales" : "Orders"}</TabsTrigger>
+          {(isArtist || isAdmin) && <TabsTrigger value="artworks" className="md:flex-1">Artworks</TabsTrigger>}
+          {(isArtist || isAdmin) && <TabsTrigger value="events" className="md:flex-1">Events</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="applications" className="md:flex-1">Applications</TabsTrigger>}
+          <TabsTrigger value="settings" className="md:flex-1">Settings</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -330,6 +362,13 @@ const DashboardPage = () => {
                     {isAdmin && <Badge variant="secondary">Admin View</Badge>}
                 </div>
                 <EventManagement isAdmin={isAdmin} />
+            </TabsContent>
+        )}
+
+        {/* APPLICATIONS TAB (Admin Only) */}
+        {isAdmin && (
+            <TabsContent value="applications" className="space-y-6">
+                 <ArtistApplications />
             </TabsContent>
         )}
 

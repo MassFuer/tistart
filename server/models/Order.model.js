@@ -105,12 +105,11 @@ const orderSchema = new Schema(
 );
 
 // Flag paid status change for post-save hook
-orderSchema.pre("save", function (next) {
+orderSchema.pre("save", async function () {
   // Check if status changed to 'paid'
   if (this.isModified("status") && this.status === "paid") {
     this.wasJustPaid = true;
   }
-  next();
 });
 
 orderSchema.post("save", async function (doc) {

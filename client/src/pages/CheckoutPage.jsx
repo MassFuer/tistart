@@ -15,13 +15,15 @@ import {
   CreditCard,
   ArrowLeft,
 } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 import { 
   FaCcVisa, 
   FaCcMastercard, 
   FaCcAmex, 
   FaPaypal, 
   FaApplePay,
-  FaLock 
+  FaLock,
+  FaStripe
 } from "react-icons/fa";
 
 // Shadcn Components
@@ -46,6 +48,7 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const CheckoutPage = () => {
   const { cart, fetchCart } = useCart();
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -189,11 +192,11 @@ const CheckoutPage = () => {
 
   // Stripe Elements appearance options
   const appearance = {
-    theme: 'stripe',
+    theme: isDarkMode ? 'night' : 'stripe',
     variables: {
-      colorPrimary: '#0f172a',
-      colorBackground: '#ffffff',
-      colorText: '#1e293b',
+      colorPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+      colorBackground: isDarkMode ? '#020817' : '#ffffff',
+      colorText: isDarkMode ? '#f8fafc' : '#1e293b',
     },
   };
 
@@ -229,7 +232,7 @@ const CheckoutPage = () => {
             </div>
         </div>
 
-       <div className="flex flex-col lg:flex-row gap-8 items-start">
+       <div className={step === "shipping" ? "flex flex-col-reverse gap-8 w-full" : "flex flex-col-reverse lg:flex-row gap-8 w-full lg:items-start"}>
             {/* MAIN FORM AREA */}
             <div className="flex-1 space-y-6">
                 {step === "shipping" ? (
@@ -364,6 +367,7 @@ const CheckoutPage = () => {
                            <FaLock className="h-3 w-3" /> Secure 256-bit SSL Encrypted Payment
                        </div>
                        <div className="flex justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
+                           <FaStripe className="h-8 w-8 text-[#635BFF]" title="Stripe" />
                            <FaCcVisa className="h-6 w-6" title="Visa" />
                            <FaCcMastercard className="h-6 w-6" title="Mastercard" />
                            <FaCcAmex className="h-6 w-6" title="American Express" />

@@ -173,7 +173,8 @@ artworkSchema.index({ searchKeywords: 1 });
 artworkSchema.index({ title: "text", description: "text" });
 
 // Flag new document and check for status changes for post-save hook
-artworkSchema.pre("save", async function (next) {
+// Flag new document and check for status changes for post-save hook
+artworkSchema.pre("save", async function () {
   this.wasNew = this.isNew;
 
   // Capture previous isForSale state for updates
@@ -188,7 +189,6 @@ artworkSchema.pre("save", async function (next) {
       console.error("Error fetching old artwork in pre-save:", err);
     }
   }
-  next();
 });
 
 artworkSchema.post("save", async function (doc) {

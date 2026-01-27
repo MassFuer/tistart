@@ -71,8 +71,9 @@ npm run seed
 - **Models**: Mongoose schemas for User, Artwork, Order, Event, Review.
 - **Auth**: JWT-based authentication using HTTP-only cookies.
 - **Search**: N-gram based search optimization for titles and artist names.
-- **Storage**: Direct upload to R2/S3 using AWS SDK.
+- **Storage**: Direct upload to R2/S3 using AWS SDK. Includes automatic quota tracking and file cleanup on deletion.
 - **Security**: Helmet, Rate Limiting, XSS Sanitzation, CORS, Secure Streaming Uploads.
+- **Permissions**: Granular Role-Based Access Control (RBAC) middleware for Admins, SuperAdmins, and Artists.
 
 ## 🔌 API Endpoints
 
