@@ -267,6 +267,7 @@ router.post(
         colors: colors || [],
         dimensions: dimensions || {},
         totalInStock: totalInStock || 1,
+        video: req.body.video || {}, // Include video metadata
       });
 
       res.status(201).json({ data: artwork });

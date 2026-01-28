@@ -16,7 +16,8 @@ import {
   Minimize,
   RotateCcw,
   RotateCw,
-  Loader2
+  Loader2,
+  Clapperboard
 } from "lucide-react";
 
 // Shadcn Components
@@ -35,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
+const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPause: onPauseCallback }) => {
   const { isAuthenticated, user } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -58,23 +59,38 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 
   const video = artwork?.video;
+
+  // Normalize URL: Support both 'url' and 'fullVideoUrl'
+  const videoUrl = video?.url || video?.fullVideoUrl;
+
   const isOwner = user?._id === artwork?.artist?._id;
   const isPaid = video?.isPaid;
 
   useEffect(() => {
-    if (video?.url) {
+    if (videoUrl) {
       checkAccess();
     } else {
       setIsLoading(false);
     }
-  }, [artwork?._id, isAuthenticated]);
+  }, [artwork?._id, isAuthenticated, videoUrl]);
 
   const checkAccess = async () => {
-    if (isOwner) {
+
+    const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
+
+    if (isOwner || isAdmin) {
       setAccessInfo({ hasAccess: true, isOwner: true });
       await fetchStreamUrl();
+      setIsLoading(false);
+      return;
+    }
+
+    // REQUIRE LOGIN FOR ALL USERS (Even for free videos)
+    if (!isAuthenticated) {
+      setAccessInfo({ hasAccess: false, requiresLogin: true });
       setIsLoading(false);
       return;
     }
@@ -86,12 +102,6 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
       return;
     }
 
-    if (!isAuthenticated) {
-      setAccessInfo({ hasAccess: false, requiresLogin: true });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const response = await videosAPI.checkAccess(artwork._id);
       setAccessInfo(response.data.data);
@@ -99,6 +109,7 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
         await fetchStreamUrl();
       }
     } catch (err) {
+      console.error("Access check failed:", err);
       setError("Failed to check video access");
     } finally {
       setIsLoading(false);
@@ -145,8 +156,10 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        onPauseCallback?.();
       } else {
         videoRef.current.play();
+        onPlayCallback?.();
       }
       setIsPlaying(!isPlaying);
     }
@@ -221,7 +234,7 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
     }, 2500);
   };
 
-  if (!video?.url) {
+  if (!videoUrl) {
     return null;
   }
 
@@ -248,7 +261,7 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
 
   // HAS ACCESS - RENDER PLAYER
   if (accessInfo?.hasAccess) {
-    const videoSrc = streamUrl || video.url;
+    const videoSrc = streamUrl || videoUrl;
     
     return (
       <div className="w-full space-y-2">
@@ -266,11 +279,20 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
             poster={video.thumbnailUrl || artwork.images?.[0]}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
-            onEnded={() => setIsPlaying(false)}
+            onEnded={() => {
+                setIsPlaying(false);
+                onPauseCallback?.();
+            }}
             onWaiting={() => setIsBuffering(true)}
             onPlaying={() => setIsBuffering(false)}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
+            onPlay={() => {
+                setIsPlaying(true);
+                onPlayCallback?.();
+            }}
+            onPause={() => {
+                setIsPlaying(false);
+                onPauseCallback?.();
+            }}
             onClick={togglePlay}
           />
 
@@ -360,7 +382,35 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
     );
   }
 
-  // PAYWALL (Login or Buy) - Reusing existing code structure
+  // If preview is playing, render the player with preview URL content
+  if (isPlayingPreview && video?.previewVideoUrl) {
+      return (
+          <div className="w-full space-y-2">
+            <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-sm border">
+                <video
+                    src={video.previewVideoUrl}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                    onEnded={() => setIsPlayingPreview(false)}
+                />
+                <button 
+                    onClick={() => setIsPlayingPreview(false)}
+                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+                >
+                    <Minimize className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-4 right-4">
+                     <Button size="sm" onClick={() => setIsPlayingPreview(false)}>
+                        Unlock Full Video
+                     </Button>
+                </div>
+            </div>
+          </div>
+      );
+  }
+
+  // PAYWALL (Login or Buy)
   return (
     <div className="w-full">
       <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden group">
@@ -380,9 +430,16 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
                 {accessInfo?.requiresLogin ? (
                     <>
                         <p className="text-white/80 mb-6">Log in to watch or purchase this video.</p>
-                        <Button onClick={() => navigate("/login")} className="w-full font-semibold" size="lg">
-                            Log In to Watch
-                        </Button>
+                        <div className="flex flex-col gap-3 w-full">
+                            {video?.previewVideoUrl && (
+                                <Button onClick={() => setIsPlayingPreview(true)} variant="secondary" className="w-full bg-white/20 hover:bg-white/30 text-white border-0">
+                                    <Clapperboard className="mr-2 h-4 w-4" /> Watch Preview
+                                </Button>
+                            )}
+                            <Button onClick={() => navigate("/login")} className="w-full font-semibold" size="lg">
+                                Log In to Watch
+                            </Button>
+                        </div>
                     </>
                 ) : (
                     <>
@@ -393,27 +450,35 @@ const VideoPlayer = ({ artwork, onPurchaseComplete }) => {
                             <p className="text-sm text-white/70">One-time purchase • Unlimited streaming</p>
                         </div>
                         
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button size="lg" className="w-full font-semibold box-shadow-xl">
-                                    Unlock Now
+                        <div className="flex flex-col gap-3 w-full">
+                             {video?.previewVideoUrl && (
+                                <Button onClick={() => setIsPlayingPreview(true)} variant="secondary" className="w-full bg-white/20 hover:bg-white/30 text-white border-0">
+                                    <Clapperboard className="mr-2 h-4 w-4" /> Watch Preview
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        You are about to add <strong>{artwork.title}</strong> to your cart for <strong>{Number(artwork.price).toFixed(2)} €</strong>.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleBuyClick} disabled={isPurchasing}>
-                                        {isPurchasing ? "Processing..." : "Continue to Checkout"}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                            )}
+
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button size="lg" className="w-full font-semibold box-shadow-xl">
+                                        Unlock Now
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            You are about to add <strong>{artwork.title}</strong> to your cart for <strong>{Number(artwork.price).toFixed(2)} €</strong>.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleBuyClick} disabled={isPurchasing}>
+                                            {isPurchasing ? "Processing..." : "Continue to Checkout"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </>
                 )}
             </div>

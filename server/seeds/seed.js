@@ -147,8 +147,18 @@ const createAdmin = async () => {
     email: "admin@nemesis.com",
     password: hashedPassword,
     role: "admin",
-    artistStatus: "none",
+    artistStatus: "verified",
     isEmailVerified: true,
+    artistInfo: {
+        companyName: "Nemesis Admin",
+        tagline: "Platform Administrator",
+        description: "Official administrator account.",
+        type: "company",
+        address: {
+            city: "Admin City",
+            country: "Adminland",
+        }
+    },
   });
 };
 
@@ -163,8 +173,18 @@ const createSuperAdmin = async () => {
     email: "superadmin@nemesis.com",
     password: hashedPassword,
     role: "superAdmin",
-    artistStatus: "none",
+    artistStatus: "verified",
     isEmailVerified: true,
+    artistInfo: {
+        companyName: "Nemesis SuperAdmin",
+        tagline: "Platform Super Administrator",
+        description: "Official super administrator account.",
+        type: "company",
+        address: {
+            city: "Super City",
+            country: "Superland",
+        }
+    },
   });
 };
 

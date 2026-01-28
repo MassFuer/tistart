@@ -110,15 +110,16 @@ export const useListing = ({
     });
 
     const newSearch = params.toString();
-    const currentSearch = searchParams.toString();
+    const newUrl = newSearch ? `?${newSearch}` : "";
 
-    if (newSearch !== currentSearch) {
-      lastUrlRef.current = newSearch ? `?${newSearch}` : "";
+    // Only update if URL actually changed
+    if (newUrl !== lastUrlRef.current) {
+      lastUrlRef.current = newUrl;
       setSearchParams(params, { replace: false });
     }
 
     userInitiatedChange.current = false;
-  }, [filters, sort, syncWithUrl, initialSort, setSearchParams, searchParams]);
+  }, [filters, sort, syncWithUrl, initialSort, setSearchParams]);
 
   const fetch = useCallback(async () => {
     if (!enabled) return;

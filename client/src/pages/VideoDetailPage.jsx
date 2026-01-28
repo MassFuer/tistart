@@ -15,14 +15,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
+import { useAuth } from "../context/AuthContext";
+import VideoPlayer from "../components/video/VideoPlayer";
+import ReviewSection from "../components/review/ReviewSection";
 
 const VideoDetailPage = () => {
     const { id } = useParams();
+    const { isAuthenticated } = useAuth();
     const [videoData, setVideoData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
-    const [bgAudioPlaying, setBgAudioPlaying] = useState(true);
+    const [bgAudioPlaying, setBgAudioPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
 
@@ -78,8 +83,7 @@ const VideoDetailPage = () => {
         if (videoRef.current) {
             if (isPlaying) {
                 videoRef.current.pause();
-                // Resume background audio if desired?
-                if(videoData.video.backgroundAudioUrl) setBgAudioPlaying(true);
+                // Do not auto-resume background audio to respect user preference
             } else {
                 videoRef.current.play();
                 // Check if background audio needs to stop
@@ -125,7 +129,7 @@ const VideoDetailPage = () => {
     return (
         <div className="min-h-screen bg-black text-white pb-20 pt-20">
             {/* Background Audio Player (Hidden) */}
-            {videoData.video?.backgroundAudioUrl && (
+            {videoData.video?.backgroundAudioUrl && isAuthenticated && (
                 <audio ref={bgAudioRef} src={videoData.video.backgroundAudioUrl} loop />
             )}
 
@@ -135,91 +139,70 @@ const VideoDetailPage = () => {
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Gallery
                 </Link>
 
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    
-                    {/* LEFT COLUMN: Video Player */}
-                    <div className="lg:col-span-2">
-                         <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-900 ring-1 ring-white/10 shadow-2xl">
-                            <video
-                                ref={videoRef}
-                                src={videoData.video?.fullVideoUrl || videoData.video?.url}
-                                className="h-full w-full object-cover"
-                                onTimeUpdate={handleTimeUpdate}
-                                onLoadedMetadata={handleLoadedMetadata}
-                                onEnded={() => setIsPlaying(false)}
-                                onClick={handlePlayPause}
-                            >
-                                {videoData.video?.subtitlesUrl && (
-                                    <track 
-                                        kind="subtitles" 
-                                        src={videoData.video.subtitlesUrl} 
-                                        srcLang="en" 
-                                        label="English" 
-                                        default 
-                                    />
+                {/* HEADER SECTION (Title & Artist) */}
+                <div className="mb-8 border-b border-white/10 pb-6">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                        <div>
+                            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">{videoData.title}</h1>
+                            <div className="flex flex-wrap items-center gap-6 text-sm">
+                                <Link 
+                                    to={`/artists/${videoData.artist?._id}`} 
+                                    className="flex items-center gap-3 text-white hover:text-primary transition-colors group"
+                                >
+                                    {videoData.artist?.profilePicture ? (
+                                        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-transparent group-hover:border-primary transition-colors">
+                                            <img src={videoData.artist.profilePicture} alt="" className="h-full w-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="h-10 w-10 rounded-full bg-gray-800 flex items-center justify-center">
+                                            <span className="text-xs font-bold">{videoData.artist?.firstName?.[0]}</span>
+                                        </div>
+                                    )}
+                                    <span className="font-medium text-lg">{videoData.artist?.firstName} {videoData.artist?.lastName}</span>
+                                </Link>
+                                
+                                {videoData.video?.duration && (
+                                    <>
+                                        <div className="h-4 w-px bg-white/20 hidden md:block" />
+                                        <div className="flex items-center gap-2 text-gray-400 font-mono bg-white/5 px-2 py-1 rounded">
+                                            <span className="text-xs uppercase tracking-wider">Duration</span>
+                                            <span className="text-white">{Math.floor(videoData.video.duration / 60)}m {videoData.video.duration % 60}s</span>
+                                        </div>
+                                    </>
                                 )}
-                            </video>
-                            
-                            {/* Custom Controls Overlay */}
-                            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                <div className="p-4 space-y-4">
-                                     {/* Progress Bar */}
-                                    <Slider
-                                        value={[currentTime]}
-                                        max={duration}
-                                        step={1}
-                                        onValueChange={handleSeek}
-                                        className="cursor-pointer"
-                                    />
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <button onClick={handlePlayPause} className="text-white hover:text-primary transition-colors">
-                                                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                                            </button>
-                                            
-                                            <div className="flex items-center gap-2 group relative">
-                                                <button onClick={() => {
-                                                    videoRef.current.muted = !isMuted;
-                                                    setIsMuted(!isMuted);
-                                                }}>
-                                                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                                                </button>
-                                            </div>
-
-                                            <span className="text-sm font-medium text-gray-300">
-                                                {formatTime(currentTime)} / {formatTime(duration)}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-4">
-                                            {/* Quality / Settings Placeholder */}
-                                            <button className="text-gray-300 hover:text-white">
-                                                <Settings className="h-5 w-5" />
-                                            </button>
-                                            
-                                            <button onClick={toggleFullscreen} className="text-white hover:text-primary">
-                                                <Maximize className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                
+                                {videoData.video?.isPaid && <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-1">Premium</Badge>}
                             </div>
-
-                            {/* Center Play Button Overlay (when paused) */}
-                            {!isPlaying && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer" onClick={handlePlayPause}>
-                                    <div className="rounded-full bg-white/20 p-6 backdrop-blur-md transition-transform hover:scale-110">
-                                        <Play className="h-10 w-10 text-white fill-white ml-1" />
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
-                         {/* Background Audio Control */}
+                        {/* Action Buttons (Like 'Favorite' - placeholder for now) */}
+                         <div className="flex gap-3">
+                             {/* Future implementation */}
+                        </div>
+                    </div>
+                </div>
+
+                {/* MAIN CONTENT GRID */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    
+                    {/* LEFT COLUMN: Video & Reviews */}
+                    <div className="lg:col-span-2 space-y-12">
+                         <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-900 ring-1 ring-white/10 shadow-2xl">
+                            <VideoPlayer 
+                                artwork={videoData} 
+                                onPurchaseComplete={fetchVideoDetails}
+                                onPlay={() => {
+                                    if (videoData.video?.backgroundAudioUrl) setBgAudioPlaying(false);
+                                }}
+                                onPause={() => {
+                                    // Do not auto-resume background audio (respect user preference)
+                                }}
+                            />
+                        </div>
+
+                        {/* Background Audio Control */}
                         {videoData.video?.backgroundAudioUrl && (
-                             <div className="mt-4 flex items-center justify-between rounded-lg bg-white/5 p-3 px-4 backdrop-blur-sm">
+                             <div className="flex items-center justify-between rounded-lg bg-white/5 p-3 px-4 backdrop-blur-sm border border-white/5">
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         {bgAudioPlaying && (
@@ -232,9 +215,9 @@ const VideoDetailPage = () => {
                                 <div className="flex items-center gap-2">
                                      <span className="text-xs text-muted-foreground mr-2">{bgAudioPlaying ? "On" : "Off"}</span>
                                     <Button 
-                                        variant="outline" 
+                                        variant="ghost" 
                                         size="sm" 
-                                        className="h-7 text-xs border-white/10 dark:text-gray-200 hover:bg-white/10"
+                                        className="h-7 text-xs text-white border border-white/20 hover:bg-white/10 hover:text-white"
                                         onClick={() => setBgAudioPlaying(!bgAudioPlaying)}
                                     >
                                         Toggle
@@ -242,58 +225,89 @@ const VideoDetailPage = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* Reviews Section */}
+                        <div className="pt-8 border-t border-white/10">
+                            <ReviewSection artworkId={id} />
+                        </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Metadata */}
+                    {/* RIGHT COLUMN: Metadata Sidebar */}
                     <div className="space-y-8">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{videoData.title}</h1>
-                            <div className="mt-2 flex items-center gap-3">
-                                <span className="text-lg text-primary">{videoData.artist?.firstName} {videoData.artist?.lastName}</span>
-                                {videoData.video?.duration && (
-                                    <span className="text-sm text-gray-400 border border-white/10 px-2 py-0.5 rounded">
-                                        {Math.floor(videoData.video.duration / 60)}m {videoData.video.duration % 60}s
-                                    </span>
-                                )}
-                                {videoData.video?.isPaid && <Badge variant="secondary">Premium</Badge>}
+                        
+                        {/* Synopsis */}
+                        {videoData.video?.synopsis ? (
+                            <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                                <h3 className="text-xs font-bold tracking-widest text-primary mb-4 uppercase">Synopsis</h3>
+                                <p className="text-gray-200 leading-relaxed italic opacity-90">{videoData.video.synopsis}</p>
                             </div>
-                        </div>
-
-                        {videoData.video?.synopsis && (
-                            <div className="prose prose-invert">
-                                <h3 className="text-sm font-uppercase font-semibold tracking-wider text-gray-500">SYNOPSIS</h3>
-                                <p className="text-gray-300 leading-relaxed mt-2">{videoData.video.synopsis}</p>
+                        ) : videoData.description && (
+                             <div className="bg-white/5 rounded-xl p-6 border border-white/10 text-gray-300 leading-relaxed">
+                                <ReactMarkdown>{videoData.description}</ReactMarkdown>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-6">
-                            {videoData.video?.director && (
-                                <div>
-                                    <h3 className="text-xs font-uppercase font-semibold tracking-wider text-gray-500 mb-1">DIRECTOR</h3>
-                                    <p className="font-medium">{videoData.video.director}</p>
-                                </div>
-                            )}
-                            
-                            {videoData.video?.cast && videoData.video.cast.length > 0 && (
-                                <div>
-                                    <h3 className="text-xs font-uppercase font-semibold tracking-wider text-gray-500 mb-1">CAST</h3>
-                                    <ul className="space-y-1">
-                                        {videoData.video.cast.map((actor, i) => (
-                                            <li key={i} className="text-sm text-gray-300">{actor}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                        {/* Credits Grid */}
+                        <div className="bg-transparent rounded-xl border border-white/10 overflow-hidden">
+                            <div className="bg-white/5 px-6 py-4 border-b border-white/10">
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Credits & Info</h3>
+                            </div>
+                            <div className="p-6 grid grid-cols-1 gap-6">
+                                {videoData.video?.director && (
+                                    <div>
+                                        <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">Director</h4>
+                                        <p className="font-medium text-white text-lg">{videoData.video.director}</p>
+                                    </div>
+                                )}
+                                
+                                {videoData.video?.coAuthor && (
+                                    <div>
+                                        <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">Co-Author</h4>
+                                        <p className="font-medium text-white">{videoData.video.coAuthor}</p>
+                                    </div>
+                                )}
+
+                                {videoData.video?.cast && videoData.video.cast.length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-2">Cast</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {videoData.video.cast.map((actor, i) => (
+                                                <Badge key={i} variant="outline" className="border-white/20 text-gray-300 font-normal">
+                                                    {actor}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {videoData.video?.fileSize && (
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                                        <div>
+                                            <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">File Size</h4>
+                                            <p className="font-mono text-gray-300">{(videoData.video.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                                        </div>
+                                        {videoData.video?.quality && (
+                                            <div>
+                                                <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quality</h4>
+                                                <Badge className="bg-primary/20 text-primary border-primary/20 hover:bg-primary/30">
+                                                    {videoData.video.quality}
+                                                </Badge>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
+                        {/* Production Team */}
                         {videoData.video?.productionTeam && videoData.video.productionTeam.length > 0 && (
-                            <div>
-                                <h3 className="text-xs font-uppercase font-semibold tracking-wider text-gray-500 mb-2">TEAM</h3>
+                            <div className="pt-4">
+                                <h3 className="text-xs font-bold tracking-widest text-gray-500 mb-4 uppercase">Production Team</h3>
                                 <div className="space-y-3">
                                     {videoData.video.productionTeam.map((member, i) => (
-                                        <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm border-b border-white/10 pb-2 last:border-0">
-                                            <span className="text-gray-400">{member.role}</span>
-                                            <span className="font-medium">{member.name}</span>
+                                        <div key={i} className="flex justify-between items-baseline p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 transition-colors">
+                                            <span className="text-xs text-gray-400 uppercase font-bold">{member.role}</span>
+                                            <span className="font-medium text-white">{member.name}</span>
                                         </div>
                                     ))}
                                 </div>

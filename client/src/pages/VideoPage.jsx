@@ -1,14 +1,17 @@
 import VideoHero from "../components/video/VideoHero";
-import VideoGallery from "../components/video/VideoGallery";
-import { useScroll } from "framer-motion";
+import VideoMarquee from "../components/video/VideoMarquee";
 
 const VideoPage = () => {
-    // Optional: Smooth scroll or other page-level effects could go here
     return (
-        <div className="min-h-screen bg-black">
-            <VideoHero />
-            <div className="relative z-10 bg-background">
-                <VideoGallery />
+        <div className="h-screen w-full bg-black flex flex-col overflow-hidden">
+            {/* Top Section - Hero (60%) */}
+            <div className="h-[60vh] w-full relative z-10 shrink-0 border-b border-white/10">
+                <VideoHero compact={true} />
+            </div>
+            
+            {/* Bottom Section - Marquee (40%) */}
+            <div className="h-[40vh] w-full bg-black relative z-20">
+                <VideoMarquee />
             </div>
         </div>
     );

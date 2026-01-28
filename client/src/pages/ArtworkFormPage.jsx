@@ -85,7 +85,8 @@ const ArtworkFormPage = () => {
       fullVideoUrl: "",
       previewVideoUrl: "",
       backgroundAudioUrl: "",
-      subtitlesUrl: ""
+      subtitlesUrl: "",
+      quality: ""
     },
   });
 
@@ -132,7 +133,8 @@ const ArtworkFormPage = () => {
           fullVideoUrl: artwork.video?.fullVideoUrl || artwork.video?.url || "", // Fallback to legacy url
           previewVideoUrl: artwork.video?.previewVideoUrl || "",
           backgroundAudioUrl: artwork.video?.backgroundAudioUrl || "",
-          subtitlesUrl: artwork.video?.subtitlesUrl || ""
+          subtitlesUrl: artwork.video?.subtitlesUrl || "",
+          quality: artwork.video?.quality || ""
         },
       });
       setExistingImages(artwork.images || []);
@@ -220,6 +222,7 @@ const ArtworkFormPage = () => {
   };
 
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0 });
   // --- Dynamic Field Handlers ---
   // --- File Select Handlers ---
   const handleFileSelect = (setter, allowedTypes, maxSizeMB) => (e) => {
@@ -264,6 +267,10 @@ const ArtworkFormPage = () => {
                const onProgress = (field === "fullVideo") ? (progressEvent) => {
                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                    setUploadProgress(percentCompleted);
+                   setUploadStats({
+                       loaded: (progressEvent.loaded / (1024 * 1024)).toFixed(2),
+                       total: (progressEvent.total / (1024 * 1024)).toFixed(2)
+                   });
                } : undefined;
 
                uploadPromises.push(artworksAPI.uploadVideo(artworkId, fd, onProgress)); 
@@ -281,6 +288,7 @@ const ArtworkFormPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setIsSubmitting(true);
     try {
       const data = {
@@ -351,11 +359,16 @@ const ArtworkFormPage = () => {
 
           <div className="flex items-center gap-4">
                {isUploading && (
-                   <div className="flex items-center gap-2 mr-4">
-                       <span className="text-sm font-medium text-muted-foreground">{uploadProgress}%</span>
-                       <div className="h-2 w-24 bg-secondary rounded-full overflow-hidden">
-                           <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                   <div className="flex flex-col items-end mr-4">
+                       <div className="flex items-center gap-2">
+                           <span className="text-sm font-medium text-muted-foreground">{uploadProgress}%</span>
+                           <div className="h-2 w-24 bg-secondary rounded-full overflow-hidden">
+                               <div className="h-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                           </div>
                        </div>
+                       <span className="text-xs text-muted-foreground mt-1">
+                           {uploadStats.loaded}MB / {uploadStats.total}MB
+                       </span>
                    </div>
                )}
                <Button onClick={handleSubmit} disabled={isSubmitting || isUploading}>
@@ -666,14 +679,61 @@ const ArtworkFormPage = () => {
                         <Input id="totalInStock" name="totalInStock" type="number" value={formData.totalInStock} onChange={handleChange} required />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="materialsUsed">Materials</Label>
-                        <Input id="materialsUsed" name="materialsUsed" value={formData.materialsUsed} onChange={handleChange} placeholder="e.g. Oil, Canvas, Digital" />
+                        <Label htmlFor="materialsUsed">{isVideoCategory ? "Tools Used" : "Materials"}</Label>
+                        <Input 
+                            id="materialsUsed" 
+                            name="materialsUsed" 
+                            value={formData.materialsUsed} 
+                            onChange={handleChange} 
+                            placeholder={isVideoCategory ? "e.g. Sony A7S III, Premiere Pro, DaVinci Resolve" : "e.g. Oil, Canvas, Digital"} 
+                        />
                     </div>
-                    {/* Simplified dims for brevity */}
-                     <div className="flex gap-2">
-                         <Input placeholder="W" name="dimensions.width" value={formData.dimensions.width} onChange={handleChange} />
-                         <Input placeholder="H" name="dimensions.height" value={formData.dimensions.height} onChange={handleChange} />
-                     </div>
+                    
+                    {/* Dimension / Quality Logic */}
+                    {isVideoCategory ? (
+                         <div className="space-y-2">
+                             <Label htmlFor="quality">Registered Quality (Resolution)</Label>
+                             <Select 
+                                value={formData.video.quality} 
+                                onValueChange={(val) => handleSelectChange("video.quality", val)}
+                             >
+                                <SelectTrigger><SelectValue placeholder="Select Quality" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="8K">8K Ultra HD</SelectItem>
+                                    <SelectItem value="4K">4K UHD</SelectItem>
+                                    <SelectItem value="2K">2K QHD</SelectItem>
+                                    <SelectItem value="1080p">1080p Full HD</SelectItem>
+                                    <SelectItem value="720p">720p HD</SelectItem>
+                                    <SelectItem value="High Quality">High Quality Audio</SelectItem>
+                                </SelectContent>
+                             </Select>
+                         </div>
+                    ) : (
+                         <div className="flex gap-4">
+                             <div className="space-y-2 flex-1">
+                                 <Label htmlFor="width">Width ({formData.dimensions.unit}) *</Label>
+                                 <Input id="width" placeholder="Width" name="dimensions.width" value={formData.dimensions.width} onChange={handleChange} required />
+                             </div>
+                             <div className="space-y-2 flex-1">
+                                 <Label htmlFor="height">Height ({formData.dimensions.unit}) *</Label>
+                                 <Input id="height" placeholder="Height" name="dimensions.height" value={formData.dimensions.height} onChange={handleChange} required />
+                             </div>
+                             <div className="space-y-2 w-24">
+                                <Label htmlFor="unit">Unit</Label>
+                                <Select 
+                                    value={formData.dimensions.unit} 
+                                    onValueChange={(val) => handleSelectChange("dimensions.unit", val)}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cm">cm</SelectItem>
+                                        <SelectItem value="in">in</SelectItem>
+                                        <SelectItem value="m">m</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                             </div>
+                         </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

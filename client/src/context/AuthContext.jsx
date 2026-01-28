@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     isAuthenticated,
     isArtist: user?.role === "artist",
-    isVerifiedArtist: user?.role === "artist" && user?.artistStatus === "verified",
+    isVerifiedArtist: (user?.role === "artist" && user?.artistStatus === "verified") || user?.role === "admin" || user?.role === "superAdmin",
     isAdmin: user?.role === "admin" || user?.role === "superAdmin",
     isSuperAdmin: user?.role === "superAdmin",
     login,

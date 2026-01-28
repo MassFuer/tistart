@@ -16,7 +16,7 @@ router.get("/:artworkId/access", isAuthenticated, attachUser, async (req, res, n
       return res.status(404).json({ error: "Artwork not found" });
     }
 
-    if (!artwork.video?.url) {
+    if (!artwork.video?.fullVideoUrl && !artwork.video?.url) {
       return res.status(404).json({ error: "This artwork has no video" });
     }
 
@@ -68,13 +68,16 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
       return res.status(404).json({ error: "Artwork not found" });
     }
 
-    if (!artwork.video?.url) {
+    // Check if video exists
+    const videoUrl = artwork.video?.fullVideoUrl || artwork.video?.url;
+
+    if (!videoUrl) {
       return res.status(404).json({ error: "This artwork has no video" });
     }
 
     // Free video - generate signed URL directly
     if (!artwork.video.isPaid) {
-      const key = getKeyFromUrl(artwork.video.url);
+      const key = getKeyFromUrl(videoUrl);
       const signedUrl = await getSignedVideoUrl(key);
       return res.json({
         data: {
@@ -86,6 +89,8 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
 
     // Check if user is the artist
     const isOwner = artwork.artist.toString() === req.user._id.toString();
+    // Check if user is admin
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'superAdmin';
 
     // Check if user has purchased
     const purchase = await VideoPurchase.findOne({
@@ -93,7 +98,7 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
       artwork: artworkId,
     });
 
-    if (!isOwner && !purchase) {
+    if (!isOwner && !isAdmin && !purchase) {
       return res.status(403).json({
         error: "You need to purchase this video to watch it",
         price: artwork.price,
@@ -101,7 +106,7 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
     }
 
     // Generate signed URL for authorized user
-    const key = getKeyFromUrl(artwork.video.url);
+    const key = getKeyFromUrl(videoUrl);
     const signedUrl = await getSignedVideoUrl(key);
 
     res.json({
@@ -133,7 +138,9 @@ router.post(
         return res.status(404).json({ error: "Artwork not found" });
       }
 
-      if (!artwork.video?.url) {
+      const videoUrl = artwork.video?.fullVideoUrl || artwork.video?.url;
+
+      if (!videoUrl) {
         return res.status(400).json({ error: "This artwork has no video" });
       }
 
@@ -170,7 +177,7 @@ router.post(
       });
 
       // Generate signed URL for immediate access
-      const key = getKeyFromUrl(artwork.video.url);
+      const key = getKeyFromUrl(videoUrl);
       const signedUrl = await getSignedVideoUrl(key);
 
       res.status(201).json({

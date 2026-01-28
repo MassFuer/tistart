@@ -4,7 +4,7 @@ import { Volume2, VolumeX, ArrowDown, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TextReveal } from "@/components/ui/text-reveal";
 
-const VideoHero = () => {
+const VideoHero = ({ compact = false }) => {
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const { scrollY } = useScroll();
@@ -19,9 +19,9 @@ const VideoHero = () => {
   };
 
   return (
-    <div className="relative h-[150vh] w-full bg-black">
+    <div className={`relative w-full bg-black ${compact ? "h-full" : "h-[150vh]"}`}>
       {/* Sticky Container for the video effect */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
+      <div className={`${compact ? "absolute inset-0 h-full" : "sticky top-0 h-screen"} w-full overflow-hidden`}>
         
         {/* Background Video Layer */}
         <div className="absolute inset-0 h-full w-full">

@@ -201,12 +201,6 @@ const ReviewSection = ({ artworkId, artistId }) => {
          </div>
       )}
 
-      {isAuthenticated && isArtist && reviews.length === 0 && (
-          <div className="bg-muted/50 p-4 rounded-lg text-center text-muted-foreground">
-              No reviews yet. Share your artwork to get feedback!
-          </div>
-      )}
-
       {/* New Review Form Area */}
       {showForm && (
         <Card className="border-primary/20 bg-accent/10">

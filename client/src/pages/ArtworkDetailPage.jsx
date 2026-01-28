@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
   Heart,
   Share2,
+  Clapperboard,
   ShoppingCart,
   Tag,
   Palette,
@@ -35,6 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ReactMarkdown from "react-markdown";
 
 const ArtworkDetailPage = () => {
   const { id } = useParams();
@@ -141,8 +143,18 @@ const ArtworkDetailPage = () => {
             <Card className="overflow-hidden border-0 shadow-none bg-transparent">
                 <div className="relative aspect-square sm:aspect-[4/3] w-full sm:rounded-xl overflow-hidden bg-muted/20 sm:border shadow-sm">
                      {artwork.video?.url ? (
-                        <div className="w-full h-full">
+                        <div className="w-full h-full relative group">
+                            {/* CASE 1: Full Video Access Logic (handled by VideoPlayer) */}
                              <VideoPlayer artwork={artwork} onPurchaseComplete={fetchArtwork} />
+                             
+                             {/* CASE 2: Preview Logic Override if needed - currently VideoPlayer handles main content. 
+                                 The user asked for "Preview checking" specifically.
+                                 If VideoPlayer is locked (e.g. paid), we might want to show a Preview button if available. 
+                                 However, avoiding complex overlays for now, relying on VideoPlayer's internal logic.
+                                 
+                                 BUT, if the User explicitly wants a "Preview" distinct from the main video, 
+                                 we should check artwork.video.previewVideoUrl.
+                             */}
                         </div>
                      ) : artwork.images?.length > 0 ? (
                         <img
@@ -248,6 +260,11 @@ const ArtworkDetailPage = () => {
                          }}>
                              <Share2 className="h-5 w-5" />
                          </Button>
+                         {(artwork.category === "video" || artwork.category === "music") && (
+                             <Button variant="secondary" size="icon" title="Watch in Immersive Mode" onClick={() => navigate(`/videos/${id}`)}>
+                                 <Clapperboard className="h-5 w-5" />
+                             </Button>
+                         )}
                      </div>
                 </div>
             </div>
@@ -259,33 +276,62 @@ const ArtworkDetailPage = () => {
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Info className="h-4 w-4" /> About the Artwork
                 </h3>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                    {artwork.description}
-                </p>
+                <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                    <ReactMarkdown>{artwork.description}</ReactMarkdown>
+                </div>
             </div>
 
             {/* Attributes Grid */}
             <div className="grid grid-cols-2 gap-4 py-4">
-                 {artwork.dimensions && (
-                    <div className="bg-muted/30 p-3 rounded-lg border">
-                        <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
-                            <Ruler className="h-3 w-3" /> Dimensions
-                        </span>
-                        <p className="font-medium">
-                            {artwork.dimensions.width} x {artwork.dimensions.height}
-                            {artwork.dimensions.depth ? ` x ${artwork.dimensions.depth}` : ""} {artwork.dimensions.unit}
-                        </p>
-                    </div>
-                 )}
-                 {artwork.materialsUsed?.length > 0 && (
-                     <div className="bg-muted/30 p-3 rounded-lg border">
-                         <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
-                            <Box className="h-3 w-3" /> Materials
-                        </span>
-                        <p className="font-medium truncate" title={artwork.materialsUsed.join(", ")}>
-                            {artwork.materialsUsed.join(", ")}
-                        </p>
-                     </div>
+                 {artwork.category === "video" || artwork.category === "music" ? (
+                    <>
+                        {/* Video Quality Display */}
+                        {artwork.video?.quality && (
+                            <div className="bg-muted/30 p-3 rounded-lg border">
+                                <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                                    <Ruler className="h-3 w-3" /> Quality
+                                </span>
+                                <p className="font-medium">{artwork.video.quality}</p>
+                            </div>
+                        )}
+                        {/* Tools Used Display */}
+                        {artwork.materialsUsed?.length > 0 && (
+                             <div className="bg-muted/30 p-3 rounded-lg border">
+                                 <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                                    <Box className="h-3 w-3" /> Tools Used
+                                </span>
+                                <p className="font-medium truncate" title={artwork.materialsUsed.join(", ")}>
+                                    {artwork.materialsUsed.join(", ")}
+                                </p>
+                             </div>
+                        )}
+                    </>
+                 ) : (
+                    <>
+                        {/* Standard Dimensions */}
+                         {artwork.dimensions && (
+                            <div className="bg-muted/30 p-3 rounded-lg border">
+                                <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                                    <Ruler className="h-3 w-3" /> Dimensions
+                                </span>
+                                <p className="font-medium">
+                                    {artwork.dimensions.width} x {artwork.dimensions.height}
+                                    {artwork.dimensions.depth ? ` x ${artwork.dimensions.depth}` : ""} {artwork.dimensions.unit}
+                                </p>
+                            </div>
+                         )}
+                         {/* Standard Materials */}
+                         {artwork.materialsUsed?.length > 0 && (
+                             <div className="bg-muted/30 p-3 rounded-lg border">
+                                 <span className="text-xs text-muted-foreground uppercase font-bold flex items-center gap-1 mb-1">
+                                    <Box className="h-3 w-3" /> Materials
+                                </span>
+                                <p className="font-medium truncate" title={artwork.materialsUsed.join(", ")}>
+                                    {artwork.materialsUsed.join(", ")}
+                                </p>
+                             </div>
+                         )}
+                    </>
                  )}
                   {artwork.colors?.length > 0 && (
                      <div className="bg-muted/30 p-3 rounded-lg border col-span-2">

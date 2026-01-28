@@ -185,7 +185,7 @@ const ArtworkManager = ({ isAdmin = false }) => {
     <div className="space-y-6">
       {/* KPI Cards */}
       {kpis && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
             <StatCard 
                 title="Total Revenue" 
                 value={formatPrice(kpis.totalRevenue)} 

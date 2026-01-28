@@ -8,7 +8,6 @@ const dimensionsSchema = new Schema(
     depth: { type: Number },
     unit: {
       type: String,
-      enum: ["cm", "in", "m"],
       default: "cm",
     },
   },
@@ -84,6 +83,11 @@ const artworkSchema = new Schema(
       backgroundAudioUrl: { type: String },
       
       // Metadata
+      quality: { 
+        type: String, 
+        enum: ["8K", "4K", "2K", "1080p", "720p", "High Quality", "Other", "480p", "360p"],
+        default: "" 
+      },
       synopsis: { type: String, maxlength: 2000 },
       director: { type: String },
       coAuthor: { type: String },
