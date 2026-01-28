@@ -18,8 +18,30 @@ const ThemeEditor = () => {
   const [fontFamily, setFontFamily] = useState("Inter");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Structural Colors State - LIGHT
+  const [bgColorLight, setBgColorLight] = useState("#ffffff");
+  const [textColorLight, setTextColorLight] = useState("#000000");
+  const [cardColorLight, setCardColorLight] = useState("#ffffff");
+  const [cardTextColorLight, setCardTextColorLight] = useState("#000000");
+  const [primaryForegroundLight, setPrimaryForegroundLight] = useState("#fafafa");
+  const [secondaryColorLight, setSecondaryColorLight] = useState("#f4f4f5");
+  const [secondaryForegroundLight, setSecondaryForegroundLight] = useState("#18181b");
+
+  // Structural Colors State - DARK
+  const [bgColorDark, setBgColorDark] = useState("#0a0a0b"); // Default dark
+  const [textColorDark, setTextColorDark] = useState("#fafafa");
+  const [cardColorDark, setCardColorDark] = useState("#18181b");
+  const [cardTextColorDark, setCardTextColorDark] = useState("#fafafa");
+  const [primaryForegroundDark, setPrimaryForegroundDark] = useState("#fafafa");
+  const [secondaryColorDark, setSecondaryColorDark] = useState("#27272a");
+  const [secondaryForegroundDark, setSecondaryForegroundDark] = useState("#fafafa");
+
+  const [activeMode, setActiveMode] = useState("light"); // 'light' or 'dark'
+
   const fontOptions = [
       { label: "Inter (Default)", value: "Inter" },
+      { label: "Geist Sans", value: "Geist Sans" },
+      { label: "Segoe UI", value: "Segoe UI" },
       { label: "Manrope", value: "Manrope" },
       { label: "Poppins", value: "Poppins" },
       { label: "Roboto", value: "Roboto" },
@@ -109,6 +131,30 @@ const ThemeEditor = () => {
         }
         if (themeSettings.radius) setRadius(parseFloat(themeSettings.radius) || 0.5);
         if (themeSettings.fontFamily) setFontFamily(themeSettings.fontFamily);
+        
+        // Initialize Light Mode Colors
+        if (themeSettings.cssVarsLight) {
+            if (themeSettings.cssVarsLight["--background"]) setBgColorLight(hslToHex(themeSettings.cssVarsLight["--background"]));
+            if (themeSettings.cssVarsLight["--foreground"]) setTextColorLight(hslToHex(themeSettings.cssVarsLight["--foreground"]));
+            if (themeSettings.cssVarsLight["--card"]) setCardColorLight(hslToHex(themeSettings.cssVarsLight["--card"]));
+            if (themeSettings.cssVarsLight["--card-foreground"]) setCardTextColorLight(hslToHex(themeSettings.cssVarsLight["--card-foreground"]));
+            
+            if (themeSettings.cssVarsLight["--primary-foreground"]) setPrimaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--primary-foreground"]));
+            if (themeSettings.cssVarsLight["--secondary"]) setSecondaryColorLight(hslToHex(themeSettings.cssVarsLight["--secondary"]));
+            if (themeSettings.cssVarsLight["--secondary-foreground"]) setSecondaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--secondary-foreground"]));
+        }
+
+        // Initialize Dark Mode Colors
+        if (themeSettings.cssVarsDark) {
+            if (themeSettings.cssVarsDark["--background"]) setBgColorDark(hslToHex(themeSettings.cssVarsDark["--background"]));
+            if (themeSettings.cssVarsDark["--foreground"]) setTextColorDark(hslToHex(themeSettings.cssVarsDark["--foreground"]));
+            if (themeSettings.cssVarsDark["--card"]) setCardColorDark(hslToHex(themeSettings.cssVarsDark["--card"]));
+            if (themeSettings.cssVarsDark["--card-foreground"]) setCardTextColorDark(hslToHex(themeSettings.cssVarsDark["--card-foreground"]));
+            
+            if (themeSettings.cssVarsDark["--primary-foreground"]) setPrimaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--primary-foreground"]));
+            if (themeSettings.cssVarsDark["--secondary"]) setSecondaryColorDark(hslToHex(themeSettings.cssVarsDark["--secondary"]));
+            if (themeSettings.cssVarsDark["--secondary-foreground"]) setSecondaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--secondary-foreground"]));
+        }
     }
   }, [themeSettings]);
 
@@ -120,17 +166,35 @@ const ThemeEditor = () => {
       const hsl = hexToHSL(hex);
       const p = parseHSL(hsl);
       const fg = calculateForeground(p.h, p.s, p.l);
+      
+      // Update both foregrounds if they haven't been customized? 
+      // Or just let user manage it. We'll leave them as is.
 
-      // We ONLY update primary/radius/font preview
-      // We explicitly send empty cssVars to clear any previous clutter in preview
       updateThemePreview({ 
           ...themeSettings, 
           primary: hsl, 
           radius: `${radius}rem`, 
           fontFamily,
-          cssVars: { "--primary-foreground": fg } 
+          // We need to send both maps for preview to work fully if context switches
+          cssVarsLight: generateCssVars("light"),
+          cssVarsDark: generateCssVars("dark")
       });
   };
+
+  const generateCssVars = (mode) => {
+      const isLight = mode === "light";
+      return {
+          "--background": hexToHSL(isLight ? bgColorLight : bgColorDark),
+          "--foreground": hexToHSL(isLight ? textColorLight : textColorDark),
+          "--card": hexToHSL(isLight ? cardColorLight : cardColorDark),
+          "--card-foreground": hexToHSL(isLight ? cardTextColorLight : cardTextColorDark),
+          "--popover": hexToHSL(isLight ? cardColorLight : cardColorDark),
+          "--popover-foreground": hexToHSL(isLight ? cardTextColorLight : cardTextColorDark),
+          "--primary-foreground": hexToHSL(isLight ? primaryForegroundLight : primaryForegroundDark),
+          "--secondary": hexToHSL(isLight ? secondaryColorLight : secondaryColorDark),
+          "--secondary-foreground": hexToHSL(isLight ? secondaryForegroundLight : secondaryForegroundDark),
+      };
+  }
 
   const handleRadiusChange = (val) => {
       const r = val[0];
@@ -151,17 +215,71 @@ const ThemeEditor = () => {
 
   const handleFontChange = (val) => {
       setFontFamily(val);
-      
-      const hsl = hexToHSL(primaryColor);
-      const p = parseHSL(hsl);
-      const fg = calculateForeground(p.h, p.s, p.l);
+      updateThemePreview({ ...themeSettings, fontFamily: val });
+  };
 
+  // Generic handler for structural colors
+  const handleModeColorChange = (mode, key, val) => {
+      // mode: 'light' or 'dark', key: 'bgColor', val: hex
+      
+      // Update State
+      if (mode === "light") {
+          if (key === "bgColor") setBgColorLight(val);
+          if (key === "textColor") setTextColorLight(val);
+          if (key === "cardColor") setCardColorLight(val);
+          if (key === "cardTextColor") setCardTextColorLight(val);
+          if (key === "primaryFg") setPrimaryForegroundLight(val);
+          if (key === "secColor") setSecondaryColorLight(val);
+          if (key === "secFg") setSecondaryForegroundLight(val);
+      } else {
+          if (key === "bgColor") setBgColorDark(val);
+          if (key === "textColor") setTextColorDark(val);
+          if (key === "cardColor") setCardColorDark(val);
+          if (key === "cardTextColor") setCardTextColorDark(val);
+          if (key === "primaryFg") setPrimaryForegroundDark(val);
+          if (key === "secColor") setSecondaryColorDark(val);
+          if (key === "secFg") setSecondaryForegroundDark(val);
+      }
+
+      // PREVIEW UPDATE
+      // We construct the NEW state just for the preview call
+      // Since state update is async, we use 'val' for the changed property
+      const currentLight = generateCssVars("light");
+      const currentDark = generateCssVars("dark");
+      
+      // Map state key to CSS var
+      const keyMap = {
+          "bgColor": "--background",
+          "textColor": "--foreground",
+          "cardColor": "--card",
+          "cardTextColor": "--card-foreground",
+          "primaryFg": "--primary-foreground",
+          "secColor": "--secondary",
+          "secFg": "--secondary-foreground"
+      };
+
+      const cssVarKey = keyMap[key];
+      const newHSL = hexToHSL(val);
+
+      if (mode === "light") {
+          currentLight[cssVarKey] = newHSL;
+          currentLight["--popover"] = currentLight["--card"]; // sync
+          currentLight["--popover-foreground"] = currentLight["--card-foreground"];
+      } else {
+          currentDark[cssVarKey] = newHSL;
+          currentDark["--popover"] = currentDark["--card"];
+          currentDark["--popover-foreground"] = currentDark["--card-foreground"];
+      }
+
+      const primaryHSL = hexToHSL(primaryColor);
+      
       updateThemePreview({ 
           ...themeSettings, 
-          primary: hsl,
+          primary: primaryHSL,
           radius: `${radius}rem`, 
-          fontFamily: val,
-          cssVars: { "--primary-foreground": fg }
+          fontFamily,
+          cssVarsLight: currentLight,
+          cssVarsDark: currentDark
       });
   };
 
@@ -169,33 +287,29 @@ const ThemeEditor = () => {
       setIsLoading(true);
       try {
           const primaryHSL = hexToHSL(primaryColor);
-          const p = parseHSL(primaryHSL);
-          const fg = calculateForeground(p.h, p.s, p.l);
-
+          
           const payload = {
               theme: {
                   primary: primaryHSL,
                   radius: `${radius}rem`,
                   fontFamily,
-                  // AGGRESSIVE CLEANUP: Explicitly set all known variable keys to null 
-                  // to force the backend/frontend to fallback to system defaults.
-                  // This assumes the backend supports partial updates or we are replacing the whole map.
-                  // If the backend merges, setting to null should delete the key in Mongoose Map.
-                  cssVars: {
-                      "--primary-foreground": fg,
-                      "--secondary": null, "--secondary-foreground": null,
-                      "--accent": null, "--accent-foreground": null,
-                      "--muted": null, "--muted-foreground": null,
-                      "--destructive": null, "--destructive-foreground": null,
-                      "--card": null, "--card-foreground": null,
-                      "--popover": null, "--popover-foreground": null,
-                      "--background": null, "--foreground": null,
-                      "--border": null, "--input": null, "--ring": null
-                  }
+                  cssVarsLight: generateCssVars("light"),
+                  cssVarsDark: generateCssVars("dark")
               }
           };
           await platformAPI.updateSettings(payload);
-          toast.success("Theme restored significantly! Please reload.");
+          toast.success("Theme saved! Reloading...", {
+            action: {
+              label: "Reload Now",
+              onClick: () => window.location.reload(),
+            },
+            onDismiss: () => window.location.reload(),
+            onAutoClose: () => window.location.reload(),
+          });
+          // Fallback reload after a short delay if they don't interact? 
+          // Actually onDismiss covers manual close and auto close usually.
+          // Yet, let's keep it simple.
+          setTimeout(() => window.location.reload(), 2000); 
       } catch (error) {
           console.error("Failed to save theme", error);
           toast.error("Failed to save theme changes.");
@@ -205,19 +319,61 @@ const ThemeEditor = () => {
   };
 
   const handleReset = () => {
-     const defaultPrimary = "#0f172a";
-     setPrimaryColor(defaultPrimary);
-     setRadius(0.5);
-     setFontFamily("Inter");
+     // Default Beige Theme Values
+     const defPrimary = "#1a1a1c"; 
+     const defRadius = 0.5;
      
-     const hsl = hexToHSL(defaultPrimary);
+     // Light
+     const l_Bg = "#f8f7f5"; 
+     const l_Fg = "#0a0a0b"; 
+     const l_Card = "#fcfbf7"; 
+     const l_CardFg = "#0a0a0b"; 
+     const l_Sec = "#f4f4f5"; 
+     const l_SecFg = "#18181b"; 
+     const l_PrimFg = "#fafafa";
+
+     // Dark
+     const d_Bg = "#0c0a09"; // Very dark warm gray
+     const d_Fg = "#fafafa"; 
+     const d_Card = "#1c1917"; 
+     const d_CardFg = "#fafafa"; 
+     const d_Sec = "#292524"; 
+     const d_SecFg = "#fafafa";
+     const d_PrimFg = "#fafafa";
+
+     setPrimaryColor(defPrimary);
+     setRadius(defRadius);
+     setFontFamily("Inter");
+
+     // Reset Light State
+     setBgColorLight(l_Bg); setTextColorLight(l_Fg); setCardColorLight(l_Card); setCardTextColorLight(l_CardFg); 
+     setSecondaryColorLight(l_Sec); setSecondaryForegroundLight(l_SecFg); setPrimaryForegroundLight(l_PrimFg);
+
+     // Reset Dark State
+     setBgColorDark(d_Bg); setTextColorDark(d_Fg); setCardColorDark(d_Card); setCardTextColorDark(d_CardFg); 
+     setSecondaryColorDark(d_Sec); setSecondaryForegroundDark(d_SecFg); setPrimaryForegroundDark(d_PrimFg);
+     
+     const hsl = hexToHSL(defPrimary);
      // Resetting sends clean state
      updateThemePreview({ 
          primary: hsl, 
-         radius: "0.5rem", 
+         radius: `${defRadius}rem`, 
          fontFamily: "Inter",
-         cssVars: { "--primary-foreground": "210 40% 98%" }
+         cssVarsLight: {
+            "--background": hexToHSL(l_Bg), "--foreground": hexToHSL(l_Fg),
+            "--card": hexToHSL(l_Card), "--card-foreground": hexToHSL(l_CardFg),
+            "--secondary": hexToHSL(l_Sec), "--secondary-foreground": hexToHSL(l_SecFg),
+            "--primary-foreground": hexToHSL(l_PrimFg),
+         },
+         cssVarsDark: {
+            "--background": hexToHSL(d_Bg), "--foreground": hexToHSL(d_Fg),
+            "--card": hexToHSL(d_Card), "--card-foreground": hexToHSL(d_CardFg),
+            "--secondary": hexToHSL(d_Sec), "--secondary-foreground": hexToHSL(d_SecFg),
+            "--primary-foreground": hexToHSL(d_PrimFg),
+         }
      });
+     
+     toast.success("Reset to factory defaults");
   };
 
   return (
@@ -228,33 +384,15 @@ const ThemeEditor = () => {
         </CardHeader>
         <CardContent className="space-y-8">
             
-            {/* Primary Color */}
-            <div className="space-y-2">
-                <Label htmlFor="primary-color">Primary Brand Color</Label>
-                <div className="flex items-center gap-4">
-                    <Input
-                        id="primary-color"
-                        type="color"
-                        value={primaryColor}
-                        onChange={handleColorChange}
-                        className="w-16 h-10 p-1 cursor-pointer"
-                    />
-                    <Input
-                        value={primaryColor}
-                        onChange={handleColorChange}
-                        className="font-mono text-sm w-32"
-                    />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                    This color will be used for main buttons, active states, and highlights.
-                </p>
-            </div>
 
+
+
+            
             <div className="h-px bg-border" />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                    <Label htmlFor="radius">Border Radius: {radius}rem</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                    <Label htmlFor="radius">Radius: {radius}rem</Label>
                     <Slider
                         id="radius"
                         min={0}
@@ -262,13 +400,14 @@ const ThemeEditor = () => {
                         step={0.1}
                         value={[radius]}
                         onValueChange={handleRadiusChange}
+                        className="py-2"
                     />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2 md:col-span-1">
                     <Label htmlFor="font-family">Font Family</Label>
                     <Select value={fontFamily} onValueChange={handleFontChange}>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full h-9">
                             <SelectValue placeholder="Select a font" />
                         </SelectTrigger>
                         <SelectContent>
@@ -279,6 +418,155 @@ const ThemeEditor = () => {
                             ))}
                         </SelectContent>
                     </Select>
+                </div>
+                
+                 <div className="space-y-2 col-span-2 md:col-span-2">
+                     <Label>Primary Brand Color</Label>
+                    <div className="flex items-center gap-2">
+                        <Input
+                            id="primary-color"
+                            type="color"
+                            value={primaryColor}
+                            onChange={handleColorChange}
+                            className="w-12 h-9 p-0.5 cursor-pointer"
+                        />
+                        <Input
+                            value={primaryColor}
+                            onChange={handleColorChange}
+                            className="font-mono text-xs w-24 h-9"
+                        />
+                        <p className="text-xs text-muted-foreground ml-2">
+                             Used for main buttons & active states.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-px bg-border" />
+
+            {/* Mode Switcher */}
+            <div className="flex justify-center pb-2">
+                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                    <Button 
+                        variant={activeMode === "light" ? "default" : "ghost"} 
+                        size="sm"
+                        onClick={() => setActiveMode("light")}
+                        className="w-32 h-8"
+                    >
+                        ☀ Light Mode
+                    </Button>
+                    <Button 
+                        variant={activeMode === "dark" ? "default" : "ghost"} 
+                        size="sm"
+                        onClick={() => setActiveMode("dark")}
+                         className="w-32 h-8"
+                    >
+                        🌙 Dark Mode
+                    </Button>
+                </div>
+            </div>
+
+            <div className="p-4 border rounded-lg bg-card/50">
+                <div className="text-center pb-4">
+                    <h3 className="font-semibold text-lg">
+                        {activeMode === "light" ? "Light Mode Palette" : "Dark Mode Palette"}
+                    </h3>
+                    <p className="text-muted-foreground text-xs">
+                        {activeMode === "light" ? "Light" : "Dark"} mode specific overrides.
+                    </p>
+                </div>
+                
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Background Color */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">App Background</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? bgColorLight : bgColorDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "bgColor", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Text Color */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">App Text</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? textColorLight : textColorDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "textColor", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Card Background */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Card Background</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? cardColorLight : cardColorDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "cardColor", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Card Text */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Card Text</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? cardTextColorLight : cardTextColorDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "cardTextColor", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* Secondary Button */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Secondary Btn</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? secondaryColorLight : secondaryColorDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "secColor", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Secondary Text */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Secondary Text</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? secondaryForegroundLight : secondaryForegroundDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "secFg", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Primary Text */}
+                    <div className="space-y-1.5">
+                        <Label className="text-xs">Primary Btn Text</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="color"
+                                value={activeMode === "light" ? primaryForegroundLight : primaryForegroundDark}
+                                onChange={(e) => handleModeColorChange(activeMode, "primaryFg", e.target.value)}
+                                className="w-full h-8 p-1 cursor-pointer"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 

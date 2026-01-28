@@ -216,7 +216,7 @@ function App() {
               </main>
               <Footer />
             </div>
-            <Toaster position="top-center" />
+            <Toaster position="top-center" closeButton />
             </CartProvider>
             </MessagingProvider>
           </AuthProvider>

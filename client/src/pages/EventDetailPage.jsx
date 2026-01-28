@@ -258,7 +258,7 @@ const EventDetailPage = () => {
 
                            {event.maxCapacity > 0 && (
                                <div className="space-y-1">
-                                   <Progress value={progress} className="h-2" />
+                                   <Progress value={progress} className="h-2 bg-muted dark:bg-zinc-700" />
                                    <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}% full</p>
                                </div>
                            )}

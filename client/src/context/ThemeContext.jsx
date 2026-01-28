@@ -31,16 +31,16 @@ export const ThemeProvider = ({ children }) => {
   const applyTheme = (theme) => {
       if (!theme) return;
       const root = document.documentElement;
+      
+      // 1. Base Variables (Primary, Radius, Fonts) - Shared or specific?
+      // Usually Primary brand color is shared, but we could split it if needed.
+      // For now, keep Primary/Radius/Font global as "Brand Identity".
 
       if (theme.primary) {
           root.style.setProperty("--primary", theme.primary);
-          // Ensure text is readable. Default dark mode behavior expects a white primary button with black text.
-          // When overriding with a custom color (usually dark), we need white text.
-          root.style.setProperty("--primary-foreground", "0 0% 98%");
-          
-          // We might want to auto-calculate ring/foreground if not provided,
-          // but for now assume simple override
-          root.style.setProperty("--ring", theme.primary);
+          // Auto-contrast foreground for primary is tricky if primary changes brightness.
+          // We'll rely on the theme config overrides if provided.
+          // root.style.setProperty("--primary-foreground", "0 0% 98%"); 
       }
 
       if (theme.radius) {
@@ -48,39 +48,24 @@ export const ThemeProvider = ({ children }) => {
       }
       
       if (theme.fontFamily) {
-          // If system-ui is selected, use the standard system font stack
-          // Otherwise use the font name fallbacked to sans-serif
           const fontValue = theme.fontFamily === 'system-ui' 
             ? "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
             : `"${theme.fontFamily}", sans-serif`;
-            
           root.style.setProperty("--font-sans", fontValue);
       }
 
-      if (theme.cssVars) {
-          const unsafeKeys = [
-              "--background", "--foreground", 
-              "--card", "--card-foreground",
-              "--popover", "--popover-foreground",
-              "--secondary", "--secondary-foreground",
-              "--muted", "--muted-foreground",
-              "--accent", "--accent-foreground",
-              "--destructive", "--destructive-foreground",
-              "--input", "--border", "--ring"
-          ];
-          // We decided to only allow BRAND colors for now to preserve dark mode integrity
-          // Or we can allow specific ones.
-          // The critical ones to block are background/foreground/card.
-          // Let's block the structural ones.
-          
-          const structuralKeys = ["--background", "--foreground", "--card", "--card-foreground", "--popover", "--popover-foreground"];
+      // 2. Mode-Specific Overrides
+      // We check the LOCAL state `isDarkMode` to decide which set to apply.
+      // BUT, `applyTheme` might be called before `isDarkMode` state is settled or when it changes.
+      // The `useEffect` below handles the change.
+      
+      const varsToApply = isDarkMode 
+        ? (theme.cssVarsDark || {}) 
+        : (theme.cssVarsLight || {});
 
-          Object.entries(theme.cssVars).forEach(([key, value]) => {
-              if (!structuralKeys.includes(key)) {
-                  root.style.setProperty(key, value);
-              }
-          });
-      }
+      Object.entries(varsToApply).forEach(([key, value]) => {
+          root.style.setProperty(key, value);
+      });
   };
 
   useEffect(() => {

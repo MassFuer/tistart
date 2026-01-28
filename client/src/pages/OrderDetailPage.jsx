@@ -180,10 +180,10 @@ const OrderDetailPage = () => {
                         <div key={idx} className="py-4 first:pt-0 last:pb-0 flex gap-4 md:gap-6">
                              {/* Image */}
                              <div className="shrink-0 w-24 h-24 bg-muted rounded-md overflow-hidden border">
-                                  {item.artwork?.images?.[0] ? (
+                                  {item.image || item.artwork?.images?.[0] ? (
                                     <img 
-                                        src={item.artwork.images[0]} 
-                                        alt={item.artwork.title} 
+                                        src={item.image || item.artwork.images[0]} 
+                                        alt={item.title || item.artwork.title} 
                                         className="w-full h-full object-cover"
                                     />
                                   ) : (
@@ -197,10 +197,10 @@ const OrderDetailPage = () => {
                                       <h3 className="font-semibold text-lg truncate">
                                          {item.artwork ? (
                                            <Link to={`/artworks/${item.artwork._id}`} className="hover:underline">
-                                               {item.artwork.title}
+                                               {item.title || item.artwork.title}
                                            </Link>
                                          ) : (
-                                           <span className="text-muted-foreground">Artwork no longer available</span>
+                                           <span className="text-muted-foreground">{item.title || "Artwork no longer available"}</span>
                                          )}
                                       </h3>
                                       {item.artwork?.artist && (

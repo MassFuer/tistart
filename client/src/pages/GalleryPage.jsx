@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import ArtworkCard from "../components/artwork/ArtworkCard";
+import { useAuth } from "../context/AuthContext";
 import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { SlidersHorizontal, X, ArrowUpDown, Filter } from "lucide-react";
+import { SlidersHorizontal, X, ArrowUpDown, Filter, Plus } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,7 @@ import Pagination from "../components/common/Pagination";
 import ArtworkFilters from "../components/artwork/ArtworkFilters";
 
 const GalleryPage = () => {
+  const { isVerifiedArtist, isAdmin } = useAuth();
   const {
     data: artworks,
     loading: isLoading,
@@ -212,6 +215,15 @@ const GalleryPage = () => {
                           </SelectContent>
                       </Select>
                   </div>
+
+                  {(isVerifiedArtist || isAdmin) && (
+                      <Button asChild size="sm">
+                          <Link to="/artworks/new">
+                              <Plus className="mr-2 h-4 w-4" />
+                              Create Artwork
+                          </Link>
+                      </Button>
+                  )}
               </div>
           </div>
       </div>

@@ -268,7 +268,7 @@ const Navbar = () => {
                 <Button variant="ghost" asChild>
                     <Link to="/login">Log in</Link>
                 </Button>
-                <Button asChild className="dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-all">
+                <Button asChild className="transition-all">
                     <Link to="/signup">Sign up</Link>
                 </Button>
              </div>
@@ -296,7 +296,7 @@ const Navbar = () => {
                             <Button variant="outline" asChild className="justify-start">
                                 <Link to="/login" onClick={() => setIsSheetOpen(false)}>Log in</Link>
                             </Button>
-                            <Button asChild className="justify-start dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-all">
+                            <Button asChild className="justify-start transition-all">
                                 <Link to="/signup" onClick={() => setIsSheetOpen(false)}>Sign up</Link>
                             </Button>
                         </div>

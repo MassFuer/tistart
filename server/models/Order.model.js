@@ -44,6 +44,14 @@ const orderItemSchema = new Schema(
       required: true,
       min: 0,
     },
+    // Snapshot fields
+    title: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String, 
+    },
     // Ticket specific
     ticketCode: {
        type: String,

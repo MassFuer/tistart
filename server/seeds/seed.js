@@ -53,7 +53,7 @@ const pickRandom = (arr, count = 1) => {
 };
 
 // Create users
-const createUsers = async (count = 10) => {
+const createUsers = async (count = 50) => {
   const users = [];
   const hashedPassword = await bcryptjs.hash("Password123", 12);
 
@@ -80,7 +80,7 @@ const createUsers = async (count = 10) => {
 // Create artists (verified)
 const createArtists = async (count = 5) => {
   const artists = [];
-  const hashedPassword = await bcryptjs.hash("Password123", 12);
+  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
 
   for (let i = 0; i < count; i++) {
     const firstName = faker.person.firstName();
@@ -138,7 +138,7 @@ const createArtists = async (count = 5) => {
 
 // Create admin user
 const createAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash("Admin123!", 12);
+  const hashedPassword = await bcryptjs.hash("Admin1234567!!", 12);
 
   return User.create({
     firstName: "Admin",
@@ -154,7 +154,7 @@ const createAdmin = async () => {
 
 // Create superadmin user
 const createSuperAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash("SuperAdmin123!", 12);
+  const hashedPassword = await bcryptjs.hash("SuperAdmin1234567!!", 12);
 
   return User.create({
     firstName: "Super",
@@ -170,7 +170,7 @@ const createSuperAdmin = async () => {
 
 // Create test user account (for testing paywall, purchases, etc.)
 const createTestUser = async () => {
-  const hashedPassword = await bcryptjs.hash("Test123!", 12);
+  const hashedPassword = await bcryptjs.hash("Test1234567!!", 12);
 
   return User.create({
     firstName: "Test",
@@ -188,7 +188,7 @@ const createTestUser = async () => {
 
 // Create pending artist account (for testing artist approval flow)
 const createPendingArtist = async () => {
-  const hashedPassword = await bcryptjs.hash("Test123!", 12);
+  const hashedPassword = await bcryptjs.hash("Test1234567!!", 12);
 
   return User.create({
     firstName: "Pending",
@@ -220,7 +220,7 @@ const createPendingArtist = async () => {
 
 // Create specific artist
 const createSpecificArtist = async () => {
-  const hashedPassword = await bcryptjs.hash("Password123", 12);
+  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
 
   return User.create({
     firstName: "Artist",
@@ -259,7 +259,7 @@ const createSpecificArtist = async () => {
 };
 
 // Create artworks
-const createArtworks = async (artists, count = 30) => {
+const createArtworks = async (artists, count = 150) => {
   const artworks = [];
 
   for (let i = 0; i < count; i++) {
@@ -301,7 +301,7 @@ const createArtworks = async (artists, count = 30) => {
 };
 
 // Create events
-const createEvents = async (artists, users, count = 20) => {
+const createEvents = async (artists, users, count = 100) => {
   const events = [];
 
   for (let i = 0; i < count; i++) {
@@ -361,7 +361,7 @@ const createEvents = async (artists, users, count = 20) => {
 };
 
 // Create reviews
-const createReviews = async (users, artworks, count = 50) => {
+const createReviews = async (users, artworks, count = 500) => {
   const reviews = [];
   const usedPairs = new Set();
 
@@ -423,7 +423,7 @@ const seed = async () => {
     console.log(`   ✓ Pending Artist: ${pendingArtist.email}`);
 
     console.log("\n👥 Creating regular users...");
-    const users = await createUsers(10);
+    const users = await createUsers(50);
     users.push(testUser); // Include test user in users array for reviews/events
     console.log(`   ✓ Created ${users.length} users (including test user)`);
 
@@ -437,13 +437,13 @@ const seed = async () => {
     console.log(`   ✓ Artiste: ${specificArtist.email}`);
 
     console.log("\n🖼️  Creating artworks...");
-    const artworks = await createArtworks(artists, 30);
+    const artworks = await createArtworks(artists, 150);
     console.log(`   ✓ Created ${artworks.length} artworks`);
 
     console.log("\n📅 Creating events...");
     let events = [];
     try {
-      events = await createEvents(artists, users, 20);
+      events = await createEvents(artists, users, 100);
       console.log(`   ✓ Created ${events.length} events with attendees`);
     } catch (eventError) {
       console.error("   ❌ Error creating events:", eventError.message);
@@ -456,19 +456,19 @@ const seed = async () => {
 
     console.log("\n⭐ Creating reviews...");
     const allUsers = [...users, ...artists];
-    const reviews = await createReviews(allUsers, artworks, 50);
+    const reviews = await createReviews(allUsers, artworks, 500);
     console.log(`   ✓ Created ${reviews.length} reviews`);
 
     // Summary
     console.log("\n" + "=".repeat(50));
     console.log("✅ Seed completed successfully!\n");
     console.log("📊 Summary:");
-    console.log(`   - SuperAdmin: 1 (superadmin@nemesis.com / SuperAdmin123!)`);
-    console.log(`   - Admin: 1 (admin@nemesis.com / Admin123!)`);
-    console.log(`   - Test User: 1 (user@test.com / Test123!)`);
-    console.log(`   - Pending Artist: 1 (pending@test.com / Test123!)`);
-    console.log(`   - Verified Artist: 1 (artist@nemesis.com / Password123)`);
-    console.log(`   - Random Users: ${users.length - 1} (password: Password123)`);
+    console.log(`   - SuperAdmin: 1 (superadmin@nemesis.com / SuperAdmin1234567!!)`);
+    console.log(`   - Admin: 1 (admin@nemesis.com / Admin1234567!!)`);
+    console.log(`   - Test User: 1 (user@test.com / Test1234567!!)`);
+    console.log(`   - Pending Artist: 1 (pending@test.com / Test1234567!!)`);
+    console.log(`   - Verified Artist: 1 (artist@nemesis.com / Password1234567!!)`);
+    console.log(`   - Random Users: ${users.length - 1} (password: Password1234567!!)`);
     console.log(`   - Random Artists: ${artists.length - 1} (password: Password123)`);
     console.log(`   - Artworks: ${artworks.length}`);
     console.log(`   - Events: ${events.length}`);

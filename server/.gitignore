@@ -7,6 +7,9 @@ npm-debug.log
 # Environment Variables should NEVER be published
 .env
 
+# Seed data
+seeds/
+
 # macOS
 .DS_Store
 .AppleDouble
@@ -17,7 +20,7 @@ Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 *.lnk
-/scripts
+/scripts/
 
 # VS Code
 .vscode/*

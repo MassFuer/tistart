@@ -78,3 +78,4 @@ Access the app at `http://localhost:5173`.
     - *New*: Streamlined **EventManagement** interface.
     - *New*: Enhanced mobile responsiveness for dashboard tabs.
     - *New*: **Storage Usage** indicators for artists.
+    - *New*: **Advanced Theme Editor** with mode-specific (Light/Dark) customization.

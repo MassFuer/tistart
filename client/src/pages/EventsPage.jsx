@@ -12,7 +12,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { Filter, Calendar as CalendarIcon, Map as MapIcon, List as ListIcon } from "lucide-react";
+import { Filter, Calendar as CalendarIcon, Map as MapIcon, List as ListIcon, Plus } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -139,10 +139,12 @@ const EventsPage = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-                    <p className="text-muted-foreground">Discover upcoming art events and exhibitions</p>
+                    <p className="text-muted-foreground">
+                        Showing {events.length} of {pagination.total || 0} events
+                    </p>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap justify-end">
                     {/* View Mode Tabs */}
                     <TabsList>
                         <TabsTrigger value="grid" className="px-3">
@@ -186,7 +188,10 @@ const EventsPage = () => {
 
                     {(isVerifiedArtist || isAdmin) && (
                        <Button asChild size="sm">
-                          <Link to="/events/new">Create Event</Link>
+                          <Link to="/events/new">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Event
+                          </Link>
                        </Button>
                     )}
                 </div>
@@ -218,7 +223,7 @@ const EventsPage = () => {
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-2 gap-3 md:gap-6">
+                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                     {events.map(event => (
                                         <EventCard key={event._id} event={event} />
                                     ))}

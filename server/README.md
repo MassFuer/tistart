@@ -97,3 +97,7 @@ npm run seed
 
 - `npm run seed`: Reset database with dummy data.
 - `node scripts/migrate-ngrams.js`: Re-index artworks for search.
+
+## 🔐 Super Admin Access
+
+Certain features, such as **Theme Customization**, **Maintenance Mode**, and **Global Storage Management**, are restricted to the `SuperAdmin` role.

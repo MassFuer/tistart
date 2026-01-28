@@ -14,6 +14,7 @@ import {
 import { ArrowRight, Palette, ShieldCheck, Users } from "lucide-react"; // Icons
 import ArtworkCard from "../components/artwork/ArtworkCard";
 import EventCard from "../components/event/EventCard";
+import WordRotate from "../components/ui/word-rotate";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -26,7 +27,7 @@ const HomePage = () => {
       try {
         const [artworksRes, eventsRes] = await Promise.all([
           artworksAPI.getAll({ limit: 6, sort: '-createdAt' }),
-          eventsAPI.getAll({ limit: 4, sort: '-createdAt' })
+          eventsAPI.getAll({ limit: 6, sort: '-createdAt' })
         ]);
         setFeaturedArtworks(artworksRes.data.data);
         setFeaturedEvents(eventsRes.data.data || []);
@@ -61,8 +62,14 @@ const HomePage = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-2xl mb-4">
-                  Where Art Meets <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Innovation</span>
+                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-2xl mb-4 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-3">
+                  <span>Where Art Meets</span>
+                  <div className="w-[320px] md:w-auto min-w-[300px] flex justify-center md:justify-start">
+                     <WordRotate
+                        className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 pb-2 text-center md:text-left"
+                        words={["Innovation", "Ironhack", "Creativity", "Passion", "Future", "Marseille"]}
+                     />
+                  </div>
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl mx-auto leading-relaxed">
                   The premier platform for discovering unique artworks, connecting with visionary artists, and collecting with confidence.
@@ -170,7 +177,7 @@ const HomePage = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 max-w-7xl mx-auto">
             {featuredEvents.map((event, i) => (
               <motion.div
                 key={event._id}

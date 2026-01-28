@@ -156,7 +156,9 @@ const platformSettingsSchema = new Schema(
     theme: {
       primary: { type: String, default: "240 5.9% 10%" },
       radius: { type: String, default: "0.5rem" },
-      cssVars: { type: Map, of: String, default: {} }, // Allow arbitrary overrides
+      fontFamily: { type: String, default: "Inter" },
+      cssVarsLight: { type: Map, of: String, default: {} },
+      cssVarsDark: { type: Map, of: String, default: {} },
     },
 
     // Last updated by

@@ -68,7 +68,7 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
                 {formatPrice(event.price)}
              </div>
         </div>
-        <CardTitle className="text-xl line-clamp-1 leading-tight">
+        <CardTitle className="text-xl line-clamp-2 leading-tight min-h-[3.5rem]">
             <Link to={`/events/${event._id}`} className="hover:underline">
                 {event.title}
             </Link>
