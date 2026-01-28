@@ -5,6 +5,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Lock, Loader2, AlertCircle } from "lucide-react";
+import { formatPrice } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -88,7 +89,7 @@ const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
               </>
             ) : (
               <>
-                <Lock className="mr-2 h-4 w-4" /> Pay {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalAmount)}
+                <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(totalAmount)}
               </>
             )}
           </Button>

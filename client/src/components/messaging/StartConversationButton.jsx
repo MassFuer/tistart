@@ -4,7 +4,7 @@ import { useMessaging } from "../../context/MessagingContext";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../ui/button";
 import { MessageCircle, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const StartConversationButton = ({
   artistId,

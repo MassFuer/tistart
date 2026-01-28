@@ -91,6 +91,9 @@ conversationSchema.index({ "lastMessage.createdAt": -1 });
 // Index for status filtering
 conversationSchema.index({ status: 1 });
 
+// Index for finding conversations about specific artwork
+conversationSchema.index({ artwork: 1 });
+
 // Static method to find or create a conversation between two users
 conversationSchema.statics.findOrCreateConversation = async function (
   participantIds,

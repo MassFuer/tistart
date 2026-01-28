@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { videosAPI } from "../../services/api";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { 
   Lock, 
   Play, 

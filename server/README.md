@@ -74,6 +74,7 @@ npm run seed
 - **Storage**: Direct upload to R2/S3 using AWS SDK. Includes automatic quota tracking and file cleanup on deletion.
 - **Security**: Helmet, Rate Limiting, XSS Sanitzation, CORS, Secure Streaming Uploads.
 - **Permissions**: Granular Role-Based Access Control (RBAC) middleware for Admins, SuperAdmins, and Artists.
+- **Video Streaming**: Secured `/stream` endpoints with role-based bypass for Admins/Owners and property normalization (`fullVideoUrl`).
 
 ## 🔌 API Endpoints
 

@@ -82,3 +82,6 @@ Access the app at `http://localhost:5173`.
 - **Self-Hosted Fonts** via `@fontsource` (Inter, Roboto, Segoe UI, Geist, Manrope, etc.) for performance and privacy.
 - **Interactive Hero Animation** featuring dynamic `WordRotate` transitions.
 - **Enhanced Toast Notifications** with global dismiss and smart auto-reload logic.
+- **Video Player**: Integrated robust access control, preview mode for non-purchased users, and high-contrast UI controls.
+- **HomePage FAQ**: Added using Shadcn Accordion.
+- **Mobile Optimizations**: Improved responsive layouts for Artwork Cards and Hero sections.

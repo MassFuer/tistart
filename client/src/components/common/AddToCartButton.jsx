@@ -151,7 +151,12 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
       ) : (
         <ShoppingCart className="mr-1 h-4 w-4" />
       )}
-      {isLoading ? "Adding..." : "Add to Cart"}
+      {isLoading ? "Adding..." : (
+        <>
+            <span className="md:hidden">Buy</span>
+            <span className="hidden md:inline">Add to Cart</span>
+        </>
+      )}
     </Button>
   );
 };

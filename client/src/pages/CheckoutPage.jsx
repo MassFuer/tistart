@@ -26,6 +26,8 @@ import {
   FaStripe
 } from "react-icons/fa";
 
+import { formatPrice } from "@/lib/formatters";
+
 // Shadcn Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -338,7 +340,7 @@ const CheckoutPage = () => {
                                     <p className="text-xs text-muted-foreground truncate max-w-[150px]">{product.artist?.artistInfo?.companyName || product.artist?.lastName}</p>
                                 </div>
                                 <p className="font-medium">
-                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format((product.price || 0) * item.quantity)}
+                                    {formatPrice((product.price || 0) * item.quantity)}
                                 </p>
                            </div>
                            );
@@ -348,7 +350,7 @@ const CheckoutPage = () => {
                       
                       <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Subtotal</span>
-                          <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalPrice)}</span>
+                          <span>{formatPrice(totalPrice)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Shipping</span>
@@ -359,7 +361,7 @@ const CheckoutPage = () => {
                       
                       <div className="flex justify-between font-bold text-lg">
                           <span>Total</span>
-                          <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(totalPrice)}</span>
+                          <span>{formatPrice(totalPrice)}</span>
                       </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-4 flex flex-col gap-4">

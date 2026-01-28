@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useMessaging } from "../../context/MessagingContext";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import logo from "../../assets/logo.jpg";
 import {
   Menu,

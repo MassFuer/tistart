@@ -20,6 +20,7 @@ import {
   Box,
 } from "lucide-react";
 
+import { formatPrice } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -178,7 +179,7 @@ const DashboardPage = () => {
               <>
                  <StatCard 
                     title="Total Revenue" 
-                    value={stats?.revenue ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(stats.revenue) : "€0.00"} 
+                    value={stats?.revenue ? formatPrice(stats.revenue) : "€0.00"} 
                     icon={TrendingUp} 
                     description={`${stats?.sales || 0} orders completed`} 
                  />

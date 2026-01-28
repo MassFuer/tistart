@@ -150,13 +150,6 @@ const ArtworkManager = ({ isAdmin = false }) => {
     }));
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
-
   // Filter and Sort Logic
   const filteredArtworks = artworks.filter(artwork => 
     artwork.title.toLowerCase().includes(search.toLowerCase())

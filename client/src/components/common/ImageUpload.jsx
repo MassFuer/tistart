@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const ImageUpload = ({
   existingImages = [], // Array of URLs or single URL (if multiple=false)

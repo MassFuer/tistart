@@ -158,6 +158,12 @@ orderSchema.post("save", async function (doc) {
   }
 });
 
+// Indexes for efficient queries
+orderSchema.index({ user: 1, status: 1 });
+orderSchema.index({ "items.artist": 1, status: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ paymentId: 1 });
+
 const Order = model("Order", orderSchema);
 
 module.exports = Order;

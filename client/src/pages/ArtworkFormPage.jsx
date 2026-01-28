@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import { useNavigation } from "../context/NavigationContext";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import MarkdownEditor from "../components/common/MarkdownEditor";
 import ImageUpload from "../components/common/ImageUpload";
 import { 

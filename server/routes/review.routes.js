@@ -6,6 +6,7 @@ const Artwork = require("../models/Artwork.model");
 const Order = require("../models/Order.model");
 
 const { isAuthenticated } = require("../middleware/jwt.middleware");
+const { isAdminRole } = require("../middleware/role.middleware");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 const mongoose = require("mongoose");

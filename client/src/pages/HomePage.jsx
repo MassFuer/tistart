@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { ArrowRight, Palette, ShieldCheck, Users } from "lucide-react"; // Icons
 import ArtworkCard from "../components/artwork/ArtworkCard";
 import EventCard from "../components/event/EventCard";
@@ -64,7 +70,7 @@ const HomePage = () => {
             >
                 <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-2xl mb-4 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-3">
                   <span>Where Art Meets</span>
-                  <div className="w-[320px] md:w-auto min-w-[300px] flex justify-center md:justify-start">
+                  <div className="w-full max-w-[300px] md:w-auto md:max-w-none flex justify-center md:justify-start">
                      <WordRotate
                         className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 pb-2 text-center md:text-left"
                         words={["Innovation", "Creativity", "Passion", "Future", "Marseille"]}
@@ -177,7 +183,7 @@ const HomePage = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
             {featuredEvents.map((event, i) => (
               <motion.div
                 key={event._id}
@@ -274,6 +280,51 @@ const HomePage = () => {
                     </div>
                 )}
             </div>
+        </div>
+      </section>
+
+      {/* FAQ SECTION */}
+      <section className="py-16 bg-background container mx-auto px-4">
+        <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+                Everything you need to know about collecting and exhibiting on our platform.
+            </p>
+        </div>
+
+        <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                    <AccordionTrigger className="text-lg font-bold">How do I purchase artwork?</AccordionTrigger>
+                    <AccordionContent>
+                        Browse our gallery, select the piece you love, and add it to your cart. We accept secure payments via Stripe. Once purchased, you'll receive a confirmation and shipping details (or instant access for digital assets).
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                    <AccordionTrigger className="text-lg font-bold">Is payment secure?</AccordionTrigger>
+                    <AccordionContent>
+                        Absolutely. We use Stripe, a globally trusted payment processor, to handle all transactions. Your financial data is encrypted and never stored on our servers.
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                    <AccordionTrigger className="text-lg font-bold">Can I return an artwork?</AccordionTrigger>
+                    <AccordionContent>
+                        Physical artworks can be returned within 14 days of delivery if they arrive damaged or significantly different from the description. Digital purchases (videos, music) are non-refundable once accessed.
+                    </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-4">
+                    <AccordionTrigger className="text-lg font-bold">How do I become a verified artist?</AccordionTrigger>
+                    <AccordionContent>
+                        Create an account and navigate to the "Apply as Artist" section. Submit your portfolio for review. Our curation team will evaluate your work and get back to you within 48 hours.
+                    </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-5">
+                    <AccordionTrigger className="text-lg font-bold">Do you offer international shipping?</AccordionTrigger>
+                    <AccordionContent>
+                        Yes! Our artists ship worldwide. Shipping costs are calculated at checkout based on your location and the artwork's dimensions.
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </div>
       </section>
     </div>

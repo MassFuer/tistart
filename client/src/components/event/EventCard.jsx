@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/formatters";
 
 const EventCard = ({ event, showActions = false, onDelete }) => {
   const formatDate = (dateString) => {
@@ -20,14 +21,6 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
 
   const formatTime = (dateString) => {
     return format(new Date(dateString), "h:mm a");
-  };
-
-  const formatPrice = (price) => {
-    if (price === 0) return "Free";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
   };
 
   const isFull = event.maxCapacity > 0 && event.currentAttendees >= event.maxCapacity;
@@ -65,7 +58,7 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
                 <span>{formatDate(event.startDateTime)} • {formatTime(event.startDateTime)}</span>
              </div>
              <div className="font-bold text-lg text-foreground">
-                {formatPrice(event.price)}
+                {event.price === 0 ? "Free" : formatPrice(event.price)}
              </div>
         </div>
         <CardTitle className="text-xl line-clamp-2 leading-tight min-h-[3.5rem]">

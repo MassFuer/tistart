@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ReactMarkdown from "react-markdown";
+import { formatPrice } from "@/lib/formatters";
 
 const ArtworkDetailPage = () => {
   const { id } = useParams();
@@ -107,13 +108,6 @@ const ArtworkDetailPage = () => {
         toast.error("Failed to delete artwork");
       }
     }
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
   };
 
   if (isLoading) {

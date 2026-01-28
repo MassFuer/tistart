@@ -225,7 +225,9 @@ userSchema.virtual("fullName").get(function () {
 userSchema.set("toJSON", { virtuals: true });
 userSchema.set("toObject", { virtuals: true });
 
-// Index for efficient queries
+// Indexes for efficient queries
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ userName: 1 }, { unique: true, sparse: true });
 userSchema.index({ artistStatus: 1 });
 userSchema.index({ role: 1 });
 

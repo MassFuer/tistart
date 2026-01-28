@@ -23,6 +23,8 @@ import {
   ShoppingCart
 } from "lucide-react";
 
+import { formatPrice } from "@/lib/formatters";
+
 // Shadcn Components
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -167,14 +169,6 @@ const EventDetailPage = () => {
     return format(new Date(dateString), "h:mm a");
   };
 
-  const formatPrice = (price) => {
-    if (price === 0) return "Free";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
-  };
-
   if (isLoading) return <Loading message="Loading event details..." />;
 
   if (error || !event) {
@@ -243,7 +237,7 @@ const EventDetailPage = () => {
                            <div className="flex justify-between items-end">
                                <div>
                                    <p className="text-sm text-muted-foreground">Price</p>
-                                   <p className="text-3xl font-bold text-foreground">{formatPrice(event.price)}</p>
+                                   <p className="text-3xl font-bold text-foreground">{event.price === 0 ? "Free" : formatPrice(event.price)}</p>
                                </div>
                                <div className="text-right">
                                    <p className="text-sm text-muted-foreground mb-1">Capacity</p>
@@ -487,7 +481,7 @@ const EventDetailPage = () => {
          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur border-t shadow-lg sm:hidden z-50">
            <div className="flex items-center gap-3">
              <div className="flex-shrink-0">
-               <p className="text-lg font-bold">{formatPrice(event.price)}</p>
+               <p className="text-lg font-bold">{event.price === 0 ? "Free" : formatPrice(event.price)}</p>
              </div>
              <div className="flex-1">
                {!isAuthenticated ? (

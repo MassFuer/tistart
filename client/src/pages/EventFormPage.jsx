@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { eventsAPI, geocodeAPI } from "../services/api";
 import { useNavigation } from "../context/NavigationContext";
 import { parseAddressFromSearch } from "../utils/addressUtils";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import AddressForm from "../components/map/AddressForm";
 import LocationMap from "../components/map/LocationMap";
 import MarkdownEditor from "../components/common/MarkdownEditor";

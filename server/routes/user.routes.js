@@ -228,7 +228,7 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
     stats.favorites = req.user.favorites.length;
     
     // Always calculate attending count via query as hooks don't track attendees array changes
-    stats.attending = await mongoose.model("Event").countDocuments({ attendees: user._id });
+    stats.attending = await mongoose.model("Event").countDocuments({ "attendees.user": user._id });
     
     // Storage & Plan Stats
     if (stats.isArtist) {

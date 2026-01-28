@@ -6,6 +6,7 @@ import { usersAPI } from "../../services/api";
 import { toast } from "sonner";
 import { Heart, Star, Pencil, Trash2 } from "lucide-react";
 import AddToCartButton from "../common/AddToCartButton";
+import { formatPrice } from "@/lib/formatters";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,6 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
     } finally {
       setFavoriteLoading(false);
     }
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
   };
 
   const isSale = artwork.originalPrice && artwork.price < artwork.originalPrice;
