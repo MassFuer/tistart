@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { artworksAPI } from "../services/api";
+import { useNavigation } from "../context/NavigationContext";
 import toast from "react-hot-toast";
 import MarkdownEditor from "../components/common/MarkdownEditor";
 import ImageUpload from "../components/common/ImageUpload";
@@ -34,6 +35,7 @@ import { Trash2 } from "lucide-react";
 const ArtworkFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { goBackWithScroll } = useNavigation();
   const isEditing = Boolean(id);
 
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -295,7 +297,7 @@ const ArtworkFormPage = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/gallery")}>
+              <Button variant="ghost" size="icon" onClick={() => goBackWithScroll("/gallery")}>
                   <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-3xl font-bold tracking-tight">
@@ -578,7 +580,7 @@ const ArtworkFormPage = () => {
         </div>
 
         <div className="flex justify-end gap-4 pb-12">
-            <Button type="button" variant="outline" onClick={() => navigate("/gallery")}>
+            <Button type="button" variant="outline" onClick={() => goBackWithScroll("/gallery")}>
                 Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || isUploading || isUploadingVideo}>

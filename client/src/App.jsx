@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { MessagingProvider } from "./context/MessagingContext";
+import { NavigationProvider } from "./context/NavigationContext";
 
 // Layout
 import Navbar from "./components/layout/Navbar";
@@ -54,6 +55,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <NavigationProvider>
         <ThemeProvider>
           <AuthProvider>
             <MessagingProvider>
@@ -221,6 +223,7 @@ function App() {
             </MessagingProvider>
           </AuthProvider>
         </ThemeProvider>
+        </NavigationProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

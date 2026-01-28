@@ -5,6 +5,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { eventsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useNavigation } from "../context/NavigationContext";
+import { useScrollRestore } from "../hooks/useScrollRestore";
 import EventCard from "../components/event/EventCard";
 import EventsMap from "../components/map/EventsMap";
 import Loading from "../components/common/Loading";
@@ -37,6 +39,7 @@ import EventFilters from "../components/event/EventFilters";
 
 const EventsPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
+  const { saveScrollPosition } = useNavigation();
   const [viewMode, setViewMode] = useState("grid"); // 'grid', 'calendar', 'map'
   const [meta, setMeta] = useState({ cities: [], companies: [], artists: [] });
 
@@ -69,7 +72,11 @@ const EventsPage = () => {
       company: "",
       artist: ""
     },
+    syncWithUrl: true,
   });
+
+  // Restore scroll position after data loads
+  useScrollRestore(!isLoading);
 
   const [allEventsForMap, setAllEventsForMap] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -188,7 +195,7 @@ const EventsPage = () => {
 
                     {(isVerifiedArtist || isAdmin) && (
                        <Button asChild size="sm">
-                          <Link to="/events/new">
+                          <Link to="/events/new" onClick={() => saveScrollPosition()}>
                             <Plus className="mr-2 h-4 w-4" />
                             Create Event
                           </Link>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
 export const useListing = ({
@@ -7,24 +8,123 @@ export const useListing = ({
   initialSort = "",
   onError,
   enabled = true,
+  syncWithUrl = false,
 }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({});
-  const [filters, setFilters] = useState({
-    page: 1,
-    limit: 12, // Default limit, can be overridden by initialFilters
-    ...initialFilters,
-  });
-  const [sort, setSort] = useState(initialSort);
+
+  // Use refs to track state without causing re-renders
+  const lastUrlRef = useRef(location.search);
+  const userInitiatedChange = useRef(false);
+
+  // Helper to read filters from URL
+  const getFiltersFromUrl = useCallback(() => {
+    const base = {
+      page: 1,
+      limit: 12,
+      ...initialFilters,
+    };
+
+    if (syncWithUrl) {
+      const urlPage = searchParams.get("page");
+      if (urlPage) base.page = parseInt(urlPage, 10) || 1;
+
+      Object.keys(initialFilters).forEach((key) => {
+        const urlValue = searchParams.get(key);
+        if (urlValue !== null && urlValue !== "") {
+          base[key] = urlValue;
+        }
+      });
+    }
+
+    return base;
+  }, [searchParams, syncWithUrl]);
+
+  const getSortFromUrl = useCallback(() => {
+    if (syncWithUrl) {
+      return searchParams.get("sort") || initialSort;
+    }
+    return initialSort;
+  }, [searchParams, initialSort, syncWithUrl]);
+
+  // Initialize state from URL
+  const [filters, setFiltersInternal] = useState(getFiltersFromUrl);
+  const [sort, setSortInternal] = useState(getSortFromUrl);
+
+  // Wrapper to mark user-initiated changes
+  const setFilters = useCallback((update) => {
+    userInitiatedChange.current = true;
+    setFiltersInternal(update);
+  }, []);
+
+  const setSort = useCallback((value) => {
+    userInitiatedChange.current = true;
+    setSortInternal(value);
+  }, []);
+
+  // Sync URL → State when browser navigation occurs (back/forward)
+  useEffect(() => {
+    if (!syncWithUrl) return;
+
+    // Check if URL actually changed (browser navigation)
+    if (location.search === lastUrlRef.current) return;
+    lastUrlRef.current = location.search;
+
+    // If this was a user-initiated change, don't sync back
+    if (userInitiatedChange.current) {
+      userInitiatedChange.current = false;
+      return;
+    }
+
+    // Browser navigation - sync URL to state
+    const urlFilters = getFiltersFromUrl();
+    const urlSort = getSortFromUrl();
+
+    setFiltersInternal(urlFilters);
+    setSortInternal(urlSort);
+  }, [location.search, syncWithUrl, getFiltersFromUrl, getSortFromUrl]);
+
+  // Sync State → URL when user changes filters/page
+  useEffect(() => {
+    if (!syncWithUrl || !userInitiatedChange.current) return;
+
+    const params = new URLSearchParams();
+
+    if (filters.page > 1) {
+      params.set("page", filters.page.toString());
+    }
+
+    if (sort && sort !== initialSort) {
+      params.set("sort", sort);
+    }
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === "page" || key === "limit") return;
+      if (value !== "" && value !== null && value !== undefined) {
+        params.set(key, value);
+      }
+    });
+
+    const newSearch = params.toString();
+    const currentSearch = searchParams.toString();
+
+    if (newSearch !== currentSearch) {
+      lastUrlRef.current = newSearch ? `?${newSearch}` : "";
+      setSearchParams(params, { replace: false });
+    }
+
+    userInitiatedChange.current = false;
+  }, [filters, sort, syncWithUrl, initialSort, setSearchParams, searchParams]);
 
   const fetch = useCallback(async () => {
     if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
-      // Merge filters and sort, removing empty values
       const params = Object.entries(filters).reduce((acc, [key, value]) => {
         if (value !== "" && value !== null && value !== undefined) {
           acc[key] = value;
@@ -57,36 +157,32 @@ export const useListing = ({
     }
   }, [apiFetcher, filters, sort, onError, enabled]);
 
-  // Trigger fetch when filters or sort change
   useEffect(() => {
     fetch();
   }, [fetch, enabled]);
 
-  // Helper to update a single filter and reset page
-  const updateFilter = (key, value) => {
+  const updateFilter = useCallback((key, value) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
-      page: 1, // Always reset to page 1 on filter change
+      page: 1,
     }));
-  };
+  }, [setFilters]);
 
-  // Helper to update multiple filters
-  const updateFilters = (newFilters) => {
+  const updateFilters = useCallback((newFilters) => {
     setFilters((prev) => ({
       ...prev,
       ...newFilters,
       page: 1,
     }));
-  };
+  }, [setFilters]);
 
-  // Helper specifically for page change
-  const setPage = (pageNumber) => {
+  const setPage = useCallback((pageNumber) => {
     setFilters((prev) => ({
       ...prev,
       page: pageNumber,
     }));
-  };
+  }, [setFilters]);
 
   return {
     data,
@@ -94,7 +190,7 @@ export const useListing = ({
     error,
     pagination,
     filters,
-    setFilters, // Direct access if needed
+    setFilters,
     updateFilter,
     updateFilters,
     setPage,

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import ArtworkCard from "../components/artwork/ArtworkCard";
 import { useAuth } from "../context/AuthContext";
+import { useScrollRestore } from "../hooks/useScrollRestore";
 import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
@@ -61,7 +62,11 @@ const GalleryPage = () => {
       search: ""
     },
     initialSort: "-createdAt",
+    syncWithUrl: true,
   });
+
+  // Restore scroll position after data loads
+  useScrollRestore(!isLoading);
 
   const [artists, setArtists] = useState([]);
   const [materialsOptions, setMaterialsOptions] = useState([]);

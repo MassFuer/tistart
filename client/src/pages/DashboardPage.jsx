@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigation } from "../context/NavigationContext";
+import { useScrollRestore } from "../hooks/useScrollRestore";
 import { usersAPI, artworksAPI, eventsAPI, ordersAPI } from "../services/api";
 import { toast } from "sonner";
 import { Link, useSearchParams } from "react-router-dom";
@@ -34,14 +36,18 @@ import ArtistApplications from "../components/dashboard/ArtistApplications";
 
 const DashboardPage = () => {
   const { user, isArtist, isAdmin } = useAuth();
+  const { saveScrollPosition } = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "overview");
-  
+
   const [stats, setStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentSales, setRecentSales] = useState([]);
   const [recentAttending, setRecentAttending] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Restore scroll position after data loads
+  useScrollRestore(!isLoading);
 
   // Sync tab with URL
   useEffect(() => {
@@ -139,10 +145,10 @@ const DashboardPage = () => {
            {isArtist && user?.artistStatus === "verified" && (
              <>
                <Button asChild variant="outline">
-                 <Link to="/artworks/new"><Plus className="mr-2 h-4 w-4" /> New Artwork</Link>
+                 <Link to="/artworks/new" onClick={() => saveScrollPosition()}><Plus className="mr-2 h-4 w-4" /> New Artwork</Link>
                </Button>
                <Button asChild>
-                 <Link to="/events/new"><Plus className="mr-2 h-4 w-4" /> New Event</Link>
+                 <Link to="/events/new" onClick={() => saveScrollPosition()}><Plus className="mr-2 h-4 w-4" /> New Event</Link>
                </Button>
              </>
            )}

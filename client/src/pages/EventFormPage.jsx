@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { eventsAPI, geocodeAPI } from "../services/api";
+import { useNavigation } from "../context/NavigationContext";
 import { parseAddressFromSearch } from "../utils/addressUtils";
 import toast from "react-hot-toast";
 import AddressForm from "../components/map/AddressForm";
@@ -34,6 +35,7 @@ import {
 const EventFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { goBackWithScroll } = useNavigation();
   const isEditing = Boolean(id);
 
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -307,7 +309,7 @@ const EventFormPage = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+              <Button variant="ghost" size="icon" onClick={() => goBackWithScroll("/dashboard")}>
                   <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-3xl font-bold tracking-tight">
@@ -548,7 +550,7 @@ const EventFormPage = () => {
         </Card>
 
         <div className="flex justify-end gap-4 pb-12">
-            <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
+            <Button type="button" variant="outline" onClick={() => goBackWithScroll("/dashboard")}>
                 Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || isUploading}>

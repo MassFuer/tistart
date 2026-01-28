@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { artworksAPI, platformAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigation } from "../../context/NavigationContext";
 import { toast } from "sonner";
 import { 
   Plus, 
@@ -53,6 +54,7 @@ import StatCard from "./StatCard";
 
 const ArtworkManager = ({ isAdmin = false }) => {
   const { user } = useAuth();
+  const { saveScrollPosition } = useNavigation();
   const [artworks, setArtworks] = useState([]);
   const [kpis, setKpis] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -223,7 +225,7 @@ const ArtworkManager = ({ isAdmin = false }) => {
           />
         </div>
         <Button asChild>
-            <Link to="/artworks/new">
+            <Link to="/artworks/new" onClick={() => saveScrollPosition()}>
                 <Plus className="mr-2 h-4 w-4" /> New Artwork
             </Link>
         </Button>

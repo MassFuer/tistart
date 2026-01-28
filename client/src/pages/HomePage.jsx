@@ -67,7 +67,7 @@ const HomePage = () => {
                   <div className="w-[320px] md:w-auto min-w-[300px] flex justify-center md:justify-start">
                      <WordRotate
                         className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 pb-2 text-center md:text-left"
-                        words={["Innovation", "Ironhack", "Creativity", "Passion", "Future", "Marseille"]}
+                        words={["Innovation", "Creativity", "Passion", "Future", "Marseille"]}
                      />
                   </div>
                 </h1>
@@ -177,7 +177,7 @@ const HomePage = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
             {featuredEvents.map((event, i) => (
               <motion.div
                 key={event._id}

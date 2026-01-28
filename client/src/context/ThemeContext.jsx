@@ -38,9 +38,13 @@ export const ThemeProvider = ({ children }) => {
 
       if (theme.primary) {
           root.style.setProperty("--primary", theme.primary);
-          // Auto-contrast foreground for primary is tricky if primary changes brightness.
-          // We'll rely on the theme config overrides if provided.
-          // root.style.setProperty("--primary-foreground", "0 0% 98%"); 
+          // Set primary-foreground from config, or default to light text for dark buttons
+          if (theme.primaryForeground) {
+              root.style.setProperty("--primary-foreground", theme.primaryForeground);
+          } else {
+              // Default: light text works on most primary colors
+              root.style.setProperty("--primary-foreground", "0 0% 98%");
+          }
       }
 
       if (theme.radius) {

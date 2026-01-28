@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { eventsAPI, messagingAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigation } from "../../context/NavigationContext";
 import { toast } from "sonner";
 import Loading from "../common/Loading";
 import EmptyState from "../common/EmptyState";
@@ -45,6 +46,7 @@ import {
 const EventManagement = ({ isAdmin = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { saveScrollPosition } = useNavigation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -169,7 +171,7 @@ const EventManagement = ({ isAdmin = false }) => {
                {isAdmin ? "Manage all platform events and view attendee lists." : "Manage your exhibitions and view attendee lists."}
            </p>
         </div>
-        <Button onClick={() => navigate("/events/new")}>
+        <Button onClick={() => { saveScrollPosition(); navigate("/events/new"); }}>
             <Plus className="mr-2 h-4 w-4" /> Create Event
         </Button>
       </div>

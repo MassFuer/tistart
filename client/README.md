@@ -74,8 +74,11 @@ Access the app at `http://localhost:5173`.
 - **Direct Messaging**: Internal chat system between collectors and artists.
 - **Custom Video Player**: Simplified, elegant video playback experience.
 - **Unified Dashboards**: Dedicated views for Artists (Sales, Analytics) and Collectors (Purchases, Favorites).
-    - *New*: Role Badges for clear user status identification.
-    - *New*: Streamlined **EventManagement** interface.
-    - *New*: Enhanced mobile responsiveness for dashboard tabs.
-    - *New*: **Storage Usage** indicators for artists.
-    - *New*: **Advanced Theme Editor** with mode-specific (Light/Dark) customization.
+- **Role Badges** for clear user status identification.
+- **EventManagement** interface.
+- **Enhanced mobile responsiveness**
+- **Storage Usage** indicators for artists.
+- **Advanced Theme Editor** with mode-specific (Light/Dark) customization.
+- **Self-Hosted Fonts** via `@fontsource` (Inter, Roboto, Segoe UI, Geist, Manrope, etc.) for performance and privacy.
+- **Interactive Hero Animation** featuring dynamic `WordRotate` transitions.
+- **Enhanced Toast Notifications** with global dismiss and smart auto-reload logic.

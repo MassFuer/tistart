@@ -28,6 +28,7 @@ Nemesis is a full-stack art marketplace and community platform where:
 - **Optimized Stats**: Improved caching and calculation strategies for user and artist statistics (including on-the-fly revenue calculation).
 - **Storage Management**: Implemented quota tracking for artists/users with automatic file cleanup on deletion.
 - **Admin Capabilities**: Extended profile management, Platform Settings, and granular Theme Customization (Light/Dark modes).
+- **UX/UI Polish**: Interactive hero animations, self-hosted fonts for privacy/speed, and fully responsive layouts.
 
 
 ## 🛠️ Tech Stack
