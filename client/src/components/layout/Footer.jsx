@@ -47,22 +47,22 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground text-sm md:text-base">Quick Links</h4>
             <ul className="space-y-2 text-xs md:text-sm text-muted-foreground flex flex-col items-center md:items-start">
               <li>
-                <Link to="/gallery" className="hover:text-primary transition-colors flex items-center gap-2">
+                <Link to="/gallery" className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-2">
                   Gallery
                 </Link>
               </li>
               <li>
-                <Link to="/events" className="hover:text-primary transition-colors flex items-center gap-2">
+                <Link to="/events" className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-2">
                   Events
                 </Link>
               </li>
               <li>
-                <Link to="/apply-artist" className="hover:text-primary transition-colors flex items-center gap-2">
+                <Link to="/apply-artist" className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-2">
                   For Artists
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="hover:text-primary transition-colors flex items-center gap-2">
+                <Link to="/about" className="hover:text-primary dark:hover:text-white transition-colors flex items-center gap-2">
                   About Us
                 </Link>
               </li>
@@ -128,8 +128,8 @@ const Footer = () => {
           
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
              <div className="flex gap-6">
-                <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-                <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+                <Link to="/terms" className="hover:text-primary dark:hover:text-white transition-colors">Terms of Service</Link>
+                <Link to="/privacy" className="hover:text-primary dark:hover:text-white transition-colors">Privacy Policy</Link>
              </div>
 
              <div className="flex gap-2">

@@ -74,12 +74,12 @@ function VerifyEmailPage() {
                         <Loader2 className="h-8 w-8 text-primary animate-spin" />
                     </div>
                 ) : verified ? (
-                    <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle className="h-8 w-8 text-green-600" />
+                    <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-500" />
                     </div>
                 ) : (
-                    <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
-                        <XCircle className="h-8 w-8 text-red-600" />
+                    <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <XCircle className="h-8 w-8 text-red-600 dark:text-red-500" />
                     </div>
                 )}
             </div>

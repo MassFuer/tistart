@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { FaGoogle, FaGithub, FaMicrosoft, FaApple } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ const LoginPage = () => {
     password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -57,7 +59,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 bg-muted/30">
+    <div className="flex flex-1 items-center justify-center py-8 md:py-12 px-4 bg-muted/30">
       <Card className="w-full max-w-md shadow-lg border-0 bg-card">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
@@ -82,23 +84,34 @@ const LoginPage = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm font-medium text-primary hover:underline"
+                <Link
+                  to={`/forgot-password${formData.email ? `?email=${encodeURIComponent(formData.email)}` : ''}`}
+                  className="text-sm font-medium text-primary dark:text-blue-400 dark:hover:text-white hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-            <Button className="w-full" type="submit" disabled={isSubmitting}>
+            <Button className="w-full text-primary-foreground dark:text-white" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>
@@ -132,7 +145,7 @@ const LoginPage = () => {
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
           <div>
              Don&apos;t have an account?{" "}
-            <Link to="/signup" className="font-semibold text-primary hover:underline">
+            <Link to="/signup" className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline">
               Sign up
             </Link>
           </div>

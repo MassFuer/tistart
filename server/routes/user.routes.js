@@ -16,6 +16,7 @@ const {
   updateUserStorage,
   deleteFile,
 } = require("../utils/r2");
+const { sendArtistStatusEmail } = require("../utils/email");
 
 // ==================== USER ROUTES ====================
 
@@ -558,9 +559,22 @@ router.patch("/:id/artist-status", isAuthenticated, isAdmin, async (req, res, ne
       updateObj.role = "user";
     }
 
+    // Store previous status to check if it changed
+    const previousStatus = user.artistStatus;
+
     const updatedUser = await User.findByIdAndUpdate(req.params.id, updateObj, {
       new: true,
     }).select("-password");
+
+    // Send notification email if status changed
+    if (status !== previousStatus && status !== "none") {
+      try {
+        await sendArtistStatusEmail(user.email, user.firstName, status);
+      } catch (emailError) {
+        console.error("Failed to send artist status email:", emailError);
+        // Don't throw - status update already succeeded
+      }
+    }
 
     res.status(200).json({
       message: `Artist status updated to: ${status}`,

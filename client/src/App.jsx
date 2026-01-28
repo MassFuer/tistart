@@ -58,9 +58,9 @@ function App() {
           <AuthProvider>
             <MessagingProvider>
             <CartProvider>
-              <div className="app">
+              <div className="app min-h-screen flex flex-col">
               <Navbar />
-              <main className="main-content">
+              <main className="main-content flex-1 flex flex-col">
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<HomePage />} />

@@ -204,7 +204,7 @@ const DashboardPage = () => {
                     title="Plan" 
                     value={stats?.plan ? stats.plan.toUpperCase() : "FREE"} 
                     icon={CreditCard} 
-                    description={<Link to="/pricing" className="text-primary hover:underline">Upgrade Plan</Link>} 
+                    description={<Link to="/pricing" className="text-primary dark:text-blue-400 hover:underline dark:hover:text-white">Upgrade Plan</Link>} 
                  />
               </>
             ) : (

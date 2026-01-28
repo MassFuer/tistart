@@ -1,66 +1,83 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const { renderTemplate } = require("./emailRenderer");
 
-// Create a transporter using Gmail service
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465, // SSL port often works better on cloud
-  secure: true, // true for 465
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  // Force IPv4
-  family: 4,
-});
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
+const FROM_NAME = "Nemesis";
+
+/**
+ * Core email sending function with error handling
+ * @param {Object} options - Email options
+ * @param {string} options.to - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - HTML content
+ * @returns {Promise<Object>} Resend response
+ */
+const sendEmail = async ({ to, subject, html }) => {
+  // Always log for debugging
+  console.log(`[EMAIL] Sending "${subject}" to ${to}`);
+
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[EMAIL] RESEND_API_KEY not set - email not sent");
+    console.log(`[EMAIL-DEBUG] Subject: ${subject}`);
+    console.log(`[EMAIL-DEBUG] To: ${to}`);
+    return { id: "mock-id", skipped: true };
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: [to],
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.error("[EMAIL] Resend error:", error);
+      throw new Error(error.message);
+    }
+
+    console.log(`[EMAIL] Sent successfully: ${data.id}`);
+    return data;
+  } catch (error) {
+    console.error("[EMAIL] Failed:", error.message);
+    throw error;
+  }
+};
+
+// === Email Functions ===
 
 const sendVerificationEmail = async (email, firstName, verificationLink) => {
-  // LOGGING FOR RENDER FREE TIER (Since SMTP is blocked)
+  // Extra logging for verification emails (critical flow)
   console.log("\n========================================");
   console.log(`[EMAIL-DEBUG] Sending verification to: ${email}`);
   console.log(`[EMAIL-DEBUG] Link: ${verificationLink}`);
   console.log("========================================\n");
 
-  try {
-    const html = renderTemplate("verification", {
-      firstName,
-      verificationLink,
-    });
+  const html = renderTemplate("verification", {
+    firstName,
+    verificationLink,
+  });
 
-    const info = await transporter.sendMail({
-      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Verify Your Email Address - Nemesis",
-      html,
-    });
-
-    console.log(`Verification email sent to ${email}: ${info.messageId}`);
-    return info;
-  } catch (error) {
-    console.error("Nodemailer error:", error);
-    throw error;
-  }
+  return sendEmail({
+    to: email,
+    subject: "Verify Your Email Address - Nemesis",
+    html,
+  });
 };
 
 const sendWelcomeEmail = async (email, firstName) => {
-  try {
-    const html = renderTemplate("welcome", {
-      firstName,
-    });
+  const html = renderTemplate("welcome", {
+    firstName,
+  });
 
-    const info = await transporter.sendMail({
-      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Welcome to Nemesis!",
-      html,
-    });
-
-    console.log(`Welcome email sent to ${email}: ${info.messageId}`);
-    return info;
-  } catch (error) {
-    console.error("Nodemailer error:", error);
-    throw error;
-  }
+  return sendEmail({
+    to: email,
+    subject: "Welcome to Nemesis!",
+    html,
+  });
 };
 
 const sendOrderConfirmationEmail = async (email, firstName, order) => {
@@ -70,17 +87,13 @@ const sendOrderConfirmationEmail = async (email, firstName, order) => {
       order,
     });
 
-    const info = await transporter.sendMail({
-      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
+    return await sendEmail({
       to: email,
       subject: `Order Confirmation #${order._id.toString().slice(-6).toUpperCase()} - Nemesis`,
       html,
     });
-
-    console.log(`Order confirmation email sent to ${email}: ${info.messageId}`);
-    return info;
   } catch (error) {
-    console.error("Nodemailer error:", error);
+    console.error("Order confirmation email error:", error);
     // Don't throw to prevent blocking checkout if email fails
   }
 };
@@ -88,50 +101,66 @@ const sendOrderConfirmationEmail = async (email, firstName, order) => {
 const sendArtistApplicationEmail = async (email, firstName) => {
   try {
     const html = renderTemplate("artist-application", {
-        firstName,
+      firstName,
     });
 
-    const info = await transporter.sendMail({
-      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
+    return await sendEmail({
       to: email,
       subject: "Application Received - Nemesis",
       html,
     });
-
-    console.log(`Artist application email sent to ${email}: ${info.messageId}`);
-    return info;
   } catch (error) {
-    console.error("Nodemailer error:", error);
+    console.error("Artist application email error:", error);
     // Don't throw for non-critical email
   }
 };
 
 const sendPasswordResetEmail = async (email, firstName, resetLink) => {
+  const html = renderTemplate("password-reset", {
+    firstName,
+    resetLink,
+  });
+
+  return sendEmail({
+    to: email,
+    subject: "Reset Your Password - Nemesis",
+    html,
+  });
+};
+
+// === NEW: Artist Status Notification ===
+
+const sendArtistStatusEmail = async (email, firstName, status, reason = null) => {
   try {
-    const html = renderTemplate("password-reset", {
-        firstName,
-        resetLink,
+    const html = renderTemplate("artist-status", {
+      firstName,
+      status,
+      reason,
     });
 
-    const info = await transporter.sendMail({
-      from: `"Nemesis" <${process.env.EMAIL_USER}>`,
+    const subjects = {
+      verified: "Congratulations! Your Artist Application is Approved - Nemesis",
+      suspended: "Account Status Update - Nemesis",
+      pending: "Application Under Review - Nemesis",
+      incomplete: "Complete Your Artist Application - Nemesis",
+    };
+
+    return await sendEmail({
       to: email,
-      subject: "Reset Your Password - Nemesis",
+      subject: subjects[status] || "Artist Status Update - Nemesis",
       html,
     });
-
-    console.log(`Password reset email sent to ${email}: ${info.messageId}`);
-    return info;
   } catch (error) {
-    console.error("Nodemailer error:", error);
-    throw error;
+    console.error("Artist status email error:", error);
+    // Don't throw - status update should still succeed
   }
 };
 
-module.exports = { 
-  sendVerificationEmail, 
-  sendWelcomeEmail, 
-  sendOrderConfirmationEmail, 
+module.exports = {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendOrderConfirmationEmail,
   sendArtistApplicationEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendArtistStatusEmail,
 };

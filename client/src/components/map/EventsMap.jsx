@@ -142,9 +142,6 @@ const EventsMap = ({ events = [], height = "500px", onEventClick }) => {
                 key={event._id}
                 position={[lat, lng]}
                 icon={createMarkerIcon(event.category)}
-                eventHandlers={{
-                  click: () => onEventClick && onEventClick(event),
-                }}
               >
                 <Popup>
                   <div className="event-popup">

@@ -95,7 +95,7 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
         <CardContent className="flex-1 p-2.5 md:p-4">
              <div className="space-y-1">
                  <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2" title={artwork.title}>
-                     <Link to={`/artworks/${artwork._id}`} className="hover:underline hover:text-primary transition-colors">
+                     <Link to={`/artworks/${artwork._id}`} className="hover:underline hover:text-primary dark:hover:text-white transition-colors">
                          {artwork.title}
                      </Link>
                  </h3>

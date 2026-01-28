@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -16,15 +16,6 @@ import { Filter, Calendar as CalendarIcon, Map as MapIcon, List as ListIcon } fr
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tabs,
   TabsContent,
@@ -46,7 +37,6 @@ import EventFilters from "../components/event/EventFilters";
 
 const EventsPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState("grid"); // 'grid', 'calendar', 'map'
   const [meta, setMeta] = useState({ cities: [], companies: [], artists: [] });
 
@@ -247,7 +237,6 @@ const EventsPage = () => {
                              <EventsMap
                                 events={allEventsForMap}
                                 height="100%"
-                                onEventClick={(event) => navigate(`/events/${event._id}`)}
                               />
                         </div>
                     </TabsContent>

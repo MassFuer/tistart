@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
-import { artworksAPI } from "../services/api";
+import { artworksAPI, eventsAPI } from "../services/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,19 +13,25 @@ import {
 } from "@/components/ui/card";
 import { ArrowRight, Palette, ShieldCheck, Users } from "lucide-react"; // Icons
 import ArtworkCard from "../components/artwork/ArtworkCard";
+import EventCard from "../components/event/EventCard";
 
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
   const [featuredArtworks, setFeaturedArtworks] = useState([]);
+  const [featuredEvents, setFeaturedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const response = await artworksAPI.getAll({ limit: 6, sort: '-createdAt' });
-        setFeaturedArtworks(response.data.data);
+        const [artworksRes, eventsRes] = await Promise.all([
+          artworksAPI.getAll({ limit: 6, sort: '-createdAt' }),
+          eventsAPI.getAll({ limit: 4, sort: '-createdAt' })
+        ]);
+        setFeaturedArtworks(artworksRes.data.data);
+        setFeaturedEvents(eventsRes.data.data || []);
       } catch (error) {
-        console.error('Error fetching featured artworks:', error);
+        console.error('Error fetching featured content:', error);
       } finally {
         setLoading(false);
       }
@@ -69,12 +75,12 @@ const HomePage = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.6 }}
             >
-              <Button asChild size="lg" className="h-14 px-8 text-lg bg-white text-black hover:bg-gray hover:text-black shadow-xl">
+              <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] hover:brightness-110 transition-all duration-200">
                 <Link to="/gallery">
                   Explore Gallery
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg border-white/30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 hover:text-white hover:border-white/50">
+              <Button asChild variant="secondary" size="lg" className="h-12 px-8 text-base font-semibold bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:text-white hover:scale-[1.02] transition-all duration-200">
                 <Link to="/events">
                   Discover Events
                 </Link>
@@ -125,7 +131,7 @@ const HomePage = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 max-w-7xl mx-auto">
             {featuredArtworks.map((artwork, i) => (
               <motion.div
                 key={artwork._id}
@@ -142,8 +148,47 @@ const HomePage = () => {
           </div>
           
           <div className="mt-12 text-center md:hidden">
-             <Button asChild size="lg" className="w-full">
+             <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
                 <Link to="/gallery">Explore Full Gallery</Link>
+             </Button>
+          </div>
+        </section>
+      )}
+
+      {/* TRENDING EVENTS */}
+      {!loading && featuredEvents.length > 0 && (
+        <section className="py-16 container mx-auto px-4">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Trending Events</h2>
+                 <p className="text-muted-foreground">Discover exhibitions and art experiences near you.</p>
+            </div>
+            <Button variant="ghost" asChild className="hidden md:inline-flex group">
+                <Link to="/events" className="flex items-center gap-2">
+                    View All <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+            {featuredEvents.map((event, i) => (
+              <motion.div
+                key={event._id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                className="h-full"
+              >
+                  <EventCard event={event} />
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center md:hidden">
+             <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
+                <Link to="/events">Explore All Events</Link>
              </Button>
           </div>
         </section>

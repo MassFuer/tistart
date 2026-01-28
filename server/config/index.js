@@ -6,7 +6,16 @@ const helmet = require("helmet");
 // Note: express-mongo-sanitize removed due to Express 5 incompatibility (req.query is read-only)
 const { sanitizeInput } = require("../utils/sanitize");
 
-const FRONTEND_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// Build allowed origins list - always include localhost for development
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+// Add production URL if set
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
 
 module.exports = (app) => {
   // Trust proxy for deployment (Fly, Heroku, etc.)
@@ -18,7 +27,7 @@ module.exports = (app) => {
   // CORS configuration with credentials for cookies
   app.use(
     cors({
-      origin: [FRONTEND_URL],
+      origin: allowedOrigins,
       credentials: true, // Allow cookies to be sent
     })
   );

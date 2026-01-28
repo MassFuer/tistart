@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { authAPI } from "../services/api";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import {
 import { ArrowLeft, Mail } from "lucide-react";
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
 
@@ -39,7 +40,7 @@ const ForgotPasswordPage = () => {
 
   if (isSent) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 bg-muted/30">
+      <div className="flex flex-1 items-center justify-center py-8 md:py-12 px-4 bg-muted/30">
         <Card className="w-full max-w-md shadow-lg border-0 bg-card text-center">
           <CardHeader>
             <div className="mx-auto bg-blue-100 text-blue-600 rounded-full p-3 w-16 h-16 flex items-center justify-center mb-4">
@@ -76,7 +77,7 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 bg-muted/30">
+    <div className="flex flex-1 items-center justify-center py-8 md:py-12 px-4 bg-muted/30">
       <Card className="w-full max-w-md shadow-lg border-0 bg-card">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
@@ -109,7 +110,7 @@ const ForgotPasswordPage = () => {
         <CardFooter className="flex justify-center">
           <Link
             to="/login"
-            className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center text-sm text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Login
           </Link>
