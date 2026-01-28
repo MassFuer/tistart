@@ -34,6 +34,10 @@ export const ThemeProvider = ({ children }) => {
 
       if (theme.primary) {
           root.style.setProperty("--primary", theme.primary);
+          // Ensure text is readable. Default dark mode behavior expects a white primary button with black text.
+          // When overriding with a custom color (usually dark), we need white text.
+          root.style.setProperty("--primary-foreground", "0 0% 98%");
+          
           // We might want to auto-calculate ring/foreground if not provided,
           // but for now assume simple override
           root.style.setProperty("--ring", theme.primary);
