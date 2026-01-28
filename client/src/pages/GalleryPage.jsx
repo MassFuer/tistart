@@ -9,7 +9,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { SlidersHorizontal, X, ArrowUpDown, Filter, Plus } from "lucide-react";
+import { SlidersHorizontal, Plus } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -20,17 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose
-} from "@/components/ui/sheet";
 import Pagination from "../components/common/Pagination";
+import PageSizeSelector from "../components/common/PageSizeSelector";
+import { FilterSheet, FilterAside } from "../components/common/FilterSidebar";
 
 // Extracted Component imported
 import ArtworkFilters from "../components/artwork/ArtworkFilters";
@@ -164,38 +156,20 @@ const GalleryPage = () => {
               
               <div className="flex items-center gap-2 w-full md:w-auto">
                   {/* Mobile Filter Sheet */}
-                  <Sheet>
-                      <SheetTrigger asChild>
-                          <Button variant="outline" size="sm" className="lg:hidden">
-                              <Filter className="mr-2 h-4 w-4" /> Filters
-                          </Button>
-                      </SheetTrigger>
-                      <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto">
-                          <SheetHeader>
-                              <SheetTitle>Filter Artworks</SheetTitle>
-                              <SheetDescription>Refine your search results</SheetDescription>
-                          </SheetHeader>
-                          <div className="py-4">
-                              <ArtworkFilters 
-                                    filters={filters}
-                                    updateFilter={updateFilter}
-                                    categories={categories}
-                                    priceRange={priceRange}
-                                    handlePriceChange={handlePriceChange}
-                                    handlePriceCommit={handlePriceCommit}
-                                    artists={artists}
-                                    materialsOptions={materialsOptions}
-                                    colorsOptions={colorsOptions}
-                                    clearAllFilters={clearAllFilters}
-                              />
-                          </div>
-                          <SheetFooter>
-                              <SheetClose asChild>
-                                  <Button className="w-full">Show Results</Button>
-                              </SheetClose>
-                          </SheetFooter>
-                      </SheetContent>
-                  </Sheet>
+                  <FilterSheet title="Filter Artworks" description="Refine your search results">
+                      <ArtworkFilters
+                            filters={filters}
+                            updateFilter={updateFilter}
+                            categories={categories}
+                            priceRange={priceRange}
+                            handlePriceChange={handlePriceChange}
+                            handlePriceCommit={handlePriceCommit}
+                            artists={artists}
+                            materialsOptions={materialsOptions}
+                            colorsOptions={colorsOptions}
+                            clearAllFilters={clearAllFilters}
+                      />
+                  </FilterSheet>
 
                   {/* Desktop Filter Toggle */}
                   <Button 
@@ -235,22 +209,20 @@ const GalleryPage = () => {
 
       <div className="flex flex-col lg:flex-row gap-8 relative items-start">
           {/* DESKTOP SIDEBAR */}
-          {showFilters && (
-              <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 h-auto self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm">
-                   <ArtworkFilters 
-                        filters={filters}
-                        updateFilter={updateFilter}
-                        categories={categories}
-                        priceRange={priceRange}
-                        handlePriceChange={handlePriceChange}
-                        handlePriceCommit={handlePriceCommit}
-                        artists={artists}
-                        materialsOptions={materialsOptions}
-                        colorsOptions={colorsOptions}
-                        clearAllFilters={clearAllFilters}
-                   />
-              </aside>
-          )}
+          <FilterAside show={showFilters}>
+               <ArtworkFilters
+                    filters={filters}
+                    updateFilter={updateFilter}
+                    categories={categories}
+                    priceRange={priceRange}
+                    handlePriceChange={handlePriceChange}
+                    handlePriceCommit={handlePriceCommit}
+                    artists={artists}
+                    materialsOptions={materialsOptions}
+                    colorsOptions={colorsOptions}
+                    clearAllFilters={clearAllFilters}
+               />
+          </FilterAside>
 
           {/* MAIN GRID */}
           <main className="flex-1 min-w-0">
@@ -277,7 +249,11 @@ const GalleryPage = () => {
                            ))}
                        </div>
                        
-                       <div className="mt-12">
+                       <div className="mt-12 flex items-center justify-between">
+                           <PageSizeSelector
+                               value={filters.limit || 12}
+                               onChange={(size) => updateFilter("limit", size)}
+                           />
                            <Pagination
                                currentPage={pagination.page}
                                totalPages={pagination.pages}

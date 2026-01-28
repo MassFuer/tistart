@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { platformAPI, adminAPI } from "../services/api";
 import { toast } from "sonner";
 import Loading from "../components/common/Loading";
-import { 
-  Settings, Database, Users, Wrench, Save, RefreshCw, 
-  Search, AlertTriangle, Check, X, ChevronDown, ChevronUp 
+import { Loader2 } from "lucide-react";
+import {
+  Settings, Database, Users, Wrench, Save, RefreshCw,
+  Search, AlertTriangle, Check, X, ChevronDown, ChevronUp, Palette
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,30 @@ const SuperAdminPage = () => {
       enabled: false,
       message: "",
     },
+    hero: {
+      text: "",
+      videoUrl: "",
+      mobileVideoUrl: "",
+      backgroundSoundUrl: "",
+    },
+    display: {
+      defaultCurrency: "EUR",
+      defaultPageSize: 12,
+      pageSizeOptions: [8, 12, 24, 48],
+      calendarColors: {
+        exhibition: "#3b82f6",
+        workshop: "#10b981",
+        concert: "#f59e0b",
+        festival: "#ef4444",
+        default: "#6366f1",
+      },
+      artistStatusColors: {
+        verified: "#22c55e",
+        pending: "#f59e0b",
+        rejected: "#ef4444",
+        notApplied: "#6b7280",
+      },
+    },
   });
 
   // Storage Reports State
@@ -107,6 +132,8 @@ const SuperAdminPage = () => {
         rateLimits: response.data.data.rateLimits || settingsForm.rateLimits,
         email: response.data.data.email || settingsForm.email,
         maintenance: response.data.data.maintenance || settingsForm.maintenance,
+        hero: response.data.data.hero || settingsForm.hero,
+        display: response.data.data.display || settingsForm.display,
       });
     } catch (error) {
       toast.error("Failed to load platform settings");
@@ -204,6 +231,30 @@ const SuperAdminPage = () => {
     }
   };
 
+  const [assetUploading, setAssetUploading] = useState(null); // 'videoUrl', 'mobileVideoUrl', or 'backgroundSoundUrl'
+
+  const handleAssetUpload = async (e, field) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setAssetUploading(field);
+      const formData = new FormData();
+      formData.append(field, file); // field name doesn't matter much for backend logic but good for semantic
+
+      const response = await platformAPI.uploadAsset(formData);
+      const { url } = response.data.data;
+
+      handleSettingsChange("hero", field, url);
+      toast.success(`${field} uploaded successfully`);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload asset");
+    } finally {
+      setAssetUploading(null);
+    }
+  };
+
   const formatBytes = (bytes) => {
     if (!bytes) return "0 B";
     const k = 1024;
@@ -227,8 +278,9 @@ const SuperAdminPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-5">
           <TabsTrigger value="settings" className="flex items-center gap-2"><Settings className="h-4 w-4"/> Settings</TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2"><Palette className="h-4 w-4"/> Appearance</TabsTrigger>
           <TabsTrigger value="storage" className="flex items-center gap-2"><Database className="h-4 w-4"/> Storage</TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2"><Users className="h-4 w-4"/> Users</TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2"><Wrench className="h-4 w-4"/> Maintenance</TabsTrigger>
@@ -382,6 +434,125 @@ const SuperAdminPage = () => {
                          </div>
                     </CardContent>
                  </Card>
+
+                 {/* Hero Configuration */}
+                 <Card className="md:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Hero Configuration</CardTitle>
+                        <CardDescription>Customize the homepage hero section</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                         <div className="space-y-2">
+                             <Label>Hero Text (Comma separated for rotation)</Label>
+                             <Input 
+                                value={settingsForm.hero?.text || ""}
+                                onChange={(e) => handleSettingsChange("hero", "text", e.target.value)}
+                                placeholder="VIDEO ARTWORKS by NEMESIS ART"
+                             />
+                         </div>
+
+                         <div className="grid md:grid-cols-3 gap-6">
+                             {/* Desktop Video */}
+                             <div className="space-y-2">
+                                 <Label>Desktop Video URL</Label>
+                                 <div className="flex gap-2">
+                                     <Input 
+                                        value={settingsForm.hero?.videoUrl || ""}
+                                        onChange={(e) => handleSettingsChange("hero", "videoUrl", e.target.value)}
+                                        placeholder="https://..."
+                                     />
+                                     <div className="relative">
+                                         <input
+                                             type="file"
+                                             id="upload-video"
+                                             className="hidden"
+                                             accept="video/*"
+                                             onChange={(e) => handleAssetUpload(e, "videoUrl")}
+                                             disabled={assetUploading === "videoUrl"}
+                                         />
+                                         <Button 
+                                            variant="outline" 
+                                            size="icon" 
+                                            onClick={() => document.getElementById("upload-video").click()}
+                                            disabled={assetUploading === "videoUrl"}
+                                         >
+                                             {assetUploading === "videoUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                                         </Button>
+                                     </div>
+                                 </div>
+                                 {settingsForm.hero?.videoUrl && (
+                                     <video src={settingsForm.hero.videoUrl} className="w-full h-32 object-cover rounded-md bg-black" />
+                                 )}
+                             </div>
+
+                             {/* Mobile Video */}
+                             <div className="space-y-2">
+                                 <Label>Mobile Video URL (Optional)</Label>
+                                 <div className="flex gap-2">
+                                     <Input 
+                                        value={settingsForm.hero?.mobileVideoUrl || ""}
+                                        onChange={(e) => handleSettingsChange("hero", "mobileVideoUrl", e.target.value)}
+                                        placeholder="https://..."
+                                     />
+                                     <div className="relative">
+                                         <input
+                                             type="file"
+                                             id="upload-mobile"
+                                             className="hidden"
+                                             accept="video/*"
+                                             onChange={(e) => handleAssetUpload(e, "mobileVideoUrl")}
+                                             disabled={assetUploading === "mobileVideoUrl"}
+                                         />
+                                         <Button 
+                                            variant="outline" 
+                                            size="icon" 
+                                            onClick={() => document.getElementById("upload-mobile").click()}
+                                            disabled={assetUploading === "mobileVideoUrl"}
+                                         >
+                                             {assetUploading === "mobileVideoUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                                         </Button>
+                                     </div>
+                                 </div>
+                                 {settingsForm.hero?.mobileVideoUrl && (
+                                     <video src={settingsForm.hero.mobileVideoUrl} className="w-full h-32 object-cover rounded-md bg-black" />
+                                 )}
+                             </div>
+
+                             {/* Background Audio */}
+                             <div className="space-y-2">
+                                 <Label>Background Audio URL</Label>
+                                 <div className="flex gap-2">
+                                     <Input 
+                                        value={settingsForm.hero?.backgroundSoundUrl || ""}
+                                        onChange={(e) => handleSettingsChange("hero", "backgroundSoundUrl", e.target.value)}
+                                        placeholder="https://..."
+                                     />
+                                      <div className="relative">
+                                         <input
+                                             type="file"
+                                             id="upload-audio"
+                                             className="hidden"
+                                             accept="audio/*"
+                                             onChange={(e) => handleAssetUpload(e, "backgroundSoundUrl")}
+                                             disabled={assetUploading === "backgroundSoundUrl"}
+                                         />
+                                         <Button 
+                                            variant="outline" 
+                                            size="icon" 
+                                            onClick={() => document.getElementById("upload-audio").click()}
+                                            disabled={assetUploading === "backgroundSoundUrl"}
+                                         >
+                                             {assetUploading === "backgroundSoundUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                                         </Button>
+                                     </div>
+                                 </div>
+                                 {settingsForm.hero?.backgroundSoundUrl && (
+                                     <audio src={settingsForm.hero.backgroundSoundUrl} controls className="w-full h-8 mt-2" />
+                                 )}
+                             </div>
+                         </div>
+                    </CardContent>
+                 </Card>
             </div>
 
             <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
@@ -391,6 +562,140 @@ const SuperAdminPage = () => {
                   <Button onClick={handleSaveSettings} disabled={saving}>
                       <Save className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
                   </Button>
+            </div>
+        </TabsContent>
+
+        {/* Appearance Tab */}
+        <TabsContent value="appearance" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Currency & Pagination */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Display Defaults</CardTitle>
+                        <CardDescription>Currency and pagination settings</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Default Currency</Label>
+                            <Select
+                                value={settingsForm.display?.defaultCurrency || "EUR"}
+                                onValueChange={(val) => handleSettingsChange("display", "defaultCurrency", val)}
+                            >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="EUR">EUR</SelectItem>
+                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value="GBP">GBP</SelectItem>
+                                    <SelectItem value="JPY">JPY</SelectItem>
+                                    <SelectItem value="CHF">CHF</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Default Page Size</Label>
+                            <Input
+                                type="number" min="1" max="100"
+                                value={settingsForm.display?.defaultPageSize || 12}
+                                onChange={(e) => handleSettingsChange("display", "defaultPageSize", Number(e.target.value))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Page Size Options (comma separated)</Label>
+                            <Input
+                                value={(settingsForm.display?.pageSizeOptions || [8, 12, 24, 48]).join(", ")}
+                                onChange={(e) => handleSettingsChange("display", "pageSizeOptions",
+                                    e.target.value.split(",").map(v => Number(v.trim())).filter(n => n > 0)
+                                )}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Calendar Colors */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Calendar Event Colors</CardTitle>
+                        <CardDescription>Colors for event categories on the calendar</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {Object.entries(settingsForm.display?.calendarColors || {}).map(([key, value]) => (
+                            <div key={key} className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={value}
+                                    onChange={(e) => setSettingsForm(prev => ({
+                                        ...prev,
+                                        display: {
+                                            ...prev.display,
+                                            calendarColors: { ...prev.display.calendarColors, [key]: e.target.value }
+                                        }
+                                    }))}
+                                    className="w-8 h-8 rounded border cursor-pointer"
+                                />
+                                <Label className="capitalize flex-1">{key}</Label>
+                                <Input
+                                    value={value}
+                                    onChange={(e) => setSettingsForm(prev => ({
+                                        ...prev,
+                                        display: {
+                                            ...prev.display,
+                                            calendarColors: { ...prev.display.calendarColors, [key]: e.target.value }
+                                        }
+                                    }))}
+                                    className="w-28"
+                                />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* Artist Status Colors */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Artist Status Colors</CardTitle>
+                        <CardDescription>Badge colors for artist verification statuses</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {Object.entries(settingsForm.display?.artistStatusColors || {}).map(([key, value]) => (
+                            <div key={key} className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={value}
+                                    onChange={(e) => setSettingsForm(prev => ({
+                                        ...prev,
+                                        display: {
+                                            ...prev.display,
+                                            artistStatusColors: { ...prev.display.artistStatusColors, [key]: e.target.value }
+                                        }
+                                    }))}
+                                    className="w-8 h-8 rounded border cursor-pointer"
+                                />
+                                <Label className="capitalize flex-1">{key.replace(/([A-Z])/g, " $1")}</Label>
+                                <Input
+                                    value={value}
+                                    onChange={(e) => setSettingsForm(prev => ({
+                                        ...prev,
+                                        display: {
+                                            ...prev.display,
+                                            artistStatusColors: { ...prev.display.artistStatusColors, [key]: e.target.value }
+                                        }
+                                    }))}
+                                    className="w-28"
+                                />
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
+                <Button variant="outline" onClick={fetchSettings}>
+                    <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                </Button>
+                <Button onClick={handleSaveSettings} disabled={saving}>
+                    <Save className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
+                </Button>
             </div>
         </TabsContent>
 

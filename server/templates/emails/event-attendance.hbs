@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Confirm Your Attendance - Nemesis</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: {{colors.background}}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: {{colors.background}};">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: {{colors.card}}; border-radius: 8px; border: 1px solid {{colors.border}}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+          {{> header}}
+
+          <tr>
+            <td style="padding: 32px 40px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: {{colors.foreground}};">
+                Confirm Your Attendance
+              </h2>
+
+              <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.6; color: {{colors.mutedForeground}};">
+                Hi {{firstName}}, you have registered for the following event. Please confirm your attendance by clicking the button below.
+              </p>
+
+              <div style="padding: 20px; background-color: {{colors.muted}}; border-radius: 8px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: {{colors.foreground}};">
+                  {{eventTitle}}
+                </h3>
+                <p style="margin: 0 0 4px 0; font-size: 14px; color: {{colors.mutedForeground}};">
+                  {{formatDate eventDate}}
+                </p>
+                {{#if eventLocation}}
+                <p style="margin: 0; font-size: 14px; color: {{colors.mutedForeground}};">
+                  {{eventLocation}}
+                </p>
+                {{/if}}
+              </div>
+
+              <table cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td align="center" style="border-radius: 6px; background-color: {{colors.primary}};">
+                    <a href="{{confirmationLink}}" target="_blank" style="
+                      display: inline-block;
+                      padding: 12px 24px;
+                      font-size: 14px;
+                      font-weight: 500;
+                      color: {{colors.primaryForeground}};
+                      text-decoration: none;
+                      border-radius: 6px;
+                    ">Confirm Attendance</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 24px 0 8px 0; font-size: 13px; color: {{colors.mutedForeground}};">
+                Or copy and paste this link in your browser:
+              </p>
+              <p style="margin: 0 0 24px 0; font-size: 12px; word-break: break-all; color: {{colors.primary}};">
+                <a href="{{confirmationLink}}" style="color: {{colors.primary}};">{{confirmationLink}}</a>
+              </p>
+
+              <div style="padding: 16px; background-color: {{colors.muted}}; border-radius: 6px; margin-top: 24px;">
+                <p style="margin: 0; font-size: 13px; color: {{colors.mutedForeground}};">
+                  If you did not register for this event, you can safely ignore this email.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          {{> footer}}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

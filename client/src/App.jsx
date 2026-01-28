@@ -47,11 +47,15 @@ import ArtistRoute from "./components/auth/ArtistRoute";
 import AdminRoute from "./components/auth/AdminRoute";
 import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 
-// Error Boundary
+// Error Boundaries
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 
 // App css removed
 
+
+// Helper to wrap a page element with route-level error boundary
+const withEB = (element) => <RouteErrorBoundary>{element}</RouteErrorBoundary>;
 
 function App() {
   return (
@@ -67,95 +71,74 @@ function App() {
               <main className="main-content flex-1 flex flex-col">
                 <Routes>
                   {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
+                  <Route path="/" element={withEB(<HomePage />)} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
-                  <Route
-                    path="/verify-email/:token"
-                    element={<VerifyEmailPage />}
-                  />
+                  <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                   <Route path="/resend-email" element={<ResendEmailPage />} />
-                  <Route path="/gallery" element={<GalleryPage />} />
-                  <Route path="/artworks/:id" element={<ArtworkDetailPage />} />
-                  <Route path="/videos" element={<VideoPage />} />
-                  <Route path="/videos/:id" element={<VideoDetailPage />} />
-                  <Route path="/events" element={<EventsPage />} />
-                  <Route path="/events/:id" element={<EventDetailPage />} />
-                  <Route path="/artists/:id" element={<ArtistProfilePage />} />
+                  <Route path="/gallery" element={withEB(<GalleryPage />)} />
+                  <Route path="/artworks/:id" element={withEB(<ArtworkDetailPage />)} />
+                  <Route path="/videos" element={withEB(<VideoPage />)} />
+                  <Route path="/videos/:id" element={withEB(<VideoDetailPage />)} />
+                  <Route path="/events" element={withEB(<EventsPage />)} />
+                  <Route path="/events/:id" element={withEB(<EventDetailPage />)} />
+                  <Route path="/artists/:id" element={withEB(<ArtistProfilePage />)} />
 
                   {/* Protected Routes (any logged-in user) */}
                   <Route
                     path="/dashboard"
                     element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/profile"
                     element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/favorites"
                     element={
-                      <ProtectedRoute>
-                        <FavoritesPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<FavoritesPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/apply-artist"
                     element={
-                      <ProtectedRoute>
-                        <ApplyArtistPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<ApplyArtistPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/cart"
                     element={
-                      <ProtectedRoute>
-                        <CartPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<CartPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/checkout"
                     element={
-                      <ProtectedRoute>
-                        <CheckoutPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<CheckoutPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/my-orders"
                     element={
-                      <ProtectedRoute>
-                        <DashboardPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/orders/:id"
                     element={
-                      <ProtectedRoute>
-                        <OrderDetailPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<OrderDetailPage />)}</ProtectedRoute>
                     }
                   />
                   <Route
                     path="/messages"
                     element={
-                      <ProtectedRoute>
-                        <MessagesPage />
-                      </ProtectedRoute>
+                      <ProtectedRoute>{withEB(<MessagesPage />)}</ProtectedRoute>
                     }
                   />
 
@@ -164,33 +147,25 @@ function App() {
                   <Route
                     path="/artworks/new"
                     element={
-                      <ArtistRoute>
-                        <ArtworkFormPage />
-                      </ArtistRoute>
+                      <ArtistRoute>{withEB(<ArtworkFormPage />)}</ArtistRoute>
                     }
                   />
                   <Route
                     path="/artworks/:id/edit"
                     element={
-                      <ArtistRoute>
-                        <ArtworkFormPage />
-                      </ArtistRoute>
+                      <ArtistRoute>{withEB(<ArtworkFormPage />)}</ArtistRoute>
                     }
                   />
                   <Route
                     path="/events/new"
                     element={
-                      <ArtistRoute>
-                        <EventFormPage />
-                      </ArtistRoute>
+                      <ArtistRoute>{withEB(<EventFormPage />)}</ArtistRoute>
                     }
                   />
                   <Route
                     path="/events/:id/edit"
                     element={
-                      <ArtistRoute>
-                        <EventFormPage />
-                      </ArtistRoute>
+                      <ArtistRoute>{withEB(<EventFormPage />)}</ArtistRoute>
                     }
                   />
 
@@ -198,9 +173,7 @@ function App() {
                   <Route
                     path="/admin"
                     element={
-                      <AdminRoute>
-                        <AdminPage />
-                      </AdminRoute>
+                      <AdminRoute>{withEB(<AdminPage />)}</AdminRoute>
                     }
                   />
 
@@ -208,14 +181,12 @@ function App() {
                   <Route
                     path="/superadmin"
                     element={
-                      <SuperAdminRoute>
-                        <SuperAdminPage />
-                      </SuperAdminRoute>
+                      <SuperAdminRoute>{withEB(<SuperAdminPage />)}</SuperAdminRoute>
                     }
                   />
 
-                  <Route path="/pricing" element={<PricingPage />} />
-                  
+                  <Route path="/pricing" element={withEB(<PricingPage />)} />
+
                   {/* 404 */}
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>

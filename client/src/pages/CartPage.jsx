@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { formatPrice } from "../lib/formatters";
 import Loading from "../components/common/Loading";
 import { 
   Trash2, 
@@ -42,12 +43,7 @@ const CartPage = () => {
     }, 0);
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
-  };
+  const formatCurrency = (amount) => formatPrice(amount);
 
   if (loading) return <Loading />;
 

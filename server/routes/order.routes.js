@@ -272,7 +272,8 @@ router.get("/sales", isAuthenticated, async (req, res, next) => {
         path: "items.artwork",
         select: "title images price",
       })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     // Filter items in the orders to return ONLY the items belonging to this artist
     // This is important because an order might contain items from multiple artists
@@ -281,7 +282,7 @@ router.get("/sales", isAuthenticated, async (req, res, next) => {
         item.artist.toString() === userId
       );
       
-      const orderObj = order.toObject();
+      const orderObj = { ...order };
       orderObj.items = artistItems;
       
       // Recalculate total for this artist only
@@ -308,7 +309,8 @@ router.get("/mine", isAuthenticated, async (req, res, next) => {
           select: "firstName lastName artistInfo.companyName",
         },
       })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({ data: orders });
   } catch (error) {
@@ -342,7 +344,8 @@ router.get("/all", isAuthenticated, async (req, res, next) => {
       })
       .sort({ createdAt: -1 })
       .limit(safeLimit)
-      .skip(safeSkip);
+      .skip(safeSkip)
+      .lean();
 
     const total = await Order.countDocuments(query);
 

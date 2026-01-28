@@ -156,6 +156,26 @@ const sendArtistStatusEmail = async (email, firstName, status, reason = null) =>
   }
 };
 
+const sendEventAttendanceEmail = async (email, firstName, { eventTitle, eventDate, eventLocation, confirmationLink }) => {
+  try {
+    const html = renderTemplate("event-attendance", {
+      firstName,
+      eventTitle,
+      eventDate,
+      eventLocation,
+      confirmationLink,
+    });
+
+    return await sendEmail({
+      to: email,
+      subject: `Confirm Your Attendance - ${eventTitle} - Nemesis`,
+      html,
+    });
+  } catch (error) {
+    console.error("Event attendance email error:", error);
+  }
+};
+
 module.exports = {
   sendVerificationEmail,
   sendWelcomeEmail,
@@ -163,4 +183,5 @@ module.exports = {
   sendArtistApplicationEmail,
   sendPasswordResetEmail,
   sendArtistStatusEmail,
+  sendEventAttendanceEmail,
 };

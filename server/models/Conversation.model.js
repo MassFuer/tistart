@@ -82,6 +82,14 @@ const conversationSchema = new Schema(
   }
 );
 
+// Cap offer history to last 50 entries
+conversationSchema.pre("save", function (next) {
+  if (this.negotiation?.offerHistory?.length > 50) {
+    this.negotiation.offerHistory = this.negotiation.offerHistory.slice(-50);
+  }
+  next();
+});
+
 // Index for finding conversations by participants
 conversationSchema.index({ participants: 1 });
 

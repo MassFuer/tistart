@@ -59,7 +59,8 @@ router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
         .populate("user", "firstName lastName profilePicture role")
         .sort(sort)
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(Number(limit))
+        .lean(),
       Review.countDocuments({ artwork: artworkId }),
     ]);
 

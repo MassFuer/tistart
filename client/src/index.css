@@ -6,14 +6,12 @@
   :root {
     --background: 40 20% 97%;
     --foreground: 240 10% 3.9%;
-    /* --card: 0 0% 100%; */
-    --card: 48 33.3% 97.1%;
-    /* --card-foreground: 240 10% 3.9%; */
-    --card-foreground: 240 10% 3.9%;
+    --card: 48 33.3% 97.1%; /* light cream */
+    --card-foreground: 240 10% 3.9%; /* dark grey */
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 240 5.9% 10%; /* dark grey */
+    --primary-foreground: 0 0% 98%; /* light cream */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
@@ -49,9 +47,9 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 5.9%;
     --popover-foreground: 0 0% 98%;
-    /* Keep primary button consistent across themes (dark bg, light text) */
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
+    /* Dark Mode Primary: Light Cream for contrast */
+    --primary: 40 20% 97%;
+    --primary-foreground: 240 5.9% 10%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;

@@ -18,8 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Star,  Trash2, Edit2, MessageSquarePlus } from "lucide-react";
+import { Trash2, Edit2, MessageSquarePlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import StarRating from "../common/StarRating";
 
 const ReviewSection = ({ artworkId, artistId }) => {
   const { isAuthenticated, user } = useAuth();
@@ -156,22 +157,14 @@ const ReviewSection = ({ artworkId, artistId }) => {
     });
   };
 
-  const renderStars = (rating, interactive = false, size = "md") => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-        const isFilled = i <= rating;
-      stars.push(
-        <Star
-          key={i}
-          className={`${size === "lg" ? "h-6 w-6" : "h-4 w-4"} ${
-              isFilled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"
-          } ${interactive ? "cursor-pointer hover:scale-110 transition-transform" : ""}`}
-          onClick={interactive ? () => handleRatingClick(i) : undefined}
-        />
-      );
-    }
-    return <div className="flex gap-0.5">{stars}</div>;
-  };
+  const renderStars = (rating, interactive = false, size = "md") => (
+    <StarRating
+      rating={rating}
+      size={size === "lg" ? "w-6 h-6" : "w-4 h-4"}
+      interactive={interactive}
+      onRate={handleRatingClick}
+    />
+  );
 
   if (isLoading) {
     return (

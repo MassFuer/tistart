@@ -161,6 +161,34 @@ const platformSettingsSchema = new Schema(
       cssVarsDark: { type: Map, of: String, default: {} },
     },
 
+    // Display & Formatting Preferences
+    display: {
+      defaultCurrency: { type: String, default: "EUR" },
+      defaultPageSize: { type: Number, default: 12 },
+      pageSizeOptions: { type: [Number], default: [8, 12, 24, 48] },
+      calendarColors: {
+        exhibition: { type: String, default: "#3b82f6" },
+        workshop: { type: String, default: "#10b981" },
+        concert: { type: String, default: "#f59e0b" },
+        festival: { type: String, default: "#ef4444" },
+        default: { type: String, default: "#6366f1" },
+      },
+      artistStatusColors: {
+        verified: { type: String, default: "#22c55e" },
+        pending: { type: String, default: "#f59e0b" },
+        rejected: { type: String, default: "#ef4444" },
+        notApplied: { type: String, default: "#6b7280" },
+      },
+    },
+
+    // Hero Section Configuration
+    hero: {
+      videoUrl: { type: String, default: "" }, // Full URL to R2
+      mobileVideoUrl: { type: String, default: "" }, // Optional optimized video
+      text: { type: String, default: "VIDEO ARTWORKS" }, // Text for the Video Hero mask
+      backgroundSoundUrl: { type: String, default: "" },
+    },
+
     // Last updated by
     lastUpdatedBy: {
       type: Schema.Types.ObjectId,

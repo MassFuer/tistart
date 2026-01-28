@@ -80,15 +80,21 @@ const eventSchema = new Schema(
         },
         status: {
           type: String,
-          enum: ["pending", "confirmed", "cancelled"],
-          default: "confirmed",
+          enum: ["notConfirmed", "registered", "cancelled"],
+          default: "notConfirmed",
+        },
+        confirmationToken: {
+          type: String,
         },
         ticketCode: {
           type: String,
         },
-        purchasedAt: {
+        registeredAt: {
           type: Date,
           default: Date.now,
+        },
+        confirmedAt: {
+          type: Date,
         },
       },
     ],

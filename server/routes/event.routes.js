@@ -14,6 +14,8 @@ const {
 } = require("../utils/r2");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
+const crypto = require("crypto");
+const { sendEventAttendanceEmail } = require("../utils/email");
 
 // GET /api/events/filters-meta - Get metadata for filters (cities, companies, artists)
 router.get("/filters-meta", async (req, res, next) => {
@@ -21,7 +23,7 @@ router.get("/filters-meta", async (req, res, next) => {
      const [cities, companies, artists] = await Promise.all([
         Event.distinct("location.city", { isPublic: true }),
         User.distinct("artistInfo.companyName", { role: "artist" }), // Only artists have company names relevant here
-        User.find({ role: "artist", artistStatus: "verified" }).select("firstName lastName artistInfo.companyName _id")
+        User.find({ role: "artist", artistStatus: "verified" }).select("firstName lastName artistInfo.companyName _id").lean()
      ]);
 
      // Filter out null/empty values
@@ -177,7 +179,7 @@ router.get("/calendar", async (req, res, next) => {
 
     const events = await Event.find(filter)
       .populate("artist", "firstName lastName userName artistInfo.companyName")
-      .select("title startDateTime endDateTime category location.isOnline");
+      .select("title startDateTime endDateTime category location.isOnline").lean();
 
     // Format for FullCalendar
     const calendarEvents = events.map((event) => ({
@@ -215,7 +217,7 @@ router.get("/artist/:artistId", async (req, res, next) => {
     }
 
     const [events, total] = await Promise.all([
-      Event.find(filter).sort("startDateTime").skip(skip).limit(Number(limit)),
+      Event.find(filter).sort("startDateTime").skip(skip).limit(Number(limit)).lean(),
       Event.countDocuments(filter),
     ]);
 
@@ -511,9 +513,12 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
       query.$expr = { $lt: [{ $size: "$attendees" }, event.maxCapacity] };
     }
 
+    // Generate confirmation token
+    const confirmationToken = crypto.randomBytes(32).toString("hex");
+
     const updatedEvent = await Event.findOneAndUpdate(
       query,
-      { $addToSet: { attendees: { user: userId, status: "confirmed" } } },
+      { $addToSet: { attendees: { user: userId, status: "notConfirmed", confirmationToken } } },
       { new: true }
     ).populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
 
@@ -526,14 +531,25 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
       ) {
         return res.status(400).json({ error: "Event is full." });
       }
-       // Double check for race condition where user was added in between
        if (currentEvent.attendees.some(a => a.user.toString() === userId.toString())) {
              return res.status(400).json({ error: "You have already joined this event." });
        }
       return res.status(400).json({ error: "Could not join event. Please try again." });
     }
 
-    res.status(200).json({ message: "Successfully joined event.", data: updatedEvent });
+    // Send confirmation email (non-blocking)
+    const user = await User.findById(userId).select("email firstName").lean();
+    if (user?.email) {
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      sendEventAttendanceEmail(user.email, user.firstName, {
+        eventTitle: updatedEvent.title,
+        eventDate: updatedEvent.startDateTime,
+        eventLocation: updatedEvent.location?.venue || updatedEvent.location?.city || "",
+        confirmationLink: `${clientUrl}/events/${updatedEvent._id}/confirm-attendance/${confirmationToken}`,
+      }).catch(err => console.error("Attendance email failed:", err));
+    }
+
+    res.status(200).json({ message: "Successfully registered. Check your email to confirm attendance.", data: updatedEvent });
   } catch (error) {
     console.error("Error joining event:", error);
     next(error);
@@ -575,13 +591,40 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// GET /api/events/:id/attendees - Get attendees list (Admin or Owner only)
+// POST /api/events/:id/confirm-attendance/:token - Confirm attendance via email link
+router.post("/:id/confirm-attendance/:token", async (req, res, next) => {
+  try {
+    const { id, token } = req.params;
+
+    const event = await Event.findOneAndUpdate(
+      { _id: id, "attendees.confirmationToken": token },
+      {
+        $set: {
+          "attendees.$.status": "registered",
+          "attendees.$.confirmedAt": new Date(),
+        },
+        $unset: { "attendees.$.confirmationToken": "" },
+      },
+      { new: true }
+    );
+
+    if (!event) {
+      return res.status(404).json({ error: "Invalid or expired confirmation link." });
+    }
+
+    res.status(200).json({ message: "Attendance confirmed successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/events/:id/attendees - Get attendees list (Owner, Admin, SuperAdmin only)
 router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
   try {
-    const event = await Event.findById(req.params.id).populate(
-      "attendees.user",
-      "firstName lastName userName email profilePicture"
-    );
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const event = await Event.findById(req.params.id).select("artist attendees");
 
     if (!event) {
       return res.status(404).json({ error: "Event not found." });
@@ -595,7 +638,38 @@ router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
       return res.status(403).json({ error: "Unauthorized access to attendee list." });
     }
 
-    res.status(200).json({ data: event.attendees });
+    const total = event.attendees?.length || 0;
+
+    // Paginate in-memory (attendees are subdocuments)
+    const paginatedIds = (event.attendees || [])
+      .sort((a, b) => (b.registeredAt || 0) - (a.registeredAt || 0))
+      .slice(skip, skip + Number(limit));
+
+    // Populate user details for the page
+    const userIds = paginatedIds.map(a => a.user);
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("firstName lastName userName email profilePicture")
+      .lean();
+
+    const userMap = {};
+    users.forEach(u => { userMap[u._id.toString()] = u; });
+
+    const attendees = paginatedIds.map(a => ({
+      user: userMap[a.user.toString()] || null,
+      status: a.status,
+      registeredAt: a.registeredAt,
+      confirmedAt: a.confirmedAt,
+    }));
+
+    res.status(200).json({
+      data: attendees,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / Number(limit)),
+      },
+    });
   } catch (error) {
     next(error);
   }

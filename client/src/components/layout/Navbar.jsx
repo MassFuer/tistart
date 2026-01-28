@@ -278,7 +278,7 @@ const Navbar = () => {
                 <Button variant="ghost" asChild>
                     <Link to="/login">Log in</Link>
                 </Button>
-                <Button asChild className="transition-all">
+                <Button asChild className="transition-all font-bold">
                     <Link to="/signup">Sign up</Link>
                 </Button>
              </div>

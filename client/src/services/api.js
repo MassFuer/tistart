@@ -209,6 +209,11 @@ export const platformAPI = {
     api.patch(`/api/platform/storage/${userId}`, data),
   // Maintenance mode (SuperAdmin only)
   toggleMaintenance: (data) => api.post("/api/platform/maintenance", data),
+  // Asset Management (SuperAdmin only)
+  uploadAsset: (formData) =>
+    api.post("/api/platform/assets", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
 
 // Payments API (Stripe)

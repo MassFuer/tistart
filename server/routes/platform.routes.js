@@ -9,6 +9,15 @@ const Event = require("../models/Event.model");
 const Order = require("../models/Order.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isSuperAdmin, isAdmin } = require("../middleware/role.middleware");
+const Busboy = require("busboy");
+const { Upload } = require("@aws-sdk/lib-storage");
+const { 
+  r2Client, 
+  BUCKET_NAME, 
+  PUBLIC_URL, 
+  generateFilename, 
+  getFileInfo 
+} = require("../utils/r2");
 
 // ==================== PLATFORM SETTINGS (SuperAdmin Only) ====================
 
@@ -34,7 +43,9 @@ router.get("/config", async (req, res, next) => {
           message: settings.maintenance.message
       },
       features: settings.features,
-      geolocation: settings.geolocation
+      geolocation: settings.geolocation,
+      hero: settings.hero,
+      display: settings.display
     };
     res.status(200).json({ data: publicConfig });
   } catch (error) {
@@ -55,6 +66,8 @@ router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) 
       "geolocation",
       "maintenance",
       "theme",
+      "hero",
+      "display",
     ];
 
     const updateObj = {};
@@ -74,6 +87,69 @@ router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) 
     next(error);
   }
 });
+
+// POST /api/platform/assets - Upload platform assets (SuperAdmin Only)
+router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  try {
+    const bb = Busboy({ headers: req.headers });
+    let uploadPromise = null;
+    let fileFound = false;
+
+    bb.on("file", (name, file, info) => {
+      const { filename, mimeType } = info;
+      fileFound = true;
+
+      // Generate Key
+      const folder = "platform/hero";
+      const key = generateFilename(filename, folder);
+
+      // Start Streaming Upload to R2
+      const parallelUploads3 = new Upload({
+        client: r2Client,
+        params: {
+          Bucket: BUCKET_NAME,
+          Key: key,
+          Body: file,
+          ContentType: mimeType,
+        },
+      });
+
+      uploadPromise = parallelUploads3.done().then(() => {
+        const publicUrl = `${PUBLIC_URL}/${key}`;
+        return {
+          url: publicUrl,
+          key: key,
+          mimeType: mimeType
+        };
+      });
+    });
+
+    bb.on("close", async () => {
+      if (!fileFound) {
+        return res.status(400).json({ error: "No file provided." });
+      }
+
+      try {
+        const uploadedAsset = await uploadPromise;
+        
+        // Get size
+        const fileInfo = await getFileInfo(uploadedAsset.key);
+        if (fileInfo) {
+            uploadedAsset.size = fileInfo.size;
+        }
+
+        res.status(200).json({ data: uploadedAsset });
+      } catch (err) {
+        console.error("Platform asset upload failed:", err);
+        next(err);
+      }
+    });
+
+    req.pipe(bb);
+  } catch (error) {
+    next(error);
+  }
+}); 
 
 // ==================== PLATFORM STATISTICS (Admin & SuperAdmin) ====================
 

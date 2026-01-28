@@ -14,7 +14,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { Filter, Calendar as CalendarIcon, Map as MapIcon, List as ListIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Map as MapIcon, List as ListIcon, Plus } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -24,17 +24,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-  SheetClose
-} from "@/components/ui/sheet";
 import Pagination from "../components/common/Pagination";
+import PageSizeSelector from "../components/common/PageSizeSelector";
+import { FilterSheet, FilterAside } from "../components/common/FilterSidebar";
 import EventFilters from "../components/event/EventFilters";
 
 const EventsPage = () => {
@@ -166,32 +158,14 @@ const EventsPage = () => {
                     </TabsList>
 
                     {/* Mobile Filter */}
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button variant="outline" size="sm" className="lg:hidden">
-                                <Filter className="h-4 w-4 md:mr-2" /> <span className="hidden md:inline">Filters</span>
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left">
-                            <SheetHeader>
-                                <SheetTitle>Filter Events</SheetTitle>
-                                <SheetDescription>Refine your search</SheetDescription>
-                            </SheetHeader>
-                            <div className="py-4">
-                                <EventFilters
-                                    filters={filters}
-                                    updateFilter={updateFilter}
-                                    clearAllFilters={clearAllFilters}
-                                    meta={meta}
-                                />
-                            </div>
-                            <SheetFooter>
-                                <SheetClose asChild>
-                                    <Button className="w-full">Show Results</Button>
-                                </SheetClose>
-                            </SheetFooter>
-                        </SheetContent>
-                    </Sheet>
+                    <FilterSheet title="Filter Events" description="Refine your search">
+                        <EventFilters
+                            filters={filters}
+                            updateFilter={updateFilter}
+                            clearAllFilters={clearAllFilters}
+                            meta={meta}
+                        />
+                    </FilterSheet>
 
                     {(isVerifiedArtist || isAdmin) && (
                        <Button asChild size="sm">
@@ -207,14 +181,14 @@ const EventsPage = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 relative items-start">
             {/* DESKTOP SIDEBAR */}
-            <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm">
+            <FilterAside>
                 <EventFilters
                     filters={filters}
                     updateFilter={updateFilter}
                     clearAllFilters={clearAllFilters}
                     meta={meta}
                 />
-            </aside>
+            </FilterAside>
 
             {/* MAIN CONTENT */}
             <main className="w-full lg:flex-1 lg:min-w-0">
@@ -235,11 +209,17 @@ const EventsPage = () => {
                                         <EventCard key={event._id} event={event} />
                                     ))}
                                 </div>
-                                <Pagination
-                                    currentPage={pagination.page}
-                                    totalPages={pagination.pages}
-                                    onPageChange={setPage}
-                                />
+                                <div className="flex items-center justify-between mt-4">
+                                    <PageSizeSelector
+                                        value={filters.limit || 12}
+                                        onChange={(size) => updateFilter("limit", size)}
+                                    />
+                                    <Pagination
+                                        currentPage={pagination.page}
+                                        totalPages={pagination.pages}
+                                        onPageChange={setPage}
+                                    />
+                                </div>
                             </>
                         )}
                     </TabsContent>

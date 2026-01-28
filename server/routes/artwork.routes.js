@@ -103,7 +103,7 @@ router.get("/", async (req, res, next) => {
         .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
         .sort(sort)
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(Number(limit)).lean(),
       Artwork.countDocuments(filter),
     ]);
 
@@ -581,7 +581,7 @@ router.get("/artist/:artistId", async (req, res, next) => {
       Artwork.find({ artist: req.params.artistId })
         .sort("-createdAt")
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(Number(limit)).lean(),
       Artwork.countDocuments({ artist: req.params.artistId }),
     ]);
 
@@ -594,100 +594,6 @@ router.get("/artist/:artistId", async (req, res, next) => {
         pages: Math.ceil(total / Number(limit)),
       },
     });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// GET /api/artworks/artist/stats - Get artworks and stats for dashboard
-router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
-  try {
-    const artistId = req.payload._id;
-
-    // 1. Get all artworks by this artist
-    const artworks = await Artwork.find({ artist: artistId })
-      .sort({ createdAt: -1 });
-
-    // 2. Calculate KPIs
-    const totalArtworks = artworks.length;
-    let totalRevenue = 0;
-    let totalSold = 0;
-    let totalReviews = 0;
-    let sumRating = 0;
-
-    // We need to fetch aggregate stats for these artworks
-    // Efficient way: Aggregation pipeline
-    
-    // Revenue & Sales (From Orders)
-    const salesAgg = await Order.aggregate([
-        { $match: { "items.artist": new mongoose.Types.ObjectId(artistId), status: { $in: ["paid", "shipped", "delivered"] } } },
-        { $unwind: "$items" },
-        { $match: { "items.artist": new mongoose.Types.ObjectId(artistId) } },
-        { $group: { _id: null, totalRevenue: { $sum: "$items.artistEarnings" }, totalSold: { $sum: "$items.quantity" } } }
-    ]);
-
-    if (salesAgg.length > 0) {
-        totalRevenue = salesAgg[0].totalRevenue;
-        totalSold = salesAgg[0].totalSold;
-    }
-
-    // Reviews
-    const reviewsAgg = await mongoose.model("Review").aggregate([
-        { 
-            $lookup: {
-                from: "artworks",
-                localField: "artwork",
-                foreignField: "_id",
-                as: "artworkDoc"
-            }
-        },
-        { $unwind: "$artworkDoc" },
-        { $match: { "artworkDoc.artist": new mongoose.Types.ObjectId(artistId) } },
-        { $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
-    ]);
-
-    let avgRating = 0;
-    if (reviewsAgg.length > 0) {
-        avgRating = Math.round(reviewsAgg[0].avgRating * 10) / 10;
-        totalReviews = reviewsAgg[0].count;
-    }
-
-    // Attach basic stats to each artwork object for the table
-    // For per-artwork sales, we need another aggregation or just 0 for now if expensive
-    // Let's do a quick per-artwork sales lookup
-    const perArtworkSales = await Order.aggregate([
-        { $match: { "items.artist": new mongoose.Types.ObjectId(artistId), status: { $in: ["paid", "shipped", "delivered"] } } },
-        { $unwind: "$items" },
-        { $match: { "items.artist": new mongoose.Types.ObjectId(artistId), "items.itemType": "artwork" } },
-        { $group: { _id: "$items.artwork", totalSold: { $sum: "$items.quantity" }, totalRevenue: { $sum: "$items.artistEarnings" } } }
-    ]);
-
-    const salesMap = {};
-    perArtworkSales.forEach(s => {
-        if (s._id) {
-             salesMap[s._id.toString()] = s;
-        }
-    });
-
-    const artworksWithStats = artworks.map(art => {
-        const stats = salesMap[art._id.toString()] || { totalSold: 0, totalRevenue: 0 };
-        return {
-            ...art.toObject(),
-            stats
-        };
-    });
-
-    res.status(200).json({
-        data: artworksWithStats,
-        kpis: {
-            totalRevenue: Math.round(totalRevenue * 100) / 100,
-            totalSold,
-            totalReviews,
-            avgRating,
-            totalArtworks
-        }
-    });
-
   } catch (error) {
     next(error);
   }

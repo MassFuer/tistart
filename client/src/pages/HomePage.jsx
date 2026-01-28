@@ -68,15 +68,39 @@ const HomePage = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
-                <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-2xl mb-4 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-3">
-                  <span>Where Art Meets</span>
-                  <div className="w-full max-w-[300px] md:w-auto md:max-w-none flex justify-center md:justify-start">
-                     <WordRotate
-                        className="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-orange-300 to-rose-300 pb-2 text-center md:text-left"
-                        words={["Innovation", "Creativity", "Passion", "Future", "Marseille"]}
-                     />
-                  </div>
-                </h1>
+          <h1
+            className="
+              text-4xl md:text-6xl
+              font-extrabold tracking-tight
+              text-white drop-shadow-2xl
+              text-center
+              flex flex-col md:flex-row
+              flex-wrap md:flex-nowrap
+              justify-center
+              gap-x-3 gap-y-2
+            "
+          >
+            <span className="whitespace-nowrap">Where Art Meets</span>
+            <WordRotate
+              className="
+                text-transparent
+                bg-clip-text
+                bg-gradient-to-r
+                from-amber-200
+                via-orange-300
+                to-rose-300
+                text-center
+              "
+              words={[
+                "Innovation",
+                "Creativity",
+                "Ironhack 🧑‍💻",
+                "Passion",
+                "Future",
+                "Marseille",
+              ]}
+            />
+          </h1>
                 <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl mx-auto leading-relaxed">
                   The premier platform for discovering unique artworks, connecting with visionary artists, and collecting with confidence.
                 </p>
@@ -106,21 +130,21 @@ const HomePage = () => {
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
                     <Palette className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Curated Excellence</h3>
                 <p className="text-muted-foreground">Hand-picked artworks from emerging and established talents worldwide.</p>
             </div>
             <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+               <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
                     <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Secure Collections</h3>
                 <p className="text-muted-foreground">Certified authenticity and secure transactions powered by Stripe.</p>
             </div>
             <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+               <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
                     <Users className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Vibrant Community</h3>
