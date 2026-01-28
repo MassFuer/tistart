@@ -99,22 +99,22 @@ const HomePage = () => {
       {/* VALUE PROPOSITION */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-                <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
+            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                     <Palette className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Curated Excellence</h3>
                 <p className="text-muted-foreground">Hand-picked artworks from emerging and established talents worldwide.</p>
             </div>
-            <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-               <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
+            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                     <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Secure Collections</h3>
                 <p className="text-muted-foreground">Certified authenticity and secure transactions powered by Stripe.</p>
             </div>
-            <div className="space-y-4 p-6 rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
-               <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-foreground">
+            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                     <Users className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold">Vibrant Community</h3>

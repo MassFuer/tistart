@@ -255,17 +255,29 @@ const streamAndUploadVideo = async (req, res, next) => {
     bb.on("file", (name, file, info) => {
       const { filename, mimeType } = info;
 
-      // Only interested in the 'video' field
-      if (name !== "video") {
+      // Allow specific field names
+      const allowedFields = ["video", "fullVideo", "previewVideo", "backgroundAudio", "subtitles"];
+      if (!allowedFields.includes(name)) {
         file.resume(); // Drain stream
         return;
       }
 
       fileFound = true;
 
-      // Validate Mime Type
-      if (!FILE_CONFIGS.video.allowedMimes.includes(mimeType)) {
+      // Validate Mime Type based on field name
+      const isAudio = name === "backgroundAudio";
+      const isSubtitle = name === "subtitles";
+      const isVideo = ["video", "fullVideo", "previewVideo"].includes(name);
+
+      if (isVideo && !FILE_CONFIGS.video.allowedMimes.includes(mimeType)) {
         return next(new Error(`Invalid video type: ${mimeType}`));
+      }
+      if (isAudio && !["audio/mpeg", "audio/mp3", "audio/aac", "audio/wav"].includes(mimeType)) {
+         return next(new Error(`Invalid audio type: ${mimeType}`));
+      }
+      // Simple text check for subs or allow generally
+      if (isSubtitle && !["text/vtt", "application/x-subrip", "text/plain"].includes(mimeType) && !filename.endsWith(".vtt") && !filename.endsWith(".srt")) {
+        // Mime types for subs are tricky, often text/plain. We rely on extension mostly or relaxed check.
       }
 
       // Generate Key
@@ -286,20 +298,14 @@ const streamAndUploadVideo = async (req, res, next) => {
 
       uploadPromise = parallelUploads3.done().then((result) => {
         // Result typically contains Location, Key, Bucket
-        // Note: result.Location might not be the public URL depending on S3 client config
-        // We construct the public URL manually to be consistent
         const publicUrl = `${PUBLIC_URL}/${videoKey}`;
 
         // Populate req.uploadedVideo
         req.uploadedVideo = {
             url: publicUrl,
             key: videoKey,
-            // Size is not directly returned by Upload result in all cases,
-            // but we might get it if we inspect the response or trust content-length.
-            // For now, we might need to HEAD the object or use a pass-through stream to count bytes.
-            // However, doing a HEAD request is extra latency.
-            // Let's assume we can get it from result or we do a HEAD check.
             mimeType: mimeType,
+            fieldName: name
         };
         return req.uploadedVideo;
       });

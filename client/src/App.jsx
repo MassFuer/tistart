@@ -26,6 +26,8 @@ import DashboardPage from "./pages/DashboardPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import ApplyArtistPage from "./pages/ApplyArtistPage";
 import PricingPage from "./pages/PricingPage";
+import VideoPage from "./pages/VideoPage";
+import VideoDetailPage from "./pages/VideoDetailPage";
 
 import ArtworkFormPage from "./pages/ArtworkFormPage";
 import EventFormPage from "./pages/EventFormPage";
@@ -77,6 +79,8 @@ function App() {
                   <Route path="/resend-email" element={<ResendEmailPage />} />
                   <Route path="/gallery" element={<GalleryPage />} />
                   <Route path="/artworks/:id" element={<ArtworkDetailPage />} />
+                  <Route path="/videos" element={<VideoPage />} />
+                  <Route path="/videos/:id" element={<VideoDetailPage />} />
                   <Route path="/events" element={<EventsPage />} />
                   <Route path="/events/:id" element={<EventDetailPage />} />
                   <Route path="/artists/:id" element={<ArtistProfilePage />} />

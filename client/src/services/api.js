@@ -84,9 +84,10 @@ export const artworksAPI = {
     api.post(`/api/artworks/${id}/images`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  uploadVideo: (id, formData) =>
+  uploadVideo: (id, formData, onProgress) =>
     api.post(`/api/artworks/${id}/video`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: onProgress,
     }),
   uploadVideoThumbnail: (id, formData) =>
     api.post(`/api/artworks/${id}/video/thumbnail`, formData, {

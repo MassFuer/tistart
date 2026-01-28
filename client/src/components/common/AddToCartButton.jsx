@@ -104,23 +104,23 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-9 w-9 rounded-none rounded-l-md" 
+                className="h-8 w-8 rounded-none rounded-l-md" 
                 onClick={handleDecrement}
                 disabled={isLoading}
             >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-10 text-center font-medium text-sm">
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mx-auto"/> : quantityInCart}
+            <span className="w-8 text-center font-medium text-xs">
+                {isLoading ? <Loader2 className="h-3 w-3 animate-spin mx-auto"/> : quantityInCart}
             </span>
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-9 w-9 rounded-none rounded-r-md" 
+                className="h-8 w-8 rounded-none rounded-r-md" 
                 onClick={handleIncrement}
                 disabled={isLoading || quantityInCart >= artwork.totalInStock}
             >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3" />
             </Button>
         </div>
         
@@ -128,7 +128,7 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
             <Button 
                 variant="destructive" 
                 size="icon" 
-                className="h-9 w-9"
+                className="h-8 w-8"
                 onClick={handleRemove}
                 disabled={isLoading}
             >
@@ -149,7 +149,7 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
       {isLoading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
-        <ShoppingCart className="mr-2 h-4 w-4" />
+        <ShoppingCart className="mr-1 h-4 w-4" />
       )}
       {isLoading ? "Adding..." : "Add to Cart"}
     </Button>

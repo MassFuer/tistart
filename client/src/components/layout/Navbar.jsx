@@ -21,7 +21,8 @@ import {
   ShieldAlert,
   Moon,
   Sun,
-  MessageCircle
+  MessageCircle,
+  Film,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -109,18 +110,17 @@ const Navbar = () => {
       >
         Events
       </NavLink>
+
+      <NavLink 
+        to="/videos" 
+        className={({ isActive }) => 
+          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
+        }
+        onClick={handleNavClick}
+      >
+       <Film className="h-4 w-4" />
+      </NavLink>
       
-      {isAuthenticated && (
-        <NavLink 
-            to="/favorites" 
-            className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-            }
-            onClick={handleNavClick}
-        >
-            Favorites
-        </NavLink>
-      )}
       <NavLink 
         to="/pricing" 
         className={({ isActive }) => 
@@ -164,9 +164,19 @@ const Navbar = () => {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
+          {/* Favorites Icon */}
+          {isAuthenticated && (
+            <Link to="/favorites" onClick={handleNavClick}>
+               <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Heart className="h-4 w-4" />
+                  <span className="sr-only">Favorites</span>
+               </Button>
+            </Link>
+          )}
+
           {/* Messages */}
           {isAuthenticated && (
-            <Link to="/messages">
+            <Link to="/messages" onClick={handleNavClick}>
               <Button variant="ghost" size="icon" className="relative h-9 w-9">
                 <MessageCircle className="h-4 w-4" />
                 {unreadCount > 0 && (
@@ -181,7 +191,7 @@ const Navbar = () => {
 
           {/* Cart */}
           {isAuthenticated && (
-            <Link to="/cart">
+            <Link to="/cart" onClick={handleNavClick}>
                 <Button variant="ghost" size="icon" className="relative h-9 w-9">
                     <ShoppingCart className="h-4 w-4" />
                     {cartCount > 0 && (

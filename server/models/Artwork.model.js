@@ -74,18 +74,37 @@ const artworkSchema = new Schema(
     ],
     // Video-specific fields (for category: 'video' or 'music')
     video: {
-      // Full video URL (private bucket for paid, public for free)
-      url: { type: String },
-      // Preview clip URL (always public, 30-60 sec)
-      previewUrl: { type: String },
-      // Thumbnail image URL (always public)
+      // Main Video File (Private/Paid or Public)
+      fullVideoUrl: { type: String },
+      // Preview Clip / Loop (Public)
+      previewVideoUrl: { type: String },
+      // Subtitles (VTT/SRT)
+      subtitlesUrl: { type: String },
+      // Background Audio (MP3/AAC for ambience)
+      backgroundAudioUrl: { type: String },
+      
+      // Metadata
+      synopsis: { type: String, maxlength: 2000 },
+      director: { type: String },
+      coAuthor: { type: String },
+      cast: [{ type: String }],
+      productionTeam: [{
+        role: { type: String },
+        name: { type: String },
+        link: { type: String } // Optional portfolio link
+      }],
+      featuredArtists: [{
+        type: Schema.Types.ObjectId,
+        ref: "User"
+      }],
+
+      // Legacy/Compat fields
       thumbnailUrl: { type: String },
-      // Duration in seconds
-      duration: { type: Number },
-      // Is this a paid video? (false = free to watch)
-      isPaid: { type: Boolean, default: false },
-      // File size in bytes (for display)
+      duration: { type: Number }, // in seconds
       fileSize: { type: Number },
+      
+      // Access Control
+      isPaid: { type: Boolean, default: false },
     },
     totalInStock: {
       type: Number,

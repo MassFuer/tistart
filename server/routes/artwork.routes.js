@@ -311,6 +311,19 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
       }
     }
 
+    // Explicitly handle video metadata fields
+    const videoFields = ["synopsis", "director", "coAuthor", "cast", "productionTeam", "isPaid"];
+    // Check if req.body has a nested 'video' object
+    if (req.body.video) {
+        for (const vField of videoFields) {
+            if (req.body.video[vField] !== undefined) {
+                updateObj[`video.${vField}`] = req.body.video[vField];
+            }
+        }
+    }
+    // Also check flat fields if sent that way (e.g. video.synopsis)
+    // pass
+
     // Handle image deletions - find images that were removed
     if (req.body.images !== undefined) {
       const oldImages = artwork.images || [];
@@ -463,20 +476,41 @@ router.post(
         return res.status(400).json({ error: "No video provided." });
       }
 
-      // Delete old video if exists
-      if (artwork.video?.url) {
-        await deleteFile(artwork.video.url, artwork.artist.toString());
+      // Determine which field to update based on upload field name
+      const fieldMap = {
+          "video": "fullVideoUrl", // legacy default
+          "fullVideo": "fullVideoUrl",
+          "previewVideo": "previewVideoUrl",
+          "backgroundAudio": "backgroundAudioUrl",
+          "subtitles": "subtitlesUrl"
+      };
+
+      const targetField = fieldMap[req.uploadedVideo.fieldName] || "fullVideoUrl";
+      
+      // We use $set to avoid overwriting the entire video object
+      const updatePayload = {
+          [`video.${targetField}`]: req.uploadedVideo.url
+      };
+
+      // Handle specific metadata side-effects
+      if (targetField === "fullVideoUrl") {
+          if (req.body.isPaid !== undefined) updatePayload["video.isPaid"] = req.body.isPaid === "true" || req.body.isPaid === true;
+          updatePayload["video.fileSize"] = req.uploadedVideo.size;
+          // Duration usually comes from metadata extraction which we aren't doing backend-side yet
+          if (req.body.duration) updatePayload["video.duration"] = Number(req.body.duration);
+          // Legacy url field update
+          updatePayload["video.url"] = req.uploadedVideo.url; 
       }
 
-      // Update artwork with video info
-      artwork.video = {
-        url: req.uploadedVideo.url,
-        isPaid: req.body.isPaid === "true" || req.body.isPaid === true,
-        fileSize: req.uploadedVideo.size,
-        // Duration will be set by frontend after upload (via metadata)
-        duration: req.body.duration ? Number(req.body.duration) : undefined,
-      };
-      await artwork.save();
+      const updatedArtwork = await Artwork.findByIdAndUpdate(
+          req.params.id, 
+          { $set: updatePayload }, 
+          { new: true }
+      );
+
+      // Storage tracking is handled by streamAndUploadVideo middleware
+
+      res.status(200).json({ data: updatedArtwork });
 
       // Storage tracking is handled by streamAndUploadVideo middleware
 

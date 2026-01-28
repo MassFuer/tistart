@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
 import { usersAPI } from "../../services/api";
 import { toast } from "sonner";
 import { Heart, Star, Pencil, Trash2 } from "lucide-react";
@@ -58,6 +59,10 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
   };
 
   const isSale = artwork.originalPrice && artwork.price < artwork.originalPrice;
+
+
+  const { cart } = useCart();
+  const isInCart = cart.some(item => item.artwork?._id === artwork._id || item.artwork === artwork._id);
 
   return (
     <Card className="h-full flex flex-col group overflow-hidden border-border hover:shadow-lg transition-all duration-300">
@@ -145,12 +150,14 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
                  </>
              ) : (
                  <>
-                     <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
-                         <Link to={`/artworks/${artwork._id}`}>View</Link>
-                     </Button>
+                     {!isInCart && (
+                        <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
+                            <Link to={`/artworks/${artwork._id}`}>View</Link>
+                        </Button>
+                     )}
                      {!isOwner && (
-                        <div className="flex-1">
-                             <AddToCartButton artwork={artwork} className="w-full h-8 text-xs" size="sm" />
+                        <div className="flex justify-center space-between w-full">
+                             <AddToCartButton artwork={artwork} className={`w-full h-8 text-xs ${!isInCart ? "mr-1" : "justify-center"}`} size="sm" />
                         </div>
                      )}
                  </>
