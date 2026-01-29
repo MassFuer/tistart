@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { usersAPI, adminAPI } from "../../services/api";
+import { adminAPI, messagingAPI } from "../../services/api";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import Loading from "../common/Loading";
 import {
   Table,
@@ -20,7 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle2, XCircle, Eye, FileText, Globe, Mail } from "lucide-react";
+import { CheckCircle2, XCircle, Eye, Globe, Mail, MessageCircle } from "lucide-react";
+import Pagination from "../common/Pagination";
 
 // Status Badge Helper
 const StatusBadge = ({ status }) => {
@@ -40,32 +42,63 @@ const StatusBadge = ({ status }) => {
 };
 
 const ArtistApplications = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [filter, setFilter] = useState("pending"); // pending, all
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => {
     fetchUsers();
+  }, [filter, page, limit]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setPage(1);
   }, [filter]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch all users with role 'artist' or specific status if API supports it
-      // Using generic getAllUsers and client-side filtering for simplicity if backend doesn't support complex filters yet
-      const response = await adminAPI.getAllUsers({ limit: 100 }); 
-      const allUsers = response.data.data;
-      
-      // Filter based on selected view
-      let filtered = allUsers.filter(u => u.role === "artist" || u.artistStatus !== "none");
-      
+      let response;
+      const params = { page, limit, sort: '-createdAt' };
+
       if (filter === "pending") {
-        filtered = filtered.filter(u => u.artistStatus === "pending");
+         // Server-side filtering for pending ensures we don't miss any
+         response = await adminAPI.getAllUsers({ ...params, artistStatus: 'pending' });
+         setUsers(response.data.data);
+         if (response.data.pagination) setTotalPages(response.data.pagination.pages);
+      } else {
+         // "All" View: Fetch all users (with larger limit if needed, or rely on pagination)
+         // And client-side filter for now to match legacy behavior, 
+         // OR just show all verified artists if we want to be strict.
+         // Let's use the API to filter by role if possible, or just fetch mostly recent users.
+         // Note: If we use { role: 'artist' }, we miss "none" status applicants who were rejected.
+         // But usually "All Artists" implies verified ones.
+         // Let's stick to fetching a larger batch of all users and filtering, 
+         // OR use a safe fallback.
+         
+         // Using limit 100 to catch most recent history
+         response = await adminAPI.getAllUsers({ ...params, limit: 100 });
+         const allUsers = response.data.data;
+         
+         // Filter: either artist role OR not 'none' status (meaning they applied)
+         const filtered = allUsers.filter(u => u.role === "artist" || u.artistStatus !== "none");
+         
+         // Client side pagination for this view since backend query is broad
+         // This is a trade-off until backend supports "artist OR applied" query
+         setUsers(filtered);
+         // Recalculate total pages based on filtered result if we are doing client side filtering on a server page
+         // This is imperfect but better than broken pending view
+         if (response.data.pagination) setTotalPages(response.data.pagination.pages);
       }
-      
-      setUsers(filtered);
+
     } catch (error) {
       console.error("Failed to fetch users", error);
       toast.error("Failed to load applications");
@@ -88,12 +121,20 @@ const ArtistApplications = () => {
     }
   };
 
+  const handleContact = async () => {
+      try {
+          const response = await messagingAPI.createConversation({ recipientId: selectedUser._id });
+          setIsDetailsOpen(false);
+          navigate(`/messages?conversation=${response.data.data._id}`);
+      } catch (error) {
+          toast.error("Failed to start conversation");
+      }
+  };
+
   const openDetails = (user) => {
     setSelectedUser(user);
     setIsDetailsOpen(true);
   };
-
-  if (loading && users.length === 0) return <Loading message="Loading applications..." />;
 
   return (
     <div className="space-y-4">
@@ -132,7 +173,13 @@ const ArtistApplications = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                        <Loading message="Loading applications..." />
+                    </TableCell>
+                 </TableRow>
+            ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {filter === "pending" ? "No pending applications." : "No artists found."}
@@ -171,6 +218,14 @@ const ArtistApplications = () => {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        itemsPerPage={limit}
+        onItemsPerPageChange={setLimit}
+      />
 
       {/* DETAILED REVIEW DIALOG */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -246,6 +301,10 @@ const ArtistApplications = () => {
 
                       {/* Actions */}
                       <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+                           <Button variant="outline" onClick={handleContact}>
+                                <MessageCircle className="mr-2 h-4 w-4" /> Message
+                           </Button>
+
                           {selectedUser.artistStatus === "pending" && (
                               <>
                                   <Button 

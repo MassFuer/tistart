@@ -8,6 +8,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useMessaging } from "../../context/MessagingContext";
 import { toast } from "sonner";
 import logo from "../../assets/logo.jpg";
+import { Badge } from "@/components/ui/badge";
 import {
   Menu,
   Calendar,
@@ -174,29 +175,34 @@ const Navbar = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
+                <DropdownMenuLabel className="font-normal px-2 py-1.5">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    {user?.artistStatus && user.artistStatus !== 'none' && (
+                        <Badge variant={user.artistStatus === 'verified' ? 'default' : 'secondary'} className="mt-1 w-fit text-[10px] h-5 capitalize px-1.5">
+                            {user.artistStatus}
+                        </Badge>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link to="/favorites"><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
+                    <Link to="/favorites" onClick={handleNavClick}><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
                 </DropdownMenuItem>
                 {(isVerifiedArtist || isAdmin || isSuperAdmin) && (
                     <DropdownMenuItem asChild>
-                        <Link to={`/artists/${user._id}`}><User className="mr-2 h-4 w-4" /> Public Profile</Link>
+                        <Link to={`/artists/${user._id}`} onClick={handleNavClick}><User className="mr-2 h-4 w-4" /> Public Profile</Link>
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                    <Link to="/dashboard?tab=overview" onClick={handleNavClick}><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=activity"><Package className="mr-2 h-4 w-4" /> Orders</Link>
+                    <Link to="/dashboard?tab=activity" onClick={handleNavClick}><Package className="mr-2 h-4 w-4" /> Orders</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/messages" className="flex items-center">
+                    <Link to="/messages" className="flex items-center" onClick={handleNavClick}>
                       <MessageCircle className="mr-2 h-4 w-4" /> Messages
                       {unreadCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
@@ -211,21 +217,21 @@ const Navbar = () => {
                 
                 <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
                     {(isVerifiedArtist || isAdmin) ? (
-                        <Link to="/dashboard?tab=artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
+                        <Link to="/dashboard?tab=artworks" onClick={handleNavClick}><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
                     ) : (
                         <span className="flex items-center w-full opacity-50"><Palette className="mr-2 h-4 w-4" /> Artworks</span>
                     )}
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
                     {(isVerifiedArtist || isAdmin) ? (
-                        <Link to="/dashboard?tab=events"><Calendar className="mr-2 h-4 w-4" /> Events</Link>
+                        <Link to="/dashboard?tab=events" onClick={handleNavClick}><Calendar className="mr-2 h-4 w-4" /> Events</Link>
                     ) : (
                         <span className="flex items-center w-full opacity-50"><Calendar className="mr-2 h-4 w-4" /> Events</span>
                     )}
                 </DropdownMenuItem>
                 {isAdmin && (
                     <DropdownMenuItem asChild>
-                        <Link to="/admin"><ShieldAlert className="mr-2 h-4 w-4" /> Admin Panel</Link>
+                        <Link to="/admin" onClick={handleNavClick}><ShieldAlert className="mr-2 h-4 w-4" /> Admin Panel</Link>
                     </DropdownMenuItem>
                 )}
                 

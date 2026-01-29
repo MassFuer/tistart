@@ -134,7 +134,7 @@ const VideoDetailPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-black text-white pb-20 pt-20">
+        <div className="min-h-screen bg-black text-white pb-20 pt-20 overflow-x-hidden">
             {/* Background Audio Player (Hidden) */}
             {videoData.video?.backgroundAudioUrl && isAuthenticated && (
                 <audio ref={bgAudioRef} src={videoData.video.backgroundAudioUrl} loop />

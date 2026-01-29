@@ -3,6 +3,8 @@ import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import { messagingAPI } from "../services/api";
 
+import { toast } from "sonner";
+
 const MessagingContext = createContext();
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5005";
@@ -342,26 +344,32 @@ export const MessagingProvider = ({ children }) => {
 
   // Make an offer
   const makeOffer = useCallback(
-    async (amount) => {
+    async (amount, artworkId) => {
       if (!activeConversation) return;
 
-      await sendMessage(`Price offer: €${amount.toFixed(2)}`, "offer", { amount });
+      try {
+        await messagingAPI.makeOffer(activeConversation._id, amount, artworkId);
+      } catch (error) {
+        console.error("Failed to send offer:", error);
+        toast.error(error.response?.data?.message || "Failed to send offer");
+      }
     },
-    [activeConversation, sendMessage]
+    [activeConversation]
   );
 
   // Respond to an offer
   const respondToOffer = useCallback(
     async (messageId, status) => {
-      if (!activeConversation || !socket || !isConnected) return;
+      if (!activeConversation) return;
 
-      socket.emit("offer:respond", {
-        conversationId: activeConversation._id,
-        messageId,
-        status,
-      });
+      try {
+        await messagingAPI.respondToOffer(activeConversation._id, messageId, status);
+      } catch (error) {
+         console.error("Failed to respond to offer:", error);
+         toast.error(error.response?.data?.message || "Failed to respond to offer");
+      }
     },
-    [activeConversation, socket, isConnected]
+    [activeConversation]
   );
 
   // Check if user is online

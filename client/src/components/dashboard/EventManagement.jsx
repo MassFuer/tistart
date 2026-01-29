@@ -42,6 +42,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Pagination from "../common/Pagination";
 
 const EventManagement = ({ isAdmin = false }) => {
   const { user } = useAuth();
@@ -49,6 +50,11 @@ const EventManagement = ({ isAdmin = false }) => {
   const { saveScrollPosition } = useNavigation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Attendees Modal State
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -58,23 +64,32 @@ const EventManagement = ({ isAdmin = false }) => {
 
   useEffect(() => {
     fetchEvents();
-  }, [user, isAdmin]);
+  }, [user, isAdmin, page, limit]);
 
   const fetchEvents = async () => {
+    setLoading(true);
     try {
       if (!isAdmin && user.artistStatus !== 'verified') {
           setLoading(false);
           return;
       }
 
+      let response;
+      const params = { page, limit };
+
       if (isAdmin) {
-        // Admin: Fetch ALL events from the platform (no artist filter)
-        const response = await eventsAPI.getAll({ limit: 100 });
-        setEvents(response.data.data);
+        // Admin: Fetch ALL events
+        response = await eventsAPI.getAll(params);
       } else {
         // Artist: Fetch only their own events
-        const response = await eventsAPI.getAll({ artist: user._id, limit: 100 });
-        setEvents(response.data.data);
+        // Logic currently uses eventsAPI.getAll({ artist: user._id })
+        // We will pass pagination params here too
+        response = await eventsAPI.getAll({ artist: user._id, ...params });
+      }
+
+      setEvents(response.data.data);
+      if (response.data.pagination) {
+          setTotalPages(response.data.pagination.pages);
       }
     } catch (error) {
       console.error("Failed to fetch events", error);
@@ -83,10 +98,6 @@ const EventManagement = ({ isAdmin = false }) => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [user, isAdmin]);
 
   if (!isAdmin && user.artistStatus !== 'verified') {
       if (user.artistStatus === 'pending') {
@@ -160,8 +171,6 @@ const EventManagement = ({ isAdmin = false }) => {
       }
   }
 
-  if (loading) return <Loading message="Loading your events..." />;
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -180,6 +189,7 @@ const EventManagement = ({ isAdmin = false }) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Event Name</TableHead>
               {isAdmin && <TableHead>Organizer</TableHead>}
               <TableHead>Date</TableHead>
@@ -189,30 +199,46 @@ const EventManagement = ({ isAdmin = false }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {events.length === 0 ? (
+            {loading ? (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8">
+                     <Loading message="Loading events..." />
+                  </TableCell>
+                </TableRow>
+            ) : events.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8 text-muted-foreground">
                   {isAdmin ? "No events found." : "You haven't created any events yet."}
                 </TableCell>
               </TableRow>
             ) : (
               events.map((event) => (
                 <TableRow key={event._id}>
+                  <TableCell>
+                      {event.images?.[0] || event.image ? (
+                           <Link to={`/events/${event._id}`} className="block h-12 w-12 rounded overflow-hidden bg-muted">
+                              <img 
+                                src={event.images?.[0] || event.image} 
+                                alt="" 
+                                className="h-full w-full object-cover hover:scale-105 transition-transform" 
+                              />
+                           </Link>
+                      ) : (
+                          <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                              <Calendar className="h-6 w-6 text-muted-foreground opacity-50" />
+                          </div>
+                      )}
+                  </TableCell>
                   <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                          {event.images?.[0] && (
-                              <img src={event.images[0]} alt="" className="h-10 w-10 rounded-md object-cover bg-muted" />
-                          )}
-                          <Link to={`/events/${event._id}`} className="hover:underline">
-                              {event.title}
-                          </Link>
-                      </div>
+                      <Link to={`/events/${event._id}`} className="hover:underline text-foreground">
+                          {event.title}
+                      </Link>
                   </TableCell>
                   {isAdmin && (
                       <TableCell>
                           <Link
                               to={`/artists/${event.artist?._id}`}
-                              className="text-sm hover:underline text-primary"
+                              className="text-sm hover:underline text-muted-foreground"
                           >
                               {event.artist?.artistInfo?.companyName ||
                                `${event.artist?.firstName || ''} ${event.artist?.lastName || ''}`.trim() ||
@@ -270,6 +296,14 @@ const EventManagement = ({ isAdmin = false }) => {
           </TableBody>
         </Table>
       </div>
+      
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        itemsPerPage={limit}
+        onItemsPerPageChange={setLimit}
+      />
 
       {/* ATTENDEES DIALOG */}
       <Dialog open={isAttendeesOpen} onOpenChange={setIsAttendeesOpen}>

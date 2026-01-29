@@ -52,15 +52,7 @@ const VideoMarquee = () => {
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <h3 className="text-sm font-medium tracking-widest uppercase text-white/50 group-hover/label:text-white transition-colors">Featured Selection</h3>
           </Link>
-          
-          <Button asChild variant="ghost" size="sm" className="text-white hover:bg-gray-500 hover:text-white gap-2 group border border-white/10 bg-white/5">
-              <Link to="/video-library">
-                  Go to library <Popcorn /> 
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-          </Button>
       </div>
-
       <div 
         className="flex flex-col gap-4 w-full group/marquee" 
         style={{ overflow: 'hidden' }}

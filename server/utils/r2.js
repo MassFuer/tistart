@@ -45,6 +45,11 @@ const FILE_CONFIGS = {
     allowedExtensions: [".jpg", ".jpeg", ".png", ".webp", ".svg"],
     maxSize: 5 * 1024 * 1024, // 5MB
   },
+  profilePicture: {
+    allowedMimes: ["image/jpeg", "image/png", "image/webp"],
+    allowedExtensions: [".jpg", ".jpeg", ".png", ".webp"],
+    maxSize: 20 * 1024 * 1024, // 20MB
+  },
 };
 
 // Image transformation configs
@@ -475,6 +480,25 @@ const processAndUploadLogo = async (req, res, next) => {
     }
 
     req.uploadedFile = { url, key, size, type: "image" };
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Process and upload middleware for profile pictures
+const processAndUploadProfilePicture = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next();
+    }
+
+    const folder = `profiles/${req.user._id}`;
+    const processed = await processImage(req.file.buffer, IMAGE_TRANSFORMS.profile);
+    const key = generateFilename(req.file.originalname, folder).replace(/\.[^.]+$/, ".webp");
+    const url = await uploadToR2(processed.buffer, key, "image/webp");
+
+    req.uploadedFile = { url, key, size: processed.size, type: "image" };
     next();
   } catch (error) {
     next(error);

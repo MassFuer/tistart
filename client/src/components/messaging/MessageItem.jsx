@@ -14,11 +14,35 @@ const MessageItem = ({ message, isOwn, showAvatar }) => {
   // Check if message is read by others
   const isRead = message.readBy?.length > 1;
 
+  // Helper to render text with clickable links
+  const renderWithLinks = (text) => {
+    if (!text) return "";
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-300 hover:underline underline-offset-4 font-medium break-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   if (isSystem) {
     return (
       <div className="flex justify-center my-2">
-        <span className="px-3 py-1 text-xs text-muted-foreground bg-muted rounded-full">
-          {message.content}
+        <span className="px-3 py-1 text-xs text-muted-foreground bg-muted rounded-full whitespace-pre-wrap text-center">
+          {renderWithLinks(message.content)}
         </span>
       </div>
     );
@@ -41,8 +65,8 @@ const MessageItem = ({ message, isOwn, showAvatar }) => {
       <div
         className={`max-w-[70%] ${
           isOwn
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            ? "bg-gray-800 dark:bg-gray-900 text-white"
+            : "bg-gray-600 dark:bg-gray-700 text-white"
         } rounded-2xl ${
           isOwn ? "rounded-br-md" : "rounded-bl-md"
         } px-4 py-2 ${isPending ? "opacity-70" : ""}`}
@@ -86,7 +110,7 @@ const MessageItem = ({ message, isOwn, showAvatar }) => {
             )}
           </div>
         ) : (
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <p className="whitespace-pre-wrap break-words">{renderWithLinks(message.content)}</p>
         )}
 
         <div

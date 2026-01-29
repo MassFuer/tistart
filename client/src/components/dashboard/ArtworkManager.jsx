@@ -52,6 +52,7 @@ import {
 import Loading from "../common/Loading";
 import EmptyState from "../common/EmptyState";
 import StatCard from "./StatCard";
+import Pagination from "../common/Pagination";
 
 const ArtworkManager = ({ isAdmin = false }) => {
   const { user } = useAuth();
@@ -66,6 +67,11 @@ const ArtworkManager = ({ isAdmin = false }) => {
 
   const [deleteId, setDeleteId] = useState(null);
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+
   const fetchArtworks = async () => {
     setIsLoading(true);
     try {
@@ -74,13 +80,28 @@ const ArtworkManager = ({ isAdmin = false }) => {
             return;
         }
 
+        // Build sort parameter for API
+        const sortParam = sortConfig.direction === 'desc' ? `-${sortConfig.key}` : sortConfig.key;
+
         if (isAdmin) {
-            // Admin: Fetch ALL artworks from the platform
+            // Admin: Fetch artworks with server-side sorting and pagination
+            const params = {
+                page,
+                limit,
+                sort: sortParam,
+                search: search || undefined
+            };
+            
             const [artworksRes, statsRes] = await Promise.all([
-                artworksAPI.getAll({ limit: 100 }),
+                artworksAPI.getAll(params),
                 platformAPI.getStats("all")
             ]);
+            
             setArtworks(artworksRes.data.data);
+            if (artworksRes.data.pagination) {
+                setTotalPages(artworksRes.data.pagination.pages);
+            }
+            
             // Map platform stats to KPI format
             const platformStats = statsRes.data.data;
             setKpis({
@@ -106,7 +127,12 @@ const ArtworkManager = ({ isAdmin = false }) => {
 
   useEffect(() => {
     fetchArtworks();
-  }, [isAdmin]);
+  }, [isAdmin, page, limit, sortConfig, search]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   if (!isAdmin && user.artistStatus !== 'verified') {
       if (user.artistStatus === 'pending') {
@@ -151,29 +177,9 @@ const ArtworkManager = ({ isAdmin = false }) => {
     }));
   };
 
-  // Filter and Sort Logic
-  const filteredArtworks = artworks.filter(artwork => 
-    artwork.title.toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    let aValue = a[sortConfig.key];
-    let bValue = b[sortConfig.key];
-
-    // Handle nested or special keys
-    if (sortConfig.key === "revenue") {
-        aValue = a.stats?.totalRevenue || 0;
-        bValue = b.stats?.totalRevenue || 0;
-    } else if (sortConfig.key === "sales") {
-        aValue = a.stats?.totalSold || 0;
-        bValue = b.stats?.totalSold || 0;
-    } else if (sortConfig.key === "rating") {
-        aValue = a.averageRating || 0;
-        bValue = b.averageRating || 0;
-    }
-
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  // For admin: artworks are already filtered and sorted by server
+  // For artist: artworks come from getArtistStats (no pagination needed)
+  const displayArtworks = artworks;
 
   return (
     <div className="space-y-6">
@@ -264,14 +270,14 @@ const ArtworkManager = ({ isAdmin = false }) => {
                     <Loading message="Loading artworks..." />
                  </TableCell>
                </TableRow>
-            ) : filteredArtworks.length === 0 ? (
+            ) : displayArtworks.length === 0 ? (
                <TableRow>
                  <TableCell colSpan={isAdmin ? 9 : 8} className="h-32 text-center">
                     <EmptyState message="No artworks found" />
                  </TableCell>
                </TableRow>
             ) : (
-                filteredArtworks.map((artwork) => (
+                displayArtworks.map((artwork) => (
                     <TableRow key={artwork._id}>
                         <TableCell>
                              <Link to={`/artworks/${artwork._id}`} className="block h-12 w-12 rounded overflow-hidden bg-muted">
@@ -284,7 +290,9 @@ const ArtworkManager = ({ isAdmin = false }) => {
                         </TableCell>
                         <TableCell className="font-medium">
                             <div className="flex flex-col">
-                                <Link to={`/artworks/${artwork._id}`} className="hover:underline text-primary">{artwork.title}</Link>
+                                <Link to={`/artworks/${artwork._id}`} className="hover:underline text-foreground">
+                                    {artwork.title}
+                                </Link>
                                 <span className="text-xs text-muted-foreground">{formatPrice(artwork.price)}</span>
                             </div>
                         </TableCell>
@@ -292,7 +300,7 @@ const ArtworkManager = ({ isAdmin = false }) => {
                             <TableCell>
                                 <Link
                                     to={`/artists/${artwork.artist?._id}`}
-                                    className="text-sm hover:underline text-primary"
+                                    className="text-sm hover:underline text-muted-foreground"
                                 >
                                     {artwork.artist?.artistInfo?.companyName ||
                                      `${artwork.artist?.firstName || ''} ${artwork.artist?.lastName || ''}`.trim() ||
@@ -360,6 +368,14 @@ const ArtworkManager = ({ isAdmin = false }) => {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        itemsPerPage={limit}
+        onItemsPerPageChange={setLimit}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

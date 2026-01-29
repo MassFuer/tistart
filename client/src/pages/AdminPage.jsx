@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { adminAPI, ordersAPI, platformAPI } from "../services/api";
+import { adminAPI, ordersAPI, platformAPI, messagingAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import OrderDetailModal from "../components/admin/OrderDetailModal";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, DollarSign, Users, Package, Palette, HardDrive, Filter, Eye, AlertTriangle } from "lucide-react";
+import { Search, DollarSign, Users, Package, Palette, HardDrive, Filter, Eye, AlertTriangle, CheckCircle, XCircle, MessageCircle } from "lucide-react";
 
 const AdminPage = () => {
   const { user: currentUser } = useAuth();
@@ -49,6 +49,20 @@ const AdminPage = () => {
     }
   }, [tabParam]);
 
+  // Auto-open user detail modal if userId is in URL
+  useEffect(() => {
+    const userIdParam = searchParams.get("userId");
+    if (userIdParam && activeTab === "users") {
+      setSelectedUserId(userIdParam);
+      // Remove userId from URL after opening modal
+      setSearchParams((prev) => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete("userId");
+        return newParams;
+      });
+    }
+  }, [searchParams, activeTab]);
+
   // Check for pending applications
   useEffect(() => {
     // We check this periodically or when users tab is active to show the alert
@@ -61,11 +75,20 @@ const AdminPage = () => {
 
   // Update URL when active tab changes
   const handleTabChange = (val) => {
+    // Save current scroll position
+    const scrollY = window.scrollY;
+    
     setActiveTab(val);
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set("tab", val);
       return newParams;
+    });
+    
+    // Restore scroll position after URL update
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
     });
   };
 
@@ -238,6 +261,16 @@ const AdminPage = () => {
       }
   }
 
+  const handleContact = async (userId) => {
+    try {
+        const res = await messagingAPI.createConversation({ participants: [userId] });
+        navigate(`/messages?conversation=${res.data.data._id}`);
+    } catch (error) {
+        console.error("Start chat error", error);
+        toast.error("Failed to start conversation");
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -253,7 +286,16 @@ const AdminPage = () => {
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
           <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="users">Users & Artists</TabsTrigger>
+          <TabsTrigger value="users">
+            <span className="flex items-center gap-2">
+              Users & Artists
+              {pendingCount > 0 && (
+                <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+                  {pendingCount}
+                </Badge>
+              )}
+            </span>
+          </TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="theme">Appearance</TabsTrigger>
           {isSuperAdmin && <TabsTrigger value="storage">Storage</TabsTrigger>}
@@ -587,7 +629,19 @@ const AdminPage = () => {
                                             {user.artistInfo?.companyName || <span className="text-muted-foreground">-</span>}
                                         </TableCell>
                                         <TableCell>
-                                            {user.role === "artist" || user.artistStatus !== "none" ? (
+                                            {user.artistStatus === 'pending' ? (
+                                                <div className="flex items-center gap-1">
+                                                    <Button size="icon" className="h-8 w-8 bg-green-600 hover:bg-green-700 text-white border-0" onClick={() => handleStatusChange(user._id, 'verified')} title="Approve">
+                                                        <CheckCircle className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleStatusChange(user._id, 'incomplete')} title="Reject">
+                                                        <XCircle className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button size="icon" className="h-8 w-8 bg-amber-500 hover:bg-amber-600 text-white border-0" onClick={() => handleContact(user._id)} title="Request Info">
+                                                        <AlertTriangle className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ) : (user.role === "artist" || user.artistStatus !== "none") ? (
                                                 <Select 
                                                     value={user.artistStatus} 
                                                     onValueChange={(val) => handleStatusChange(user._id, val)}

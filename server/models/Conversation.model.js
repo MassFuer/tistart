@@ -83,11 +83,10 @@ const conversationSchema = new Schema(
 );
 
 // Cap offer history to last 50 entries
-conversationSchema.pre("save", function (next) {
+conversationSchema.pre("save", async function () {
   if (this.negotiation?.offerHistory?.length > 50) {
     this.negotiation.offerHistory = this.negotiation.offerHistory.slice(-50);
   }
-  next();
 });
 
 // Index for finding conversations by participants

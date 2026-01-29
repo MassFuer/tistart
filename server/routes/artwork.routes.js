@@ -111,11 +111,36 @@ router.get("/", async (req, res, next) => {
     // Calculate pagination
     const skip = (Number(page) - 1) * Number(limit);
 
+    // Map sort parameters to database fields
+    // Support: revenue, sales, rating, price, title, createdAt
+    let sortField = sort;
+    let sortDirection = 1;
+
+    // Handle negative prefix for descending order
+    if (sort.startsWith('-')) {
+      sortDirection = -1;
+      sortField = sort.substring(1);
+    }
+
+    // Map frontend sort keys to actual database fields
+    const sortMapping = {
+      'revenue': 'stats.totalRevenue',
+      'sales': 'stats.totalSold',
+      'rating': 'averageRating',
+      'price': 'price',
+      'title': 'title',
+      'createdAt': 'createdAt',
+      'stock': 'stock'
+    };
+
+    const dbSortField = sortMapping[sortField] || sortField;
+    const sortObj = { [dbSortField]: sortDirection };
+
     // Execute query
     const [artworks, total] = await Promise.all([
       Artwork.find(filter)
         .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
-        .sort(sort)
+        .sort(sortObj)
         .skip(skip)
         .limit(Number(limit)).lean(),
       Artwork.countDocuments(filter),

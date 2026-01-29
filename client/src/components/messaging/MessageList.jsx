@@ -13,10 +13,15 @@ const MessageList = () => {
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (containerRef.current) {
+      // Use scrollTo on the container instead of scrollIntoView on the element
+      // This prevents the whole browser window from scrolling
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
     }
-  }, [messages]);
+  }, [messages, activeConversation]);
 
   const typingUsers = getTypingUsers(activeConversation?._id);
 

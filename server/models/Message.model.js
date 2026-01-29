@@ -32,6 +32,11 @@ const messageSchema = new Schema(
       amount: {
         type: Number,
       },
+      // Link specific artwork to this offer
+      artwork: {
+        type: Schema.Types.ObjectId,
+        ref: "Artwork",
+      },
       status: {
         type: String,
         enum: ["pending", "accepted", "rejected", "countered"],

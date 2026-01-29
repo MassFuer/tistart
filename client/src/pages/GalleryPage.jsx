@@ -10,7 +10,7 @@ import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { useNavigation } from "../context/NavigationContext";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import ArtworkFilters from "../components/artwork/ArtworkFilters";
 const GalleryPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
   const { isNavbarHidden } = useNavigation();
+  const [showFilters, setShowFilters] = useState(true);
   const {
     data: artworks,
     loading: isLoading,
@@ -144,70 +145,81 @@ const GalleryPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Fixed Header */}
       <div 
-        className="fixed left-0 right-0 z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm"
+        className="z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm fixed left-0 right-0"
         style={{ top: isNavbarHidden ? "0px" : "4rem" }}
       >
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-2 sm:px-4 py-4">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                       <h1 className="text-3xl font-bold tracking-tight">Gallery</h1>
-                      <p className="text-muted-foreground">
-                          Showing {artworks.length} of {pagination.total || 0} artworks
-                      </p>
+                      <div className="flex items-center gap-3">
+                          <p className="text-muted-foreground">
+                              Showing {artworks.length} of {pagination.total || 0} artworks
+                          </p>
+                          <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setShowFilters(!showFilters)}
+                              className="hidden lg:flex items-center gap-1.5 h-7 px-2 text-xs"
+                          >
+                              <Filter className="h-3.5 w-3.5" />
+                              {showFilters ? 'Hide' : 'Show'} Filters
+                          </Button>
+                      </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 w-full md:w-auto">
-                      {/* Mobile Filter Sheet */}
-                      <FilterSheet title="Filter Artworks" description="Refine your search results">
-                          <ArtworkFilters
-                                filters={filters}
-                                updateFilter={updateFilter}
-                                categories={categories}
-                                priceRange={priceRange}
-                                handlePriceChange={handlePriceChange}
-                                handlePriceCommit={handlePriceCommit}
-                                artists={artists}
-                                materialsOptions={materialsOptions}
-                                colorsOptions={colorsOptions}
-                                clearAllFilters={clearAllFilters}
-                          />
-                      </FilterSheet>
+                      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0 justify-end">
+                          {/* Mobile Filter Sheet */}
+                          <FilterSheet title="Filter Artworks" description="Refine your search results">
+                              <ArtworkFilters
+                                    filters={filters}
+                                    updateFilter={updateFilter}
+                                    categories={categories}
+                                    priceRange={priceRange}
+                                    handlePriceChange={handlePriceChange}
+                                    handlePriceCommit={handlePriceCommit}
+                                    artists={artists}
+                                    materialsOptions={materialsOptions}
+                                    colorsOptions={colorsOptions}
+                                    clearAllFilters={clearAllFilters}
+                              />
+                          </FilterSheet>
 
-                      <div className="w-[180px]">
-                          <Select value={sort} onValueChange={setSort}>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Sort by" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {sortOptions.map(opt => (
-                                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                  ))}
-                              </SelectContent>
-                          </Select>
+                          <div className="flex-1 w-auto min-w-[120px] sm:w-[180px] sm:flex-none">
+                              <Select value={sort} onValueChange={setSort}>
+                                  <SelectTrigger className="h-9">
+                                      <SelectValue placeholder="Sort by" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {sortOptions.map(opt => (
+                                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+
+                          {(isVerifiedArtist || isAdmin) && (
+                              <Button asChild size="icon" className="bg-green-700 hover:bg-green-800 text-white h-9 w-9 sm:w-auto sm:h-9 sm:px-4">
+                                  <Link to="/artworks/new">
+                                      <Plus className="h-5 w-5 sm:mr-2" />
+                                      <span className="hidden sm:inline">Create Artwork</span>
+                                  </Link>
+                              </Button>
+                          )}
                       </div>
-
-                      {(isVerifiedArtist || isAdmin) && (
-                          <Button asChild size="sm">
-                              <Link to="/artworks/new">
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Create Artwork
-                              </Link>
-                          </Button>
-                      )}
-                  </div>
               </div>
           </div>
       </div>
 
       {/* Spacer */}
-      <div className="h-[210px] md:h-[120px] w-full" />
+      <div className="h-[180px] md:h-[120px] w-full" />
 
-      <div className="flex flex-col lg:flex-row gap-8 relative items-start">
+      <div className="container mx-auto px-2 sm:px-4 flex flex-col lg:flex-row gap-8 relative items-start pb-20">
           {/* DESKTOP SIDEBAR */}
-          <FilterAside>
+          <FilterAside headerVisible="10rem" headerHidden="7rem" show={showFilters}>
                <ArtworkFilters
                     filters={filters}
                     updateFilter={updateFilter}
@@ -241,7 +253,7 @@ const GalleryPage = () => {
                    </div>
                ) : (
                    <>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                            {artworks.map(artwork => (
                                <ArtworkCard key={artwork._id} artwork={artwork} />
                            ))}

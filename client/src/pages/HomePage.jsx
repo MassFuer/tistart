@@ -274,7 +274,7 @@ const HomePage = () => {
                                     <CardDescription>Share your creations with our global audience.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <Button asChild size="lg" className="w-full">
+                                    <Button asChild size="lg" className="w-full dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200">
                                         <Link to="/apply-artist">Submit Portfolio</Link>
                                     </Button>
                                 </CardContent>
@@ -295,10 +295,31 @@ const HomePage = () => {
                                     <CardDescription>Ready to upload new masterpieces?</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <Button asChild size="lg" className="w-full">
+                                    <Button asChild size="lg" className="w-full dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200">
                                         <Link to="/upload-artwork">Upload Artwork</Link>
                                     </Button>
                                 </CardContent>
+                            </Card>
+                        )}
+                        {user?.artistStatus === "incomplete" && (
+                             <Card className="bg-red-500/10 border-red-500/50">
+                                <CardHeader>
+                                    <CardTitle className="text-red-600 dark:text-red-400">Application Update Required</CardTitle>
+                                    <CardDescription>Your application was marked as incomplete. Please check your messages for feedback.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Button asChild variant="outline" size="lg" className="w-full border-red-200 hover:bg-red-50 text-red-700">
+                                        <Link to="/messages">View Feedback</Link>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
+                        {user?.artistStatus === "suspended" && (
+                             <Card className="bg-destructive/10 border-destructive/50">
+                                <CardHeader>
+                                    <CardTitle className="text-destructive">Account Suspended</CardTitle>
+                                    <CardDescription>Your artist privileges have been suspended. Please contact support.</CardDescription>
+                                </CardHeader>
                             </Card>
                         )}
                     </div>

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export default function WordRotate({
   words,
-  duration = 2500,
+  duration = 1500,
   framerProps = {
     initial: { opacity: 0, y: -50 },
     animate: { opacity: 1, y: 0 },

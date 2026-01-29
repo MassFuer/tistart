@@ -78,6 +78,7 @@ const artistInfoSchema = new Schema(
     },
     taxId: { type: String, trim: true },
     vatNumber: { type: String, trim: true },
+    siret: { type: String, trim: true }, // French business registration number
     address: { type: addressSchema, default: () => ({}) },
     logo: { type: String }, // Cloudinary URL
     businessHours: [businessHoursSchema],

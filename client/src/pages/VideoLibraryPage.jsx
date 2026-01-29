@@ -156,7 +156,7 @@ const VideoLibraryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white dark overflow-visible">
+    <div className="min-h-screen bg-black text-white dark overflow-x-hidden">
       {/* Fixed Header */}
       <div 
         className="fixed left-0 right-0 z-40 bg-black border-b border-white/10 transition-[top] duration-300 ease-in-out shadow-sm"
@@ -171,56 +171,56 @@ const VideoLibraryPage = () => {
                       </p>
                   </div>
                   
-                  <div className="flex items-center gap-2 w-full md:w-auto">
-                       <div className="w-full md:w-64">
-                      </div>
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0 justify-end">
+                       <div className="w-full md:w-64 hidden md:block">
+                       </div>
 
-                      {/* Mobile Filter Sheet */}
-                      <FilterSheet title="Filter Videos" description="Refine your search results">
-                          <VideoFilters
-                                filters={filters}
-                                updateFilter={updateFilter}
-                                priceRange={priceRange}
-                                handlePriceChange={handlePriceChange}
-                                handlePriceCommit={handlePriceCommit}
-                                artists={artists}
-                                directors={directors}
-                                castMembers={castMembers}
-                                teamMembers={teamMembers}
-                                clearAllFilters={clearAllFilters}
-                          />
-                      </FilterSheet>
+                       {/* Mobile Filter Sheet */}
+                       <FilterSheet title="Filter Videos" description="Refine your search results">
+                           <VideoFilters
+                                 filters={filters}
+                                 updateFilter={updateFilter}
+                                 priceRange={priceRange}
+                                 handlePriceChange={handlePriceChange}
+                                 handlePriceCommit={handlePriceCommit}
+                                 artists={artists}
+                                 directors={directors}
+                                 castMembers={castMembers}
+                                 teamMembers={teamMembers}
+                                 clearAllFilters={clearAllFilters}
+                           />
+                       </FilterSheet>
 
-                      <div className="w-[180px]">
-                          <Select value={sort} onValueChange={setSort}>
-                              <SelectTrigger className="bg-black border-white/20 text-white">
-                                  <SelectValue placeholder="Sort by" />
-                              </SelectTrigger>
-                              <SelectContent className="dark bg-neutral-900 border-white/10 text-white">
-                                  {sortOptions.map(opt => (
-                                      <SelectItem key={opt.value} value={opt.value} className="focus:bg-white/10">{opt.label}</SelectItem>
-                                  ))}
-                              </SelectContent>
-                          </Select>
-                      </div>
+                       <div className="flex-1 w-auto min-w-[120px] sm:w-[180px] sm:flex-none">
+                           <Select value={sort} onValueChange={setSort}>
+                               <SelectTrigger className="bg-black border-white/20 text-white h-9">
+                                   <SelectValue placeholder="Sort by" />
+                               </SelectTrigger>
+                               <SelectContent className="dark bg-neutral-900 border-white/10 text-white">
+                                   {sortOptions.map(opt => (
+                                       <SelectItem key={opt.value} value={opt.value} className="focus:bg-white/10">{opt.label}</SelectItem>
+                                   ))}
+                               </SelectContent>
+                           </Select>
+                       </div>
 
-                      {(isVerifiedArtist || isAdmin) && (
-                          <Button asChild size="sm" className="bg-white text-black hover:bg-neutral-200 border-none">
-                              <Link to="/artworks/new?category=video">
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Add Video
-                              </Link>
-                          </Button>
-                      )}
+                       {(isVerifiedArtist || isAdmin) && (
+                           <Button asChild size="icon" className="bg-green-700 hover:bg-green-800 text-white border-none h-9 w-9 sm:w-auto sm:h-9 sm:px-4">
+                               <Link to="/artworks/new?category=video">
+                                   <Plus className="h-5 w-5 sm:mr-2" />
+                                   <span className="hidden sm:inline">Add Video</span>
+                               </Link>
+                           </Button>
+                       )}
                   </div>
               </div>
           </div>
       </div>
 
       {/* Spacer */}
-      <div className="h-[240px] md:h-[160px] w-full" />
+      <div className="h-[200px] md:h-[160px] w-full" />
 
-      <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8 relative items-start pb-20">
+      <div className="container mx-auto px-2 sm:px-4 flex flex-col lg:flex-row gap-8 relative items-start pb-20">
           {/* DESKTOP SIDEBAR */}
           <FilterAside>
                 <div className="dark text-white">
@@ -259,7 +259,7 @@ const VideoLibraryPage = () => {
                ) : (
                    <>
                        {/* Video Grid - Uses video specific cards */}
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                            {artworks.map(artwork => (
                                <VideoLibraryCard key={artwork._id} video={artwork} className="w-full" />
                            ))}

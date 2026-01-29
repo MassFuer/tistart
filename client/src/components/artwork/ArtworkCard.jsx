@@ -128,10 +128,10 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
              </div>
         </CardContent>
 
-        <CardFooter className="p-2.5 pt-0 md:p-4 md:pt-0 flex gap-1.5 md:gap-2">
+        <CardFooter className="p-2.5 pt-0 md:p-4 md:pt-0 flex flex-wrap gap-1.5 md:gap-2">
              {showActions && isOwner ? (
                  <>
-                    <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
+                    <Button variant="outline" size="sm" className="flex-1 min-w-[80px] h-8 text-xs" asChild>
                         <Link to={`/artworks/${artwork._id}/edit`}>
                             <Pencil className="h-3 w-3 md:mr-1.5" /> <span className="hidden md:inline">Edit</span>
                         </Link>
@@ -145,14 +145,16 @@ const ArtworkCard = ({ artwork, showActions = false, onDelete }) => {
              ) : (
                  <>
                      {!isInCart && (
-                        <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" asChild>
+                        <Button variant="outline" size="sm" className="flex-1 min-w-[70px] h-8 text-xs" asChild>
                             <Link to={`/artworks/${artwork._id}`}>View</Link>
                         </Button>
                      )}
                      {!isOwner && (
-                        <div className="flex justify-center space-between w-full">
-                             <AddToCartButton artwork={artwork} className={`w-full h-8 text-xs ${!isInCart ? "mr-1" : "justify-center"}`} size="sm" />
-                        </div>
+                        <AddToCartButton 
+                            artwork={artwork} 
+                            className={`h-8 text-xs ${isInCart ? 'flex-1 w-full' : 'flex-1 min-w-[100px]'}`} 
+                            size="sm" 
+                        />
                      )}
                  </>
              )}

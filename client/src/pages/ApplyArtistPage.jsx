@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, AlertCircle, Building2, User, Globe, Instagram, Facebook, Twitter } from "lucide-react";
+import { CheckCircle2, AlertCircle, Building2, User, Globe, Instagram, Facebook, Twitter, Upload } from "lucide-react";
 
 const ApplyArtistPage = () => {
   const { user, applyAsArtist } = useAuth();
@@ -34,6 +34,7 @@ const ApplyArtistPage = () => {
     type: "individual",
     taxId: "",
     vatNumber: "",
+    siret: "",
     address: {
       street: "",
       streetNum: "",
@@ -48,6 +49,8 @@ const ApplyArtistPage = () => {
       twitter: "",
     },
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
 
   // Redirect/Status View if already applied
   if (user?.artistStatus !== "none" && user?.artistStatus !== "incomplete") {
@@ -125,12 +128,51 @@ const ApplyArtistPage = () => {
       setFormData({ ...formData, type: val });
   }
 
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate at least one social media link
+    const hasSocialMedia = Object.values(formData.socialMedia).some(val => val.trim() !== "");
+    if (!hasSocialMedia) {
+      toast.error("Please provide at least one social media link or website");
+      return;
+    }
+
+    // Validate profile picture
+    if (!profilePicture) {
+      toast.error("Please upload a profile picture (or a cover image, your masterpiece for instance)");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await applyAsArtist(formData);
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append("profilePicture", profilePicture);
+      submitData.append("companyName", formData.companyName);
+      submitData.append("tagline", formData.tagline);
+      submitData.append("description", formData.description);
+      submitData.append("type", formData.type);
+      submitData.append("taxId", formData.taxId);
+      submitData.append("vatNumber", formData.vatNumber);
+      submitData.append("siret", formData.siret);
+      submitData.append("address", JSON.stringify(formData.address));
+      submitData.append("socialMedia", JSON.stringify(formData.socialMedia));
+
+      await applyAsArtist(submitData);
       toast.success("Application submitted successfully!");
       navigate("/");
     } catch (error) {
@@ -211,6 +253,32 @@ const ApplyArtistPage = () => {
                     className="min-h-[150px]"
                   />
               </div>
+
+              {/* Profile Picture Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="profilePicture">Profile Picture *</Label>
+                <div className="flex items-center gap-4">
+                  {profilePicturePreview && (
+                    <img
+                      src={profilePicturePreview}
+                      alt="Profile preview"
+                      className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureChange}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload a professional profile photo (JPG, PNG, max 20MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -235,25 +303,39 @@ const ApplyArtistPage = () => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="vatNumber">VAT Number</Label>
+                        <Label htmlFor="vatNumber">VAT Number *</Label>
                         <Input
                             id="vatNumber"
                             name="vatNumber"
                             value={formData.vatNumber}
                             onChange={handleChange}
-                            placeholder="If applicable (EU)"
+                            required
+                            placeholder="FR12345678901"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="siret">SIRET Number *</Label>
+                        <Input
+                            id="siret"
+                            name="siret"
+                            value={formData.siret}
+                            onChange={handleChange}
+                            required
+                            placeholder="12345678901234 (14 digits)"
+                            maxLength="14"
                         />
                     </div>
                  </div>
 
                  <div className="space-y-2">
-                    <Label>Address</Label>
+                    <Label>Address *</Label>
                     <div className="grid gap-4 md:grid-cols-4">
                         <div className="md:col-span-3">
                              <Input
                                 name="address.street"
                                 value={formData.address.street}
                                 onChange={handleChange}
+                                required
                                 placeholder="Street Address"
                             />
                         </div>
@@ -262,6 +344,7 @@ const ApplyArtistPage = () => {
                                 name="address.streetNum"
                                 value={formData.address.streetNum}
                                 onChange={handleChange}
+                                required
                                 placeholder="No."
                             />
                         </div>
@@ -278,6 +361,7 @@ const ApplyArtistPage = () => {
                             name="address.zipCode"
                             value={formData.address.zipCode}
                             onChange={handleChange}
+                            required
                             placeholder="Postal Code"
                         />
                          <Input
@@ -298,7 +382,7 @@ const ApplyArtistPage = () => {
                 <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5 text-primary" /> Online Presence
                 </CardTitle>
-                <CardDescription>Where can collectors find more about you?</CardDescription>
+                <CardDescription>At least one link required - where can collectors find more about you?</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
                 <div className="grid gap-4 md:grid-cols-2">

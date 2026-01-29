@@ -56,10 +56,9 @@ api.interceptors.response.use(
     if (status === 403) {
       const msg = error.response?.data?.error;
       if (msg === "Invalid CSRF token") {
-        // CSRF cookie may have expired — reload to get a fresh one
-        console.warn("CSRF token mismatch — reloading page");
-        window.location.reload();
-        return new Promise(() => {}); // never resolve
+        // CSRF cookie may have expired or is missing.
+        console.warn("CSRF token mismatch");
+        return Promise.reject(error);
       }
       console.warn("Access denied:", msg);
     }
@@ -200,6 +199,8 @@ export const ordersAPI = {
   getOne: (id) => api.get(`/api/orders/${id}`),
   updateStatus: (id, status) =>
     api.patch(`/api/orders/${id}/status`, { status }),
+  updateAddress: (id, shippingAddress) =>
+    api.patch(`/api/orders/${id}/address`, { shippingAddress }),
   confirmPayment: (id) => api.post(`/api/orders/${id}/confirm-payment`),
 };
 
@@ -270,8 +271,8 @@ export const messagingAPI = {
   markAsRead: (conversationId) =>
     api.patch(`/api/conversations/${conversationId}/read`),
   // Offers
-  makeOffer: (conversationId, amount) =>
-    api.post(`/api/conversations/${conversationId}/offer`, { amount }),
+  makeOffer: (conversationId, amount, artworkId) =>
+    api.post(`/api/conversations/${conversationId}/offer`, { amount, artworkId }),
   respondToOffer: (conversationId, offerId, status) =>
     api.patch(`/api/conversations/${conversationId}/offer/${offerId}`, { status }),
   // Unread count

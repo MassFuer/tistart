@@ -4,10 +4,13 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User.model");
+const Conversation = require("../models/Conversation.model");
+const Message = require("../models/Message.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { attachUser, isAdminRole } = require("../middleware/role.middleware");
 
 const { sendVerificationEmail, sendWelcomeEmail, sendArtistApplicationEmail, sendPasswordResetEmail } = require("../utils/email");
+const { createMulterUpload, processAndUploadProfilePicture } = require("../utils/r2");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 const { authLimiter } = require("../middleware/rateLimit.middleware");
@@ -399,10 +402,20 @@ router.post("/reset-password", authLimiter, async (req, res, next) => {
 });
 
 // POST /auth/apply-artist - Submit artist registration
-router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next) => {
+const uploadProfilePic = createMulterUpload("profilePicture");
+router.post(
+  "/apply-artist",
+  isAuthenticated,
+  attachUser,
+  uploadProfilePic,
+  processAndUploadProfilePicture,
+  async (req, res, next) => {
   try {
-    const { companyName, tagline, description, type, taxId, vatNumber, address, socialMedia } =
-      req.body;
+    // Parse JSON fields from FormData
+    const address = req.body.address ? JSON.parse(req.body.address) : {};
+    const socialMedia = req.body.socialMedia ? JSON.parse(req.body.socialMedia) : {};
+    
+    const { companyName, tagline, description, type, taxId, vatNumber, siret } = req.body;
 
     // Check if user is already an artist or has pending application
     if (req.user.artistStatus !== "none" && req.user.artistStatus !== "incomplete") {
@@ -422,6 +435,7 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
       {
         role: "artist",
         artistStatus: "pending",
+        profilePicture: req.uploadedFile ? req.uploadedFile.url : req.user.profilePicture,
         artistInfo: {
           companyName,
           tagline: tagline || "",
@@ -429,6 +443,7 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
           type: type || "individual",
           taxId: taxId || "",
           vatNumber: vatNumber || "",
+          siret: siret || "",
           address: address || {},
           socialMedia: socialMedia || {},
         },
@@ -441,6 +456,45 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
       await sendArtistApplicationEmail(updatedUser.email, updatedUser.firstName, updatedUser._id);
     } catch (emailError) {
       console.error("Failed to send artist application email:", emailError);
+    }
+
+    // INTERNAL MESSAGING: Find ONLY superAdmin to notify
+    try {
+        // Find only superAdmin (not regular admins)
+        const superAdmin = await User.findOne({ role: "superAdmin" });
+        
+        if (superAdmin) {
+             // Direct link to user modal
+             const reviewLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/user/${req.user._id}`;
+             const adminMsgContent = `New Artist Application submitted by ${req.user.firstName} ${req.user.lastName} (${companyName}).\nType: ${type}\nTagline: ${tagline || "N/A"}\n\nReview application: ${reviewLink}`;
+             const autoReplyContent = `Hello ${req.user.firstName}, we have received your artist application. We will review it shortly and get back to you soon!`;
+             
+             // Create/Find conversation with superAdmin
+             const conversation = await Conversation.findOrCreateConversation([req.user._id, superAdmin._id]);
+             
+             // 1. Notification Message (System style from User -> SuperAdmin)
+             const adminMsg = await Message.create({
+                 conversation: conversation._id,
+                 sender: req.user._id,
+                 content: adminMsgContent,
+                 type: "system" 
+             });
+             await conversation.updateLastMessage(adminMsg);
+             await conversation.incrementUnread(superAdmin._id);
+             
+             // 2. Auto-reply (SuperAdmin -> User)
+             const autoReply = await Message.create({
+                  conversation: conversation._id,
+                  sender: superAdmin._id,
+                  content: autoReplyContent,
+                  type: "text"
+             });
+             await conversation.updateLastMessage(autoReply);
+             await conversation.incrementUnread(req.user._id);
+        }
+    } catch (msgError) {
+        console.error("Failed to create application messages:", msgError);
+        // Don't block response
     }
 
     res.status(200).json({

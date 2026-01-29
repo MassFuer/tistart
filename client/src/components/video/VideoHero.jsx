@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Volume2, VolumeX, ArrowDown } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Volume2, VolumeX, ArrowDown, Popcorn, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // Import API to fetch dynamic config
 import { platformAPI } from "../../services/api";
@@ -65,7 +66,7 @@ const VideoHero = ({ compact = false }) => {
   return (
     <div className={`relative w-full bg-black ${compact ? "h-full" : "h-[150vh]"}`}>
       {/* Sticky Container for the video effect */}
-      <div className={`${compact ? "absolute inset-0 h-full" : "sticky top-0 h-screen"} w-full overflow-hidden flex items-center justify-center`}>
+      <div className={`${compact ? "absolute inset-0 h-full" : "sticky top-0 h-screen"} w-full overflow-hidden flex items-center justify-center @container`}>
         
         {/* Background Video */}
         <div className="absolute inset-0 z-0">
@@ -81,25 +82,30 @@ const VideoHero = ({ compact = false }) => {
         </div>
 
         {/* Text Overlay */}
-        <div className="relative z-20 px-8 max-w-[90vw]">
+        <div className="relative z-20 px-8 max-w-[90vw] flex flex-col items-center gap-6">
              <h1 
                 className="font-black uppercase text-center leading-none tracking-tighter text-white/60 mix-blend-overlay drop-shadow-xl"
-                style={{ fontSize: heroConfig.textSize || "12vw" }}
+                style={{ fontSize: heroConfig.textSize || "12cqi" }}
              >
                  {heroText}
              </h1>
         </div>
-
         {/* Controls */}
         <div className="absolute bottom-10 left-0 right-0 z-30 flex items-center justify-between px-8 sm:px-12 pointer-events-auto">
           <motion.div style={{ opacity }} className="animate-bounce">
               <ArrowDown className="h-6 w-6 text-white/70" />
           </motion.div>
-
           {/* Optional: Background Audio Player */}
            {backgroundSoundUrl && (
              <audio ref={audioRef} src={backgroundSoundUrl} loop autoPlay />
            )}
+
+           <Button asChild variant="ghost" size="md" className="rounded-full bg-white/10 text-white backdrop-blur-sm hover:bg-white/30 hover:text-white px-6 h-10 gap-3 text-md">
+              <Link to="/video-library">
+                  Go to library <Popcorn className="w-5 h-5" /> 
+                  <ArrowRight className="w-5 h-5" />
+              </Link>
+           </Button>
 
           <Button
             variant="ghost"

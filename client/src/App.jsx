@@ -42,6 +42,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import MessagesPage from "./pages/MessagesPage";
+import UserModalPage from "./pages/UserModalPage";
 
 // Protected Route Components
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -180,6 +181,12 @@ function App() {
                     path="/admin"
                     element={
                       <AdminRoute>{withEB(<AdminPage />)}</AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/user/:userId"
+                    element={
+                      <SuperAdminRoute>{withEB(<UserModalPage />)}</SuperAdminRoute>
                     }
                   />
 

@@ -177,7 +177,7 @@ const EventDetailPage = () => {
   const progress = event.maxCapacity > 0 ? (event.currentAttendees / event.maxCapacity) * 100 : 0;
 
   return (
-    <div className="container mx-auto px-0 sm:px-4 py-4 sm:py-8 min-h-screen max-w-6xl">
+    <div className="container mx-auto px-0 sm:px-4 py-4 sm:py-8 min-h-screen max-w-6xl overflow-x-hidden">
        {/* Hero Section */}
        <div className="relative w-full h-[250px] sm:h-[300px] md:h-[400px] sm:rounded-xl overflow-hidden mb-6 sm:mb-8 shadow-lg sm:border bg-muted">
            {event.image ? (

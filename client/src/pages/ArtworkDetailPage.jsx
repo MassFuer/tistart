@@ -135,7 +135,7 @@ const ArtworkDetailPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-0 sm:px-4 lg:px-8 py-4 sm:py-8 max-w-7xl animate-in fade-in duration-500">
+    <div className="container mx-auto px-0 sm:px-4 lg:px-8 py-4 sm:py-8 max-w-7xl animate-in fade-in duration-500 overflow-x-hidden">
       <Button variant="ghost" className="mb-4 sm:mb-6 mx-4 sm:mx-0 pl-0 hover:bg-transparent hover:text-primary" asChild>
         <Link to="/gallery" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Gallery

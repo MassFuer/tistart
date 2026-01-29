@@ -55,8 +55,8 @@ export const FilterAside = ({ children, show = true, headerVisible = "10rem", he
   if (!show) return null;
   return (
     <aside 
-      className="hidden lg:block w-72 flex-shrink-0 sticky self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm transition-[top] duration-300 ease-in-out"
-      style={{ top: isNavbarHidden ? headerHidden : headerVisible }}
+      className="hidden lg:block w-72 flex-shrink-0 self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm transition-[top] duration-300 ease-in-out"
+      style={{ position: 'sticky', top: isNavbarHidden ? headerHidden : headerVisible }}
     >
       {children}
     </aside>

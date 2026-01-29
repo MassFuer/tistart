@@ -14,7 +14,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, Map as MapIcon, List as ListIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Map as MapIcon, List as ListIcon, Plus, Filter } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ const EventsPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
   const { saveScrollPosition, isNavbarHidden } = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFilters, setShowFilters] = useState(true);
 
   // Sync viewMode with URL
   const viewMode = searchParams.get("view") || "grid";
@@ -145,133 +146,143 @@ const EventsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
         {/* HEADER */}
         <div 
-            className="fixed left-0 right-0 z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm"
+            className="z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm fixed left-0 right-0"
             style={{ top: isNavbarHidden ? "0px" : "4rem" }}
         >
             <div className="container mx-auto px-4 py-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-                        <p className="text-muted-foreground">
-                            Showing {events.length} of {pagination.total || 0} events
-                        </p>
-                    </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+                <div className="flex items-center gap-3">
+                  <p className="text-muted-foreground">
+                    Showing {events.length} of {pagination.total || 0} events
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="hidden lg:flex items-center gap-1.5 h-7 px-2 text-xs"
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    {showFilters ? 'Hide' : 'Show'} Filters
+                  </Button>
+                </div>
+              </div>
+                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end mt-2 md:mt-0">
+                            {/* View Mode Tabs */}
+                            <TabsList className="h-9 w-auto">
+                                <TabsTrigger value="grid" className="px-3 h-7 text-xs sm:text-sm">
+                                    <ListIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">List</span>
+                                </TabsTrigger>
+                                <TabsTrigger value="map" className="px-3 h-7 text-xs sm:text-sm">
+                                    <MapIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Map</span>
+                                </TabsTrigger>
+                                <TabsTrigger value="calendar" className="px-3 h-7 text-xs sm:text-sm">
+                                    <CalendarIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Calendar</span>
+                                </TabsTrigger>
+                            </TabsList>
 
-                    <div className="flex items-center gap-2 w-full md:w-auto flex-wrap justify-end">
-                        {/* View Mode Tabs */}
-                        <TabsList>
-                            <TabsTrigger value="grid" className="px-3">
-                                <ListIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">List</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="map" className="px-3">
-                                <MapIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Map</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="calendar" className="px-3">
-                                <CalendarIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Calendar</span>
-                            </TabsTrigger>
-                        </TabsList>
+                            {/* Mobile Filter */}
+                            <FilterSheet title="Filter Events" description="Refine your search">
+                                <EventFilters
+                                    filters={filters}
+                                    updateFilter={updateFilter}
+                                    clearAllFilters={clearAllFilters}
+                                    meta={meta}
+                                />
+                            </FilterSheet>
 
-                        {/* Mobile Filter */}
-                        <FilterSheet title="Filter Events" description="Refine your search">
-                            <EventFilters
-                                filters={filters}
-                                updateFilter={updateFilter}
-                                clearAllFilters={clearAllFilters}
-                                meta={meta}
-                            />
-                        </FilterSheet>
-
-                        {(isVerifiedArtist || isAdmin) && (
-                           <Button asChild size="sm">
-                              <Link to="/events/new" onClick={() => saveScrollPosition()}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create Event
-                              </Link>
-                           </Button>
-                        )}
+                            {(isVerifiedArtist || isAdmin) && (
+                               <Button asChild size="icon" className="bg-green-700 hover:bg-green-800 text-white h-9 w-9 sm:w-auto sm:h-9 sm:px-4">
+                                  <Link to="/events/new" onClick={() => saveScrollPosition()}>
+                                    <Plus className="h-5 w-5 sm:mr-2" />
+                                    <span className="hidden sm:inline">Create Event</span>
+                                  </Link>
+                               </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
         {/* Spacer */}
-        <div className="h-[200px] md:h-[120px] w-full" />
+        <div className="h-[180px] md:h-[120px] w-full" />
 
-        <div className="flex flex-col lg:flex-row gap-8 relative items-start">
-            {/* DESKTOP SIDEBAR */}
-            <FilterAside>
-                <EventFilters
-                    filters={filters}
-                    updateFilter={updateFilter}
-                    clearAllFilters={clearAllFilters}
-                    meta={meta}
-                />
-            </FilterAside>
+        <div className="container mx-auto px-2 sm:px-4 flex flex-col lg:flex-row gap-8 relative items-start pb-20">
+              {/* DESKTOP SIDEBAR */}
+              <FilterAside headerVisible="10rem" headerHidden="7rem" show={showFilters}>
+                  <EventFilters
+                      filters={filters}
+                      updateFilter={updateFilter}
+                      clearAllFilters={clearAllFilters}
+                      meta={meta}
+                  />
+              </FilterAside>
 
-            {/* MAIN CONTENT */}
-            <main className="w-full lg:flex-1 lg:min-w-0">
+              {/* MAIN CONTENT */}
+              <main className="w-full lg:flex-1 lg:min-w-0">
 
-                    <TabsContent value="grid" className="mt-0 space-y-8">
-                        {isLoading ? (
-                            <Loading />
-                        ) : error ? (
-                            <ErrorMessage message={error} />
-                        ) : events.length === 0 ? (
-                            <div className="py-12">
-                                <EmptyState message="No events found" icon="📅" />
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-                                    {events.map(event => (
-                                        <EventCard key={event._id} event={event} />
-                                    ))}
-                                </div>
-                                    <Pagination
-                                        currentPage={pagination.page}
-                                        totalPages={pagination.pages}
-                                        onPageChange={setPage}
-                                        itemsPerPage={filters.limit || 12}
-                                        onItemsPerPageChange={(size) => updateFilter("limit", size)}
-                                    />
-                            </>
-                        )}
-                    </TabsContent>
+                      <TabsContent value="grid" className="mt-0 space-y-8">
+                          {isLoading ? (
+                              <Loading />
+                          ) : error ? (
+                              <ErrorMessage message={error} />
+                          ) : events.length === 0 ? (
+                              <div className="py-12">
+                                  <EmptyState message="No events found" icon="📅" />
+                              </div>
+                          ) : (
+                              <>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                                      {events.map(event => (
+                                          <EventCard key={event._id} event={event} />
+                                      ))}
+                                  </div>
+                                      <Pagination
+                                          currentPage={pagination.page}
+                                          totalPages={pagination.pages}
+                                          onPageChange={setPage}
+                                          itemsPerPage={filters.limit || 12}
+                                          onItemsPerPageChange={(size) => updateFilter("limit", size)}
+                                      />
+                              </>
+                          )}
+                      </TabsContent>
 
-                    <TabsContent value="map" className="mt-0 w-full">
-                        <div className="border rounded-lg overflow-hidden h-[60vh] sm:h-[70vh] md:h-[600px] bg-muted/20">
-                             <EventsMap
-                                events={allEventsForMap}
-                                height="100%"
-                              />
-                        </div>
-                    </TabsContent>
+                      <TabsContent value="map" className="mt-0 w-full">
+                          <div className="border rounded-lg overflow-hidden h-[60vh] sm:h-[70vh] md:h-[600px] bg-muted/20">
+                              <EventsMap
+                                  events={allEventsForMap}
+                                  height="100%"
+                                />
+                          </div>
+                      </TabsContent>
 
-                    <TabsContent value="calendar" className="mt-0">
-                         <div className="border p-4 rounded-lg bg-card shadow-sm">
-                             <FullCalendar
-                                plugins={[dayGridPlugin, timeGridPlugin]}
-                                initialView="dayGridMonth"
-                                headerToolbar={{
-                                  left: "prev,next today",
-                                  center: "title",
-                                  right: "dayGridMonth,timeGridWeek",
-                                }}
-                                events={calendarEvents}
-                                eventClick={(info) => {
-                                  info.jsEvent.preventDefault();
-                                  window.location.href = info.event.url;
-                                }}
-                                height="auto"
-                              />
-                         </div>
-                    </TabsContent>
-            </main>
-        </div>
+                      <TabsContent value="calendar" className="mt-0">
+                          <div className="border p-4 rounded-lg bg-card shadow-sm">
+                              <FullCalendar
+                                  plugins={[dayGridPlugin, timeGridPlugin]}
+                                  initialView="dayGridMonth"
+                                  headerToolbar={{
+                                    left: "prev,next today",
+                                    center: "title",
+                                    right: "dayGridMonth,timeGridWeek",
+                                  }}
+                                  events={calendarEvents}
+                                  eventClick={(info) => {
+                                    info.jsEvent.preventDefault();
+                                    window.location.href = info.event.url;
+                                  }}
+                                  height="auto"
+                                />
+                          </div>
+                      </TabsContent>
+              </main>
+          </div>
       </Tabs>
     </div>
   );

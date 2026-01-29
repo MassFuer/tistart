@@ -272,7 +272,7 @@ router.post("/:id/offer", isAuthenticated, async (req, res, next) => {
   try {
     const userId = req.payload._id;
     const { id } = req.params;
-    const { amount } = req.body;
+    const { amount, artworkId } = req.body;
 
     if (!amount || typeof amount !== "number" || amount <= 0) {
       return res.status(400).json({ message: "Valid offer amount is required" });
@@ -283,20 +283,53 @@ router.post("/:id/offer", isAuthenticated, async (req, res, next) => {
       _id: id,
       participants: userId,
       status: "active",
-    });
+    }).populate("participants");
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // Validate Artwork
+    // Use provided artworkId OR conversation default
+    const targetArtworkId = artworkId || conversation.artwork;
+
+    if (!targetArtworkId) {
+         return res.status(400).json({ message: "No artwork specified for this offer." });
+    }
+
+    const Artwork = require("../models/Artwork.model");
+    const targetArtwork = await Artwork.findById(targetArtworkId);
+
+    if (!targetArtwork) {
+        return res.status(404).json({ message: "Artwork not found." });
+    }
+
+    // Verify that the artwork belongs to one of the participants (the Artist)
+    const isArtistParticipant = conversation.participants.some(
+        p => p._id.toString() === targetArtwork.artist.toString()
+    );
+
+    if (!isArtistParticipant) {
+         return res.status(400).json({ message: "This artwork does not belong to any participant in this conversation." });
+    }
+
+    const User = require("../models/User.model");
+    const artist = await User.findById(targetArtwork.artist);
+    
+    // Check if artist is verified (required for payments/VAT)
+    if (!artist || artist.artistStatus !== "verified") {
+        return res.status(403).json({ message: "Offers disabled: Artist is not verified to receive payments." });
     }
 
     // Create offer message
     const message = await Message.create({
       conversation: id,
       sender: userId,
-      content: `Price offer: €${amount.toFixed(2)}`,
+      content: `Price offer: €${amount.toFixed(2)} for "${targetArtwork.title}"`,
       type: "offer",
       offer: {
         amount,
+        artwork: targetArtwork._id,
         status: "pending",
       },
       readBy: [{ user: userId, readAt: new Date() }],
@@ -304,7 +337,7 @@ router.post("/:id/offer", isAuthenticated, async (req, res, next) => {
 
     await message.populate("sender", "firstName lastName userName profilePicture role artistStatus");
 
-    // Update conversation negotiation status
+    // Update conversation negotiation status (Optional: keep track of latest offer generally)
     conversation.negotiation.currentOffer = amount;
     conversation.negotiation.status = "pending";
     conversation.negotiation.offerHistory.push({
@@ -395,13 +428,70 @@ router.patch("/:id/offer/:offerId", isAuthenticated, async (req, res, next) => {
     if (lastOffer) {
       lastOffer.status = status;
     }
+    
+    // Create pending order if accepted
+    let orderConfirmationMsg = "";
+    if (status === "accepted") {
+        try {
+            const Order = require("../models/Order.model");
+            const Artwork = require("../models/Artwork.model");
+            
+            // Find artwork
+            // Priority: Artwork linked in Offer > Artwork linked in Conversation
+            const artworkId = offerMessage.offer.artwork || conversation.artwork;
+
+            if (artworkId) {
+                 const artwork = await Artwork.findById(artworkId);
+                 if (artwork) {
+                     // Determine Buyer:
+                     // If the ONE WHO MADE THE OFFER (sender) is the Artist, then the Buyer is the ONE WHO ACCEPTED (userId).
+                     // If the ONE WHO MADE THE OFFER is NOT the Artist (it's the User), then the Buyer is the Sender.
+                     const buyerId = (offerMessage.sender.toString() === artwork.artist.toString()) 
+                        ? userId 
+                        : offerMessage.sender;
+
+                     console.log(`[Offer Accepted] Creating Pending Order. Buyer: ${buyerId}, Artist: ${artwork.artist}`);
+
+                     const amount = offerMessage.offer.amount;
+                     const platformFee = amount * 0.2;
+                     
+                     const order = await Order.create({
+                         user: buyerId,
+                         items: [{
+                             itemType: "artwork",
+                             artwork: artwork._id,
+                             title: artwork.title,
+                             price: amount,
+                             quantity: 1,
+                             image: artwork.images?.[0],
+                             artist: artwork.artist, 
+                             artistEarnings: amount - platformFee,
+                             platformFee: platformFee
+                         }],
+                         totalAmount: amount,
+                         subtotal: amount,
+                         platformFeeTotal: platformFee,
+                         status: "pending",
+                         // Empty address for now, to be filled at checkout
+                         shippingAddress: { street: "", streetNum: "", zipCode: "", city: "", country: "" }
+                     });
+                     
+                     const paymentLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/checkout?orderId=${order._id}`;
+                     orderConfirmationMsg = `\n\nOrder created! Please complete payment:\n[Pay Now](${paymentLink})`;
+                 }
+            }
+        } catch (err) {
+            console.error("Failed to create order from offer:", err);
+        }
+    }
+
     await conversation.save();
 
     // Create system message about the response
     const systemMessage = await Message.create({
       conversation: id,
       sender: userId,
-      content: `Offer ${status}: €${offerMessage.offer.amount.toFixed(2)}`,
+      content: `Offer ${status}: €${offerMessage.offer.amount.toFixed(2)}${orderConfirmationMsg}`,
       type: "system",
     });
 

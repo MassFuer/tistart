@@ -33,7 +33,6 @@ import ProfileSettings from "../components/dashboard/ProfileSettings";
 import EventsMap from "../components/map/EventsMap"; // Reuse existing map for user view
 import ArtworkManager from "../components/dashboard/ArtworkManager";
 import EventManagement from "../components/dashboard/EventManagement";
-import ArtistApplications from "../components/dashboard/ArtistApplications";
 import StorageManager from "../components/dashboard/StorageManager";
 
 const DashboardPage = () => {
@@ -168,7 +167,6 @@ const DashboardPage = () => {
           <TabsTrigger value="activity" className="md:flex-1">{isArtist ? "Sales" : "Orders"}</TabsTrigger>
           {(isArtist || isAdmin) && <TabsTrigger value="artworks" className="md:flex-1">Artworks</TabsTrigger>}
           {(isArtist || isAdmin) && <TabsTrigger value="events" className="md:flex-1">Events</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="applications" className="md:flex-1">Applications</TabsTrigger>}
           {(isArtist || isAdmin) && <TabsTrigger value="storage" className="md:flex-1">Storage</TabsTrigger>}
           <TabsTrigger value="settings" className="md:flex-1">Settings</TabsTrigger>
         </TabsList>
@@ -373,13 +371,6 @@ const DashboardPage = () => {
                     {isAdmin && <Badge variant="secondary">Admin View</Badge>}
                 </div>
                 <EventManagement isAdmin={isAdmin} />
-            </TabsContent>
-        )}
-
-        {/* APPLICATIONS TAB (Admin Only) */}
-        {isAdmin && (
-            <TabsContent value="applications" className="space-y-6">
-                 <ArtistApplications />
             </TabsContent>
         )}
 

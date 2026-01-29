@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "../context/CartContext";
@@ -52,10 +52,12 @@ const CheckoutPage = () => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState("shipping"); // "shipping" | "payment"
-  const [orderId, setOrderId] = useState(null);
+  const [orderId, setOrderId] = useState(searchParams.get("orderId"));
+  const [existingOrder, setExistingOrder] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
 
   const [shippingAddress, setShippingAddress] = useState({
@@ -66,9 +68,37 @@ const CheckoutPage = () => {
     country: "",
   });
 
+  // Fetch Existing Order if ID present
   useEffect(() => {
-    // Pre-fill shipping address from user profile if available
-    if (user) {
+    const fetchOrder = async () => {
+      if (orderId) {
+        try {
+          setLoading(true);
+          const res = await api.orders.getOne(orderId);
+          const order = res.data.data;
+          setExistingOrder(order);
+          // Pre-fill address if order has one and it's valid
+          if (order.shippingAddress && order.shippingAddress.street) {
+             setShippingAddress(order.shippingAddress);
+          }
+        } catch (err) {
+          console.error("Failed to load order:", err);
+          toast.error("Failed to load order details");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    // Only fetch if we haven't already loaded it (or if ID changed)
+    if (orderId && !existingOrder) {
+        fetchOrder();
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    // Pre-fill shipping address from user profile if available, AND if not already filled from existing order
+    if (user && !existingOrder?.shippingAddress?.street) {
       // Check if user has address in artistInfo (for artists) or direct address field
       const address = user.artistInfo?.address || user.address;
       if (address && typeof address === "object") {
@@ -81,26 +111,38 @@ const CheckoutPage = () => {
         });
       }
     }
-  }, [user]);
+  }, [user, existingOrder]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setShippingAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  const totalPrice = cart.reduce((total, item) => {
-    const product = item.itemType === 'ticket' ? item.event : item.artwork;
-    return total + (product?.price || 0) * item.quantity;
-  }, 0);
+  // Determine items and total to display
+  // If existingOrder, use its items. If not, use cart.
+  const displayItems = existingOrder ? existingOrder.items : cart;
+  
+  const totalPrice = existingOrder 
+      ? existingOrder.totalAmount 
+      : cart.reduce((total, item) => {
+        const product = item.itemType === 'ticket' ? item.event : item.artwork;
+        return total + (product?.price || 0) * item.quantity;
+      }, 0);
 
-  // Step 1: Create order and get PaymentIntent
+  // Step 1: Create order OR Update address, then get PaymentIntent
   const handleShippingSubmit = async (e) => {
     if (e) e.preventDefault();
 
-    if (cart.length === 0) {
+    if (!existingOrder && cart.length === 0) {
       toast.error("Cart is empty");
       navigate("/cart");
       return;
+    }
+    
+    // Address validation
+    if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode || !shippingAddress.country) {
+        toast.error("Please complete the shipping address.");
+        return;
     }
 
     // Check if Stripe is configured
@@ -112,27 +154,35 @@ const CheckoutPage = () => {
 
     setLoading(true);
     try {
-      // Create order (pending status)
-      const orderResponse = await api.orders.create({
-        shippingAddress,
-      });
+      let activeOrderId = orderId;
 
-      const newOrderId = orderResponse.data.data._id;
-      setOrderId(newOrderId);
+      if (existingOrder) {
+          // UPDATE existing order address logic
+          // Make sure we have the ID
+          if (!activeOrderId) throw new Error("Order ID missing for update");
+          await api.orders.updateAddress(activeOrderId, shippingAddress);
+      } else {
+          // CREATE new order
+          const orderResponse = await api.orders.create({
+            shippingAddress,
+          });
+          activeOrderId = orderResponse.data.data._id;
+          setOrderId(activeOrderId);
+      }
 
       // Create PaymentIntent
-      const paymentResponse = await paymentsAPI.createIntent(newOrderId);
+      const paymentResponse = await paymentsAPI.createIntent(activeOrderId);
       setClientSecret(paymentResponse.data.data.clientSecret);
 
       setStep("payment");
     } catch (error) {
       console.error("Checkout error:", error);
       const errorMessage =
-        error.response?.data?.error || "Failed to create order";
+        error.response?.data?.error || "Failed to process checkout";
 
-      // If order was created but payment failed, still refresh cart
+      // If order was created/updated but payment failed, still refresh 
       if (error.response?.status === 402 || errorMessage.includes("payment")) {
-        await fetchCart();
+        if (!existingOrder) await fetchCart();
       }
 
       toast.error(errorMessage);
@@ -145,18 +195,24 @@ const CheckoutPage = () => {
   const handleMockPayment = async () => {
     setLoading(true);
     try {
-      const orderResponse = await api.orders.create({
-        shippingAddress,
-        paymentId: "MOCK_PAYMENT_" + Date.now(),
-      });
+      let activeOrderId = orderId;
 
-      const newOrderId = orderResponse.data.data._id;
+      if (existingOrder) {
+          // Update address first
+           await api.orders.updateAddress(activeOrderId, shippingAddress);
+      } else {
+           const orderResponse = await api.orders.create({
+            shippingAddress,
+            paymentId: "MOCK_PAYMENT_" + Date.now(),
+          });
+          activeOrderId = orderResponse.data.data._id;
+      }
 
       // Confirm payment and clear cart
-      await api.orders.confirmPayment(newOrderId);
+      await api.orders.confirmPayment(activeOrderId);
 
       toast.success("Order placed successfully! 🎉");
-      await fetchCart();
+      if (!existingOrder) await fetchCart();
       navigate("/my-orders");
     } catch (error) {
       console.error(error);
@@ -173,7 +229,7 @@ const CheckoutPage = () => {
       await api.orders.confirmPayment(orderId);
 
       toast.success("Payment successful! 🎉");
-      await fetchCart(); // Refresh cart to show it's empty
+      if (!existingOrder) await fetchCart(); // Refresh cart only if it was a cart order
       navigate(`/orders/${orderId}`);
     } catch (error) {
       console.error("Payment confirmation error:", error);
@@ -190,7 +246,7 @@ const CheckoutPage = () => {
     toast.error(error.message || "Payment failed. Please try again.");
   };
 
-  if (loading) return <Loading message="Processing order..." />;
+  if (loading && !existingOrder && !cart.length) return <Loading message="Loading checkout..." />;
 
   // Stripe Elements appearance options
   const appearance = {
@@ -212,9 +268,9 @@ const CheckoutPage = () => {
        <div className="flex items-center mb-8">
             <Button variant="ghost" className="pl-0 gap-2" onClick={() => step === "payment" ? setStep("shipping") : navigate("/cart")}>
                 <ArrowLeft className="h-4 w-4" /> 
-                {step === "payment" ? "Back to Shipping" : "Back to Cart"}
+                {step === "payment" ? "Back to Address" : "Back to Cart"}
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight ml-4">Checkout</h1>
+            <h1 className="text-3xl font-bold tracking-tight ml-4">Checkout {existingOrder ? "(Pending Order)" : ""}</h1>
        </div>
 
        {/* Steps Indicator - Centered at top */}
@@ -330,17 +386,37 @@ const CheckoutPage = () => {
                       <CardTitle>Order Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {cart.map((item) => {
-                           const product = item.itemType === 'ticket' ? item.event : item.artwork;
-                           if (!product) return null;
+                      {displayItems.map((item) => {
+                           // Logic to unify item structure between Order items and Cart items
+                           // Order Item: { title, price, quantity, artwork, ... }
+                           // Cart Item: { quantity, artwork: { title, price ... } }
+                           
+                           let title, price, quantity, subtitle;
+                           
+                           if (existingOrder) {
+                               // It's an Order Item
+                               title = item.title;
+                               price = item.price;
+                               quantity = item.quantity;
+                               subtitle = "Pending Order Item"; 
+                           } else {
+                               // It's a Cart Item
+                               const product = item.itemType === 'ticket' ? item.event : item.artwork;
+                               if (!product) return null;
+                               title = product.title;
+                               price = product.price;
+                               quantity = item.quantity;
+                               subtitle = product.artist?.artistInfo?.companyName || product.artist?.lastName;
+                           }
+
                            return (
-                           <div key={item._id} className="flex justify-between items-start text-sm">
+                           <div key={item._id || Math.random()} className="flex justify-between items-start text-sm">
                                 <div>
-                                    <p className="font-medium">{product.title} <span className="text-muted-foreground">x{item.quantity}</span></p>
-                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{product.artist?.artistInfo?.companyName || product.artist?.lastName}</p>
+                                    <p className="font-medium">{title} <span className="text-muted-foreground">x{quantity}</span></p>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{subtitle}</p>
                                 </div>
                                 <p className="font-medium">
-                                    {formatPrice((product.price || 0) * item.quantity)}
+                                    {formatPrice((price || 0) * quantity)}
                                 </p>
                            </div>
                            );

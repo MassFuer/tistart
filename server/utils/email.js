@@ -162,10 +162,10 @@ const sendArtistStatusEmail = async (email, firstName, status, reason = null, us
     });
 
     const subjects = {
-      verified: "Congratulations! Your Artist Application is Approved - Nemesis",
+      verified: "Congratulations! You're an Official Artist - Nemesis",
       suspended: "Account Status Update - Nemesis",
       pending: "Application Under Review - Nemesis",
-      incomplete: "Complete Your Artist Application - Nemesis",
+      incomplete: "Action Required: Artist Application Update - Nemesis",
     };
     
     const subject = subjects[status] || "Artist Status Update - Nemesis";
@@ -177,7 +177,29 @@ const sendArtistStatusEmail = async (email, firstName, status, reason = null, us
     });
 
     if (userId) {
-        await logSystemMessage(userId, subject, `Your artist status has been updated to: ${status}. ${reason ? `Reason: ${reason}` : ''}`);
+        let systemMessage = `Your artist status has been updated to: ${status}.`;
+        
+        if (status === 'verified') {
+            systemMessage = `Congratulations! You have been approved as an artist on Nemesis.
+            
+You can now:
+- Create and Manage Artworks
+- Host Events
+- Customize your Artist Profile
+- Upload your Videos / Movies
+
+Welcome to the community!`;
+        } else if (status === 'incomplete') {
+            systemMessage = `Your artist application requires attention. Status set to: Incomplete.
+            
+Reason/Feedback: ${reason || 'Please review your profile details and ensure all information is accurate.'}
+            
+Please update your profile and re-apply or contact support.`;
+        } else if (reason) {
+            systemMessage += ` Reason: ${reason}`;
+        }
+
+        await logSystemMessage(userId, subject, systemMessage);
     }
     return result;
   } catch (error) {

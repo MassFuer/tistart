@@ -74,11 +74,11 @@ const orderSchema = new Schema(
       min: 0,
     },
     shippingAddress: {
-      street: { type: String, required: true },
-      streetNum: { type: String, required: true },
-      zipCode: { type: String, required: true },
-      city: { type: String, required: true },
-      country: { type: String, required: true },
+      street: { type: String, required: function() { return this.status !== 'pending'; } },
+      streetNum: { type: String, required: function() { return this.status !== 'pending'; } },
+      zipCode: { type: String, required: function() { return this.status !== 'pending'; } },
+      city: { type: String, required: function() { return this.status !== 'pending'; } },
+      country: { type: String, required: function() { return this.status !== 'pending'; } },
     },
     status: {
       type: String,

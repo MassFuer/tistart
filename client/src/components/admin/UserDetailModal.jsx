@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { adminAPI, platformAPI, messagingAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Loading from "@/components/common/Loading";
 import { 
     User, Mail, AtSign, Calendar, Shield, AlertTriangle, Trash2, Edit, Copy, FileIcon, Film, HardDrive, 
-    MessageCircle, CheckCircle, XCircle 
+    MessageCircle, CheckCircle, XCircle, TrendingUp, Palette, CalendarDays
 } from "lucide-react";
 
 const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
@@ -359,11 +359,11 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
                                  </div>
                              </div>
 
-                             {/* Artist Details */}
+                             {/* Artist/Business Details */}
                              {user.artistInfo && user.artistStatus !== "none" && (
                                  <div className="space-y-4">
                                      <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
-                                         <AtSign className="h-4 w-4" /> Artist Profile
+                                         <AtSign className="h-4 w-4" /> Business Profile
                                      </h3>
                                      <div className="space-y-2 text-sm">
                                          {user.artistInfo.companyName && (
@@ -375,19 +375,148 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
                                          {user.artistInfo.type && (
                                              <div className="flex justify-between">
                                                  <span className="text-muted-foreground">Type</span>
-                                                 <span>{user.artistInfo.type}</span>
+                                                 <span className="capitalize">{user.artistInfo.type}</span>
                                              </div>
                                          )}
-                                          {user.artistInfo.address?.city && (
+                                         {user.artistInfo.taxId && (
                                              <div className="flex justify-between">
-                                                 <span className="text-muted-foreground">Location</span>
-                                                 <span>{user.artistInfo.address.city}, {user.artistInfo.address.country}</span>
+                                                 <span className="text-muted-foreground">Tax ID</span>
+                                                 <span>{user.artistInfo.taxId}</span>
+                                             </div>
+                                         )}
+                                         {user.artistInfo.vatNumber && (
+                                             <div className="flex justify-between">
+                                                 <span className="text-muted-foreground">VAT Number</span>
+                                                 <span>{user.artistInfo.vatNumber}</span>
+                                             </div>
+                                         )}
+                                         {user.subscriptionTier && (
+                                             <div className="flex justify-between">
+                                                 <span className="text-muted-foreground">Subscription</span>
+                                                 <Badge variant="outline" className="capitalize">{user.subscriptionTier}</Badge>
                                              </div>
                                          )}
                                      </div>
+                                     
+                                     {/* Description/Bio */}
+                                     {user.artistInfo.description && (
+                                         <div className="mt-3">
+                                             <p className="text-xs text-muted-foreground mb-1">Description</p>
+                                             <p className="text-sm bg-muted/30 p-3 rounded-md">{user.artistInfo.description}</p>
+                                         </div>
+                                     )}
+                                     
+                                     {/* Social Media */}
+                                     {user.artistInfo.socialMedia && Object.keys(user.artistInfo.socialMedia).length > 0 && (
+                                         <div className="mt-3">
+                                             <p className="text-xs text-muted-foreground mb-2">Social Media</p>
+                                             <div className="flex flex-wrap gap-2">
+                                                 {user.artistInfo.socialMedia.website && (
+                                                     <a href={user.artistInfo.socialMedia.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                                                         Website
+                                                     </a>
+                                                 )}
+                                                 {user.artistInfo.socialMedia.instagram && (
+                                                     <a href={user.artistInfo.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                                                         Instagram
+                                                     </a>
+                                                 )}
+                                                 {user.artistInfo.socialMedia.twitter && (
+                                                     <a href={user.artistInfo.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                                                         Twitter
+                                                     </a>
+                                                 )}
+                                             </div>
+                                         </div>
+                                     )}
                                  </div>
                              )}
                         </div>
+
+                        {/* Address Information */}
+                        {user.artistInfo?.address && (
+                            <div className="space-y-4">
+                                <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
+                                    <User className="h-4 w-4" /> Address
+                                </h3>
+                                <div className="space-y-2 text-sm">
+                                    {user.artistInfo.address.street && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Street</span>
+                                            <span>{user.artistInfo.address.street}</span>
+                                        </div>
+                                    )}
+                                    {user.artistInfo.address.city && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">City</span>
+                                            <span>{user.artistInfo.address.city}</span>
+                                        </div>
+                                    )}
+                                    {user.artistInfo.address.state && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">State/Province</span>
+                                            <span>{user.artistInfo.address.state}</span>
+                                        </div>
+                                    )}
+                                    {user.artistInfo.address.postalCode && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Postal Code</span>
+                                            <span>{user.artistInfo.address.postalCode}</span>
+                                        </div>
+                                    )}
+                                    {user.artistInfo.address.country && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Country</span>
+                                            <span>{user.artistInfo.address.country}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Artist Statistics */}
+                        {user.artistStatus === "verified" && user.artistStats && (
+                            <div className="space-y-4">
+                                <h3 className="font-semibold flex items-center gap-2 border-b pb-2">
+                                    <TrendingUp className="h-4 w-4" /> Artist Statistics
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm bg-muted/30 p-4 rounded-lg">
+                                    {user.artistStats.totalRevenue !== undefined && (
+                                        <div>
+                                            <p className="text-muted-foreground mb-1">Total Revenue</p>
+                                            <p className="font-medium text-green-600">€{(user.artistStats.totalRevenue / 100).toFixed(2)}</p>
+                                        </div>
+                                    )}
+                                    {user.artistStats.totalSales !== undefined && (
+                                        <div>
+                                            <p className="text-muted-foreground mb-1">Total Sales</p>
+                                            <p className="font-medium">{user.artistStats.totalSales}</p>
+                                        </div>
+                                    )}
+                                    {user.artistStats.totalArtworks !== undefined && (
+                                        <div>
+                                            <p className="text-muted-foreground mb-1">Artworks</p>
+                                            <p className="font-medium">{user.artistStats.totalArtworks}</p>
+                                        </div>
+                                    )}
+                                    {user.artistStats.totalEvents !== undefined && (
+                                        <div>
+                                            <p className="text-muted-foreground mb-1">Events</p>
+                                            <p className="font-medium">{user.artistStats.totalEvents}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {user.artistStats.avgRating !== undefined && (
+                                    <div className="text-sm text-center">
+                                        <span className="text-muted-foreground">Average Rating: </span>
+                                        <span className="font-medium">{user.artistStats.avgRating.toFixed(1)} / 5.0</span>
+                                        {user.artistStats.totalReviews !== undefined && (
+                                            <span className="text-muted-foreground"> ({user.artistStats.totalReviews} reviews)</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                          {/* Storage Info */}
                         {user.storage && user.storage.totalBytes > 0 && (
@@ -466,23 +595,7 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
         </ScrollArea>
 
         <DialogFooter className="p-4 border-t flex justify-end gap-2">
-             {!isEditing && !showDeleteConfirm && (
-                 <>
-                    {canDelete() && (
-                        <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </Button>
-                    )}
-                    {canEdit() && (
-                        <Button onClick={() => setIsEditing(true)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                        </Button>
-                    )}
-                     <Button variant="outline" onClick={onClose}>Close</Button>
-                 </>
-             )}
-             
-              {isEditing && (
+             {isEditing && (
                  <>
                      <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                      <Button onClick={handleSave} disabled={isSaving}>
