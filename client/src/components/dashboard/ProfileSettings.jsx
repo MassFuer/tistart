@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext"; // Import useLanguage
+import { useTranslation } from "react-i18next"; // Import useTranslation
 import { toast } from "sonner";
 import { usersAPI, geocodeAPI } from "../../services/api";
 import { parseAddressFromSearch } from "../../utils/addressUtils";
@@ -15,13 +17,21 @@ import {
   Twitter,
   Loader2,
   Lock,
-  Trash2
+  Trash2,
+  Languages
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -39,6 +49,8 @@ import {
 
 const ProfileSettings = () => {
   const { user, refreshUser, updateArtistInfo, isArtist } = useAuth();
+  const { currentLanguage, changeLanguage, languages } = useLanguage();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("personal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
@@ -475,6 +487,33 @@ const ProfileSettings = () => {
                     <CardDescription>Manage your account preferences.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                     {/* Language Selector */}
+                     <div className="flex items-center justify-between p-4 border rounded-lg">
+                         <div className="flex items-center gap-3">
+                             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                 <Languages className="h-5 w-5 text-muted-foreground" />
+                             </div>
+                             <div>
+                                 <h4 className="font-medium">{t("settings.language") || "Language"}</h4>
+                                 <p className="text-sm text-muted-foreground">{t("settings.language_desc") || "Select your preferred language"}</p>
+                             </div>
+                         </div>
+                         <div className="w-[180px]">
+                            <Select value={currentLanguage} onValueChange={(val) => changeLanguage(val)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Language" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {languages.map((lang) => (
+                                        <SelectItem key={lang.code} value={lang.code}>
+                                            <span className="mr-2">{lang.flag}</span> {lang.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                         </div>
+                     </div>
+
                      <div className="flex items-center justify-between p-4 border rounded-lg">
                          <div>
                              <h4 className="font-medium">Change Password</h4>

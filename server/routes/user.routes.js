@@ -30,7 +30,7 @@ router.get("/profile", isAuthenticated, attachUser, (req, res) => {
 // PATCH /api/users/profile - Update current user profile
 router.patch("/profile", isAuthenticated, attachUser, async (req, res, next) => {
   try {
-    const allowedFields = ["firstName", "lastName", "userName"];
+    const allowedFields = ["firstName", "lastName", "userName", "preferredLanguage"];
     const updateObj = {};
 
     for (const field of allowedFields) {

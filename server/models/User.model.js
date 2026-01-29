@@ -143,6 +143,10 @@ const userSchema = new Schema(
       type: String, // Cloudinary URL
       default: "",
     },
+    preferredLanguage: {
+      type: String,
+      default: "en",
+    },
     role: {
       type: String,
       enum: ["user", "artist", "admin", "superAdmin"],

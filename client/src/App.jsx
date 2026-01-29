@@ -5,6 +5,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { NavigationProvider } from "./context/NavigationContext";
+import { LanguageProvider } from "./context/LanguageContext";
 
 // Layout
 import Navbar from "./components/layout/Navbar";
@@ -64,6 +65,7 @@ function App() {
         <NavigationProvider>
         <ThemeProvider>
           <AuthProvider>
+            <LanguageProvider>
             <MessagingProvider>
             <CartProvider>
               <div className="app min-h-screen flex flex-col">
@@ -196,6 +198,7 @@ function App() {
             <Toaster position="top-center" closeButton />
             </CartProvider>
             </MessagingProvider>
+            </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
         </NavigationProvider>
