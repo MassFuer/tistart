@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { adminAPI } from "../../services/api";
+import { useNavigate } from "react-router-dom";
+import { adminAPI, platformAPI, messagingAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import {
@@ -25,7 +25,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Loading from "@/components/common/Loading";
-import { User, Mail, AtSign, Calendar, Shield, AlertTriangle, Trash2, Edit } from "lucide-react";
+import { 
+    User, Mail, AtSign, Calendar, Shield, AlertTriangle, Trash2, Edit, Copy, FileIcon, Film, HardDrive, 
+    MessageCircle, CheckCircle, XCircle 
+} from "lucide-react";
 
 const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
   const { user: currentUser } = useAuth();
@@ -36,6 +39,11 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formData, setFormData] = useState({});
+  
+  // File Listing State
+  const [showFiles, setShowFiles] = useState(false);
+  const [userFiles, setUserFiles] = useState([]);
+  const [filesLoading, setFilesLoading] = useState(false);
 
   const isSuperAdmin = currentUser?.role === "superAdmin";
   const artistStatuses = ["none", "pending", "incomplete", "verified", "suspended"];
@@ -92,6 +100,32 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
     }
   };
 
+  // ...
+  const navigate = useNavigate();
+
+  const handleContact = async () => {
+    try {
+        const res = await messagingAPI.createConversation({ recipientId: userId });
+        onClose();
+        navigate(`/messages?conversation=${res.data.data._id}`);
+    } catch (error) {
+        console.error("Start chat error", error);
+        toast.error("Failed to start conversation");
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      await adminAPI.updateArtistStatus(userId, newStatus);
+      toast.success(`User status updated to ${newStatus}`);
+      fetchUser();
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
+  // ...
+
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -132,6 +166,21 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
     });
   };
 
+  const handleViewFiles = async () => {
+      setShowFiles(true);
+      if (userFiles.length > 0) return;
+      
+      setFilesLoading(true);
+      try {
+          const res = await platformAPI.getUserFiles(userId);
+          setUserFiles(res.data.data);
+      } catch (err) {
+          toast.error("Failed to load user files");
+      } finally {
+          setFilesLoading(false);
+      }
+  };
+
   if (isLoading) {
     return (
         <Dialog open={true} onOpenChange={onClose}>
@@ -143,6 +192,61 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
   }
 
   if (!user) return null;
+
+  if (showFiles) {
+        return (
+            <Dialog open={true} onOpenChange={onClose}>
+                <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="p-6 pb-4 border-b flex flex-row items-center justify-between">
+                         <div className="flex items-center gap-2">
+                             <Button variant="ghost" size="sm" onClick={() => setShowFiles(false)}>← Back</Button>
+                             <DialogTitle>User Files: {user?.firstName} {user?.lastName}</DialogTitle>
+                         </div>
+                    </DialogHeader>
+                    
+                    <ScrollArea className="flex-1 overflow-y-auto bg-muted/10">
+                        {filesLoading ? (
+                             <div className="py-20 flex justify-center"><Loading message="Loading files..." /></div>
+                        ) : (
+                             <div className="p-6">
+                                 {userFiles.length === 0 ? (
+                                      <div className="text-center py-10 text-muted-foreground">No files found in storage.</div>
+                                 ) : (
+                                     <div className="grid grid-cols-1 gap-2">
+                                         {userFiles.map((file, i) => (
+                                              <div key={i} className="flex items-center justify-between bg-card p-3 rounded border text-sm hover:bg-muted/50 transition-colors">
+                                                  <div className="flex items-center gap-3 overflow-hidden">
+                                                      {file.type === "video" ? <Film className="h-4 w-4 text-blue-500" /> : <FileIcon className="h-4 w-4 text-orange-500" />}
+                                                      <div className="flex flex-col truncate">
+                                                         <span className="font-medium truncate max-w-[300px]" title={file.key}>{file.key.split('/').pop()}</span>
+                                                         <span className="text-xs text-muted-foreground capitalize">{file.type} • {(file.size / (1024*1024)).toFixed(2)} MB • {new Date(file.lastModified).toLocaleDateString()}</span>
+                                                      </div>
+                                                  </div>
+                                                  <div className="flex items-center gap-2 shrink-0">
+                                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                                                          navigator.clipboard.writeText(file.url);
+                                                          toast.success("URL copied");
+                                                      }}>
+                                                          <Copy className="h-3 w-3" />
+                                                      </Button>
+                                                      <Link to={file.url} target="_blank">
+                                                          <Button variant="outline" size="sm" className="h-7 text-xs">Open</Button>
+                                                      </Link>
+                                                  </div>
+                                              </div>
+                                         ))}
+                                     </div>
+                                 )}
+                             </div>
+                        )}
+                    </ScrollArea>
+                    <DialogFooter className="p-4 border-t">
+                        <Button onClick={() => setShowFiles(false)}>Close Files</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -298,17 +402,34 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
                                      </div>
                                      <div>
                                          <p className="text-muted-foreground mb-1">Images</p>
-                                         <p className="font-medium">{(user.storage.imageBytes / (1024 * 1024)).toFixed(2)} MB</p>
+                                         <div className="font-medium">
+                                             {(user.storage.imageBytes / (1024 * 1024)).toFixed(2)} MB
+                                             {user.storage.imageCount !== undefined && (
+                                                 <span className="block text-xs text-muted-foreground">{user.storage.imageCount} files</span>
+                                             )}
+                                         </div>
                                      </div>
                                      <div>
                                          <p className="text-muted-foreground mb-1">Videos</p>
-                                         <p className="font-medium">{(user.storage.videoBytes / (1024 * 1024)).toFixed(2)} MB</p>
+                                         <div className="font-medium">
+                                             {(user.storage.videoBytes / (1024 * 1024)).toFixed(2)} MB
+                                             {user.storage.videoCount !== undefined && (
+                                                 <span className="block text-xs text-muted-foreground">{user.storage.videoCount} files</span>
+                                             )}
+                                         </div>
                                      </div>
                                      <div>
                                          <p className="text-muted-foreground mb-1">Files</p>
                                          <p className="font-medium">{user.storage.fileCount || 0}</p>
                                      </div>
                                 </div>
+                                {isSuperAdmin && (
+                                    <div className="flex justify-end">
+                                        <Button variant="outline" size="sm" onClick={handleViewFiles}>
+                                            <HardDrive className="mr-2 h-3 w-3"/> View File Details
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         )}
                         
@@ -361,13 +482,47 @@ const UserDetailModal = ({ userId, onClose, onUpdate, onDelete }) => {
                  </>
              )}
              
-             {isEditing && (
+              {isEditing && (
                  <>
                      <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</Button>
                      <Button onClick={handleSave} disabled={isSaving}>
                          {isSaving ? "Saving..." : "Save Changes"}
                      </Button>
                  </>
+             )}
+
+             {!isEditing && !showDeleteConfirm && (
+                <div className="flex gap-2 w-full justify-between">
+                    <div className="flex gap-2">
+                        {user.artistStatus === 'pending' && (
+                            <>
+                                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange('verified')}>
+                                    <CheckCircle className="mr-2 h-4 w-4" /> Approve
+                                </Button>
+                                <Button variant="destructive" onClick={() => handleStatusChange('incomplete')}>
+                                    <XCircle className="mr-2 h-4 w-4" /> Reject
+                                </Button>
+                            </>
+                        )}
+                        <Button variant="secondary" onClick={handleContact}>
+                            <MessageCircle className="mr-2 h-4 w-4" /> Contact
+                        </Button>
+                    </div>
+
+                    <div className="flex gap-2">
+                         {canEdit() && (
+                             <Button onClick={() => setIsEditing(true)}>
+                                 <Edit className="mr-2 h-4 w-4" /> Edit
+                             </Button>
+                         )}
+                         {canDelete() && (
+                             <Button variant="destructive" size="icon" onClick={() => setShowDeleteConfirm(true)}>
+                                 <Trash2 className="h-4 w-4" />
+                             </Button>
+                         )}
+                         <Button variant="outline" onClick={onClose}>Close</Button>
+                    </div>
+                </div>
              )}
         </DialogFooter>
       </DialogContent>

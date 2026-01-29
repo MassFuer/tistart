@@ -19,8 +19,15 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "../context/AuthContext";
 import VideoPlayer from "../components/video/VideoPlayer";
 import ReviewSection from "../components/review/ReviewSection";
+import { useTheme } from "../context/ThemeContext";
 
 const VideoDetailPage = () => {
+    const { setDarkMode } = useTheme();
+    
+    useEffect(() => {
+        setDarkMode(true);
+    }, [setDarkMode]);
+
     const { id } = useParams();
     const { isAuthenticated } = useAuth();
     const [videoData, setVideoData] = useState(null);

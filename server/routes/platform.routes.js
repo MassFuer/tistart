@@ -360,7 +360,7 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
 
     // Storage usage stats
     const storageStats = await User.aggregate([
-      { $match: { role: "artist" } },
+      { $match: { role: { $in: ["artist", "admin", "superAdmin"] } } },
       {
         $group: {
           _id: null,
@@ -449,6 +449,57 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
       },
     ]);
 
+    // Top Viewed Videos
+    const topViewedVideos = await Artwork.aggregate([
+      { $match: { category: "video", views: { $gt: 0 } } },
+      { $sort: { views: -1 } },
+      { $limit: 10 },
+      {
+         $lookup: {
+            from: "users",
+            localField: "artist",
+            foreignField: "_id",
+            as: "artistData"
+         }
+      },
+      { $unwind: "$artistData" },
+      {
+         $project: {
+             _id: 1,
+             title: 1,
+             views: 1,
+             duration: "$video.duration",
+             artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
+             companyName: "$artistData.artistInfo.companyName"
+         }
+      }
+    ]);
+
+    // Top Viewed Artworks (Non-Video)
+    const topViewedOther = await Artwork.aggregate([
+      { $match: { category: { $ne: "video" }, views: { $gt: 0 } } },
+      { $sort: { views: -1 } },
+      { $limit: 10 },
+      {
+         $lookup: {
+            from: "users",
+            localField: "artist",
+            foreignField: "_id",
+            as: "artistData"
+         }
+      },
+      { $unwind: "$artistData" },
+       {
+         $project: {
+             _id: 1,
+             title: 1,
+             views: 1,
+             category: 1,
+             artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] }
+         }
+      }
+    ]);
+
     res.status(200).json({
       data: {
         users: {
@@ -497,6 +548,8 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
         revenueByMonth,
         topArtists,
         topArtworks,
+        topViewedVideos,
+        topViewedOther,
         storage: storageStats[0] || {
           totalStorageUsed: 0,
           totalImageBytes: 0,
@@ -517,16 +570,82 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
 // GET /api/platform/storage - Get storage usage for all artists
 router.get("/storage", isAuthenticated, isSuperAdmin, async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, sort = "-storage.totalBytes" } = req.query;
+    const { page = 1, limit = 20, sort = "storage.totalBytes", order = "desc" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
+    const sortDir = order === "asc" ? 1 : -1;
+
+    let sortObj = {};
+    if (sort) {
+        sortObj[sort] = sortDir;
+    } else {
+        sortObj["storage.totalBytes"] = -1;
+    }
+    
+    // Ensure stable sort
+    sortObj["_id"] = 1;
+
+    const aggregationPipeline = [
+      { $match: { role: { $in: ["artist", "admin", "superAdmin"] } } },
+      {
+        $lookup: {
+          from: "artworks",
+          let: { artistId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$artist", "$$artistId"] } } },
+            { $group: { 
+                _id: "$category", 
+                count: { $sum: 1 } 
+              } 
+            }
+          ],
+          as: "artworkCounts"
+        }
+      },
+      {
+        $addFields: {
+           videoCount: {
+               $let: {
+                   vars: { videoObj: { $arrayElemAt: [{ $filter: { input: "$artworkCounts", as: "c", cond: { $eq: ["$$c._id", "video"] } } }, 0] } },
+                   in: { $ifNull: ["$$videoObj.count", 0] }
+               }
+           },
+           imageCount: {
+                $reduce: {
+                    input: { 
+                        $filter: { 
+                            input: "$artworkCounts", 
+                            as: "c", 
+                            cond: { $ne: ["$$c._id", "video"] } 
+                        } 
+                    },
+                    initialValue: 0,
+                    in: { $add: ["$$value", "$$this.count"] }
+                }
+           }
+        }
+      },
+      { $project: {
+          firstName: 1, 
+          lastName: 1, 
+          userName: 1, 
+          email: 1, 
+          "artistInfo.companyName": 1, 
+          storage: 1, 
+          role: 1,
+          subscriptionTier: 1,
+          profilePicture: 1,
+          videoCount: 1,
+          imageCount: 1,
+          updatedAt: 1
+      }},
+      { $sort: sortObj },
+      { $skip: skip },
+      { $limit: Number(limit) }
+    ];
 
     const [artists, total] = await Promise.all([
-      User.find({ role: "artist" })
-        .select("firstName lastName userName email artistInfo.companyName storage subscriptionTier")
-        .sort(sort)
-        .skip(skip)
-        .limit(Number(limit)),
-      User.countDocuments({ role: "artist" }),
+      User.aggregate(aggregationPipeline),
+      User.countDocuments({ role: { $in: ["artist", "admin", "superAdmin"] } }),
     ]);
 
     res.status(200).json({
@@ -586,6 +705,43 @@ router.patch("/storage/:userId", isAuthenticated, isSuperAdmin, async (req, res,
     res.status(200).json({ data: user });
   } catch (error) {
     next(error);
+  }
+});
+
+// GET /api/platform/storage/:userId/files - List all files for a user (SuperAdmin Only)
+router.get("/storage/:userId/files", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  try {
+     const { userId } = req.params;
+     const { listFolderContent } = require("../utils/r2");
+     
+     // Folders to check
+     const folders = [
+         `artworks/${userId}`,
+         `videos/${userId}`,
+         `events/${userId}`,
+         `profiles/${userId}`,
+         `logos/${userId}`
+     ];
+     
+     // Fetch all parallely
+     const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
+     
+     // Flatten and categorize
+     const files = results.flat().map(file => {
+          // Add type based on key
+          let type = "other";
+          if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
+          else if (file.key.startsWith(`videos/${userId}`)) type = "video";
+          else if (file.key.startsWith(`events/${userId}`)) type = "event";
+          else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
+          else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
+          
+          return { ...file, type };
+     });
+     
+     res.status(200).json({ data: files });
+  } catch (error) {
+     next(error);
   }
 });
 

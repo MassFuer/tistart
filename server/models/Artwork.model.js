@@ -134,6 +134,11 @@ const artworkSchema = new Schema(
       type: String,
       select: false,
     },
+    // Analytics
+    views: {
+        type: Number,
+        default: 0
+    }
   },
   {
     timestamps: true,

@@ -34,6 +34,7 @@ import EventsMap from "../components/map/EventsMap"; // Reuse existing map for u
 import ArtworkManager from "../components/dashboard/ArtworkManager";
 import EventManagement from "../components/dashboard/EventManagement";
 import ArtistApplications from "../components/dashboard/ArtistApplications";
+import StorageManager from "../components/dashboard/StorageManager";
 
 const DashboardPage = () => {
   const { user, isArtist, isAdmin } = useAuth();
@@ -168,6 +169,7 @@ const DashboardPage = () => {
           {(isArtist || isAdmin) && <TabsTrigger value="artworks" className="md:flex-1">Artworks</TabsTrigger>}
           {(isArtist || isAdmin) && <TabsTrigger value="events" className="md:flex-1">Events</TabsTrigger>}
           {isAdmin && <TabsTrigger value="applications" className="md:flex-1">Applications</TabsTrigger>}
+          {(isArtist || isAdmin) && <TabsTrigger value="storage" className="md:flex-1">Storage</TabsTrigger>}
           <TabsTrigger value="settings" className="md:flex-1">Settings</TabsTrigger>
         </TabsList>
 
@@ -385,6 +387,13 @@ const DashboardPage = () => {
         <TabsContent value="settings">
            <ProfileSettings />
         </TabsContent>
+
+        {/* STORAGE TAB (Artists/Admins) */}
+        {(isArtist || isAdmin) && (
+            <TabsContent value="storage" className="space-y-6">
+                <StorageManager />
+            </TabsContent>
+        )}
 
       </Tabs>
     </div>

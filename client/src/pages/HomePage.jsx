@@ -94,7 +94,7 @@ const HomePage = () => {
               words={[
                 "Innovation",
                 "Creativity",
-                "Ironhack 🧑‍💻",
+                "Ironhack ",
                 "Passion",
                 "Future",
                 "Marseille",

@@ -61,12 +61,23 @@ const ArtworkDetailPage = () => {
     fetchArtwork();
   }, [id]);
 
+  const [hasViewed, setHasViewed] = useState(false);
+
   const fetchArtwork = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await artworksAPI.getOne(id);
-      setArtwork(response.data.data);
+      const data = response.data.data;
+      setArtwork(data);
+
+      // Track View (Images/Sculptures/etc)
+      // Videos are tracked in VideoPlayer when played
+      if (data.category !== 'video' && !hasViewed) {
+         artworksAPI.incrementView(id).catch(err => console.error("Failed to track view", err));
+         setHasViewed(true);
+      }
+
     } catch (error) {
       console.error(error);
       setError("Failed to load artwork. It might have been removed.");

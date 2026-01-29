@@ -26,6 +26,10 @@ const platformStatsSchema = new Schema(
       totalRevenue: { type: Number, default: 0 },
       totalPlatformFees: { type: Number, default: 0 },
     },
+    storage: {
+      totalBytes: { type: Number, default: 0 },
+      lastUpdated: { type: Date, default: Date.now },
+    },
     lastUpdated: {
       type: Date,
       default: Date.now,

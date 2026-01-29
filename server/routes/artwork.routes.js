@@ -617,4 +617,15 @@ router.get("/artist/:artistId", async (req, res, next) => {
   }
 });
 
+// POST /api/artworks/:id/view - Increment view count
+router.post("/:id/view", async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        await Artwork.findByIdAndUpdate(id, { $inc: { views: 1 } });
+        res.status(200).json({ message: "View counted" });
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;

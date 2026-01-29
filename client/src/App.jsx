@@ -52,6 +52,7 @@ import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 // Error Boundaries
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 // App css removed
 
@@ -63,6 +64,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <ScrollToTop />
         <NavigationProvider>
         <ThemeProvider>
           <AuthProvider>
@@ -70,7 +72,7 @@ function App() {
             <CartProvider>
               <div className="app min-h-screen flex flex-col">
               <Navbar />
-              <main className="main-content flex-1 flex flex-col">
+              <main className="main-content flex-1 flex flex-col pt-16">
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={withEB(<HomePage />)} />

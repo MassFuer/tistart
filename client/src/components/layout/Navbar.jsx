@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useNavigation } from "../../context/NavigationContext";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
@@ -23,6 +24,9 @@ import {
   Sun,
   MessageCircle,
   Film,
+  Home,
+  Image as ImageIcon,
+  CreditCard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,16 +45,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Assuming Avatar not installed, will fallback to img or circle
-// Actually I didn't install Avatar... I'll use simple img tag or circle div
-// Or use Lucide User icon
 
 const Navbar = () => {
   const { user, isAuthenticated, isVerifiedArtist, isAdmin, isSuperAdmin, logout } = useAuth();
   const { cartCount } = useCart();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { unreadCount } = useMessaging();
-  const [hidden, setHidden] = useState(false);
+  const { isNavbarHidden, setIsNavbarHidden } = useNavigation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
   const { scrollY } = useScroll();
@@ -58,10 +59,10 @@ const Navbar = () => {
   // Hide navbar on scroll down
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
-    if (latest > previous && latest > 150) {
-      setHidden(true);
+    if (latest > previous && latest > 20) {
+      setIsNavbarHidden(true);
     } else {
-      setHidden(false);
+      setIsNavbarHidden(false);
     }
   });
 
@@ -81,55 +82,31 @@ const Navbar = () => {
     setIsSheetOpen(false);
   };
 
+  const NAV_LINKS = [
+    { to: "/", label: "Home", icon: Home },
+    { to: "/gallery", label: "Gallery", icon: ImageIcon },
+    { to: "/events", label: "Events", icon: Calendar },
+    { to: "/videos", label: "Videos", icon: Film },
+    { to: "/pricing", label: "Plans", icon: CreditCard },
+  ];
+
   const NavItems = ({ mobile = false }) => (
     <>
-      <NavLink 
-        to="/" 
-        className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-        }
-        onClick={handleNavClick}
-      >
-        Home
-      </NavLink>
-      <NavLink 
-        to="/gallery" 
-        className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-        }
-        onClick={handleNavClick}
-      >
-        Gallery
-      </NavLink>
-      <NavLink 
-        to="/events" 
-        className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-        }
-        onClick={handleNavClick}
-      >
-        Events
-      </NavLink>
-
-      <NavLink 
-        to="/videos" 
-        className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-        }
-        onClick={handleNavClick}
-      >
-       <Film className="h-4 w-4" />
-      </NavLink>
-      
-      <NavLink 
-        to="/pricing" 
-        className={({ isActive }) => 
-          `text-sm font-medium transition-colors hover:text-foreground ${isActive ? "text-foreground font-bold" : "text-muted-foreground"} ${mobile ? "text-lg py-2" : ""}`
-        }
-        onClick={handleNavClick}
-      >
-        Plans
-      </NavLink>
+      {NAV_LINKS.map(({ to, label, icon: Icon }) => (
+        <NavLink
+          key={to}
+          to={to}
+          className={({ isActive }) =>
+            `flex items-center gap-2 text-sm font-medium transition-colors hover:text-foreground ${
+              isActive ? "text-foreground font-bold" : "text-muted-foreground"
+            } ${mobile ? "text-lg py-2 w-full" : "px-3 py-2"}`
+          }
+          onClick={handleNavClick}
+        >
+          <Icon className="h-4 w-4" />
+          <span className={mobile ? "" : "hidden lg:inline"}>{label}</span>
+        </NavLink>
+      ))}
     </>
   );
 
@@ -139,9 +116,9 @@ const Navbar = () => {
         visible: { y: 0 },
         hidden: { y: "-100%" }
       }}
-      animate={hidden ? "hidden" : "visible"}
+      animate={isNavbarHidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div className="w-full flex h-16 items-center px-4 md:px-12">
         {/* LOGO - Left */}
@@ -151,12 +128,12 @@ const Navbar = () => {
         </Link>
 
         {/* DESKTOP NAV - Center */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-12 text-sm">
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-1 text-sm">
           <NavItems />
         </nav>
 
         {/* RIGHT ACTIONS - Right */}
-        <div className="flex items-center justify-end space-x-4 ml-auto">
+        <div className="flex items-center justify-end space-x-2 ml-auto">
           
           {/* Theme Toggle */}
           <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="h-9 w-9">
@@ -164,42 +141,17 @@ const Navbar = () => {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {/* Favorites Icon */}
-          {isAuthenticated && (
-            <Link to="/favorites" onClick={handleNavClick}>
-               <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Heart className="h-4 w-4" />
-                  <span className="sr-only">Favorites</span>
-               </Button>
-            </Link>
-          )}
-
-          {/* Messages */}
-          {isAuthenticated && (
-            <Link to="/messages" onClick={handleNavClick}>
-              <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                <MessageCircle className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground animate-in zoom-in">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-                <span className="sr-only">Messages</span>
-              </Button>
-            </Link>
-          )}
-
           {/* Cart */}
           {isAuthenticated && (
             <Link to="/cart" onClick={handleNavClick}>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                <Button variant="ghost" className="relative h-9 px-0 w-9 lg:w-auto lg:px-3 gap-2">
                     <ShoppingCart className="h-4 w-4" />
+                    <span className="hidden lg:inline">Cart</span>
                     {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground animate-in zoom-in">
+                        <span className="absolute -top-1 -right-1 lg:top-0 lg:right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground animate-in zoom-in">
                             {cartCount}
                         </span>
                     )}
-                    <span className="sr-only">Cart</span>
                 </Button>
             </Link>
           )}
@@ -208,7 +160,10 @@ const Navbar = () => {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full p-0 overflow-hidden">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full p-0 overflow-hidden ml-2">
+                    {unreadCount > 0 && (
+                        <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-background z-10 animate-pulse" />
+                    )}
                     {user?.profilePicture ? (
                          <img src={user.profilePicture} alt={user.firstName} className="h-full w-full rounded-full object-cover" />
                     ) : (
@@ -226,6 +181,9 @@ const Navbar = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link to="/favorites"><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
+                </DropdownMenuItem>
                 {(isVerifiedArtist || isAdmin || isSuperAdmin) && (
                     <DropdownMenuItem asChild>
                         <Link to={`/artists/${user._id}`}><User className="mr-2 h-4 w-4" /> Public Profile</Link>
@@ -247,18 +205,22 @@ const Navbar = () => {
                       )}
                     </Link>
                 </DropdownMenuItem>
+
+                
+                <DropdownMenuSeparator />
+                
                 <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
                     {(isVerifiedArtist || isAdmin) ? (
                         <Link to="/dashboard?tab=artworks"><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
                     ) : (
-                        <span className="flex items-center w-full"><Palette className="mr-2 h-4 w-4" /> Artworks</span>
+                        <span className="flex items-center w-full opacity-50"><Palette className="mr-2 h-4 w-4" /> Artworks</span>
                     )}
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
                     {(isVerifiedArtist || isAdmin) ? (
                         <Link to="/dashboard?tab=events"><Calendar className="mr-2 h-4 w-4" /> Events</Link>
                     ) : (
-                        <span className="flex items-center w-full"><Calendar className="mr-2 h-4 w-4" /> Events</span>
+                        <span className="flex items-center w-full opacity-50"><Calendar className="mr-2 h-4 w-4" /> Events</span>
                     )}
                 </DropdownMenuItem>
                 {isAdmin && (
@@ -269,7 +231,7 @@ const Navbar = () => {
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                    <LogOut className="mr-2 h-4 w-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

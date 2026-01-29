@@ -29,11 +29,24 @@ export const useScrollRestore = (isReady = true) => {
     const scrollY = typeof stateScroll === "number" ? stateScroll : savedScroll;
 
     if (scrollY > 0) {
-      // Small delay to ensure DOM is ready after data load
+       // Disable browser native restoration just in case
+       if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'manual';
+       }
+
+      // Delay to ensure DOM is ready after data load
       const timer = setTimeout(() => {
         window.scrollTo({ top: scrollY, behavior: "instant" });
         hasRestored.current = true;
-      }, 50);
+        
+        // Double check after another small delay (e.g. if images loaded)
+        setTimeout(() => {
+           if (Math.abs(window.scrollY - scrollY) > 20) {
+               window.scrollTo({ top: scrollY, behavior: "instant" });
+           }
+        }, 200);
+
+      }, 500);
 
       return () => clearTimeout(timer);
     } else {

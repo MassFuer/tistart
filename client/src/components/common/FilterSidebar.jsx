@@ -10,6 +10,7 @@ import {
   SheetFooter,
   SheetClose,
 } from "@/components/ui/sheet";
+import { useNavigation } from "../../context/NavigationContext";
 
 /**
  * Mobile filter sheet — renders a trigger button and a slide-out panel.
@@ -48,10 +49,15 @@ export const FilterSheet = ({
  * Desktop filter sidebar — sticky aside panel.
  * Place in the page layout next to the main content area.
  */
-export const FilterAside = ({ children, show = true }) => {
+export const FilterAside = ({ children, show = true, headerVisible = "10rem", headerHidden = "6rem" }) => {
+  const { isNavbarHidden } = useNavigation();
+  
   if (!show) return null;
   return (
-    <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-24 self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm">
+    <aside 
+      className="hidden lg:block w-72 flex-shrink-0 sticky self-start p-6 border rounded-xl bg-card/50 shadow-sm backdrop-blur-sm transition-[top] duration-300 ease-in-out"
+      style={{ top: isNavbarHidden ? headerHidden : headerVisible }}
+    >
       {children}
     </aside>
   );

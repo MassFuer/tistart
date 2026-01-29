@@ -384,6 +384,9 @@
                   "artist": {
                     "example": "any"
                   },
+                  "video": {
+                    "example": "any"
+                  },
                   "title": {
                     "example": "any"
                   },
@@ -440,6 +443,9 @@
       "get": {
         "description": "",
         "responses": {
+          "200": {
+            "description": "OK"
+          },
           "403": {
             "description": "Forbidden"
           },
@@ -506,6 +512,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "video": {
+                    "example": "any"
+                  },
                   "images": {
                     "example": "any"
                   },
@@ -840,6 +849,37 @@
         }
       }
     },
+    "/{id}/confirm-attendance/{token}": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/{id}/attendees": {
       "get": {
         "description": "",
@@ -848,6 +888,20 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
             "schema": {
               "type": "string"
             }

@@ -22,6 +22,18 @@ const platformSettingsSchema = new Schema(
         type: Number,
         default: 5 * 1024 * 1024 * 1024, // 5GB default
       },
+      maxPlatformBytes: {
+        type: Number,
+        default: 500 * 1024 * 1024 * 1024, // 500GB default
+      },
+      alertThresholdPercent: {
+        type: Number,
+        default: 80, // Alert at 80% usage
+      },
+      lastAlertSent: {
+        type: Date,
+        default: null,
+      },
       maxImageSizeMB: {
         type: Number,
         default: 10, // 10MB max per image

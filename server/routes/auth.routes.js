@@ -92,7 +92,7 @@ router.post(
 
       // Send verification email asynchronously (fire and forget)
       // This prevents the signup process from hanging if the email service is slow/down
-      sendVerificationEmail(newUser.email, newUser.firstName, verificationLink)
+      sendVerificationEmail(newUser.email, newUser.firstName, verificationLink, newUser._id)
         .catch(emailError => {
           console.error("Failed to send verification email:", emailError);
           // Email failure shouldn't block signup success
@@ -186,6 +186,7 @@ router.post(
         artistStatus: user.artistStatus,
         artistInfo: user.role === "artist" ? user.artistInfo : undefined,
         isEmailVerified: user.isEmailVerified,
+        storage: user.storage,
       };
 
       res.status(200).json({ data: userResponse });
@@ -220,6 +221,7 @@ router.get("/verify", isAuthenticated, attachUser, (req, res) => {
     artistInfo: req.user.role === "artist" ? req.user.artistInfo : undefined,
     isEmailVerified: req.user.isEmailVerified,
     favorites: req.user.favorites || [],
+    storage: req.user.storage,
   };
 
   res.status(200).json({ data: userResponse });
@@ -252,7 +254,7 @@ router.post("/verify-email", async (req, res, next) => {
 
     // Send welcome email
     try {
-      await sendWelcomeEmail(user.email, user.firstName);
+      await sendWelcomeEmail(user.email, user.firstName, user._id);
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
     }
@@ -436,7 +438,7 @@ router.post("/apply-artist", isAuthenticated, attachUser, async (req, res, next)
 
     // Send application received email
     try {
-      await sendArtistApplicationEmail(updatedUser.email, updatedUser.firstName);
+      await sendArtistApplicationEmail(updatedUser.email, updatedUser.firstName, updatedUser._id);
     } catch (emailError) {
       console.error("Failed to send artist application email:", emailError);
     }

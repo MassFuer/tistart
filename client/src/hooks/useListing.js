@@ -33,6 +33,9 @@ export const useListing = ({
       const urlPage = searchParams.get("page");
       if (urlPage) base.page = parseInt(urlPage, 10) || 1;
 
+      const urlLimit = searchParams.get("limit");
+      if (urlLimit) base.limit = parseInt(urlLimit, 10) || 12;
+
       Object.keys(initialFilters).forEach((key) => {
         const urlValue = searchParams.get(key);
         if (urlValue !== null && urlValue !== "") {
@@ -96,6 +99,10 @@ export const useListing = ({
 
     if (filters.page > 1) {
       params.set("page", filters.page.toString());
+    }
+
+    if (filters.limit && Number(filters.limit) !== 12) {
+      params.set("limit", filters.limit.toString());
     }
 
     if (sort && sort !== initialSort) {

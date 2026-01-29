@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -31,8 +31,22 @@ import EventFilters from "../components/event/EventFilters";
 
 const EventsPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
-  const { saveScrollPosition } = useNavigation();
-  const [viewMode, setViewMode] = useState("grid"); // 'grid', 'calendar', 'map'
+  const { saveScrollPosition, isNavbarHidden } = useNavigation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Sync viewMode with URL
+  const viewMode = searchParams.get("view") || "grid";
+  const setViewMode = (mode) => {
+      const newParams = new URLSearchParams(searchParams);
+      if (mode === "grid") {
+         newParams.delete("view");
+      } else {
+         newParams.set("view", mode);
+      }
+      setSearchParams(newParams);
+      window.scrollTo(0, 0);
+  };
+
   const [meta, setMeta] = useState({ cities: [], companies: [], artists: [] });
 
   // Fetch Filter Meta
@@ -134,50 +148,58 @@ const EventsPage = () => {
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
         {/* HEADER */}
-        <div className="bg-background py-4 mb-8 border-b">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Events</h1>
-                    <p className="text-muted-foreground">
-                        Showing {events.length} of {pagination.total || 0} events
-                    </p>
-                </div>
+        <div 
+            className="fixed left-0 right-0 z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm"
+            style={{ top: isNavbarHidden ? "0px" : "4rem" }}
+        >
+            <div className="container mx-auto px-4 py-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+                        <p className="text-muted-foreground">
+                            Showing {events.length} of {pagination.total || 0} events
+                        </p>
+                    </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto flex-wrap justify-end">
-                    {/* View Mode Tabs */}
-                    <TabsList>
-                        <TabsTrigger value="grid" className="px-3">
-                            <ListIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">List</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="map" className="px-3">
-                            <MapIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Map</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="calendar" className="px-3">
-                            <CalendarIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Calendar</span>
-                        </TabsTrigger>
-                    </TabsList>
+                    <div className="flex items-center gap-2 w-full md:w-auto flex-wrap justify-end">
+                        {/* View Mode Tabs */}
+                        <TabsList>
+                            <TabsTrigger value="grid" className="px-3">
+                                <ListIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">List</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="map" className="px-3">
+                                <MapIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Map</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="calendar" className="px-3">
+                                <CalendarIcon className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">Calendar</span>
+                            </TabsTrigger>
+                        </TabsList>
 
-                    {/* Mobile Filter */}
-                    <FilterSheet title="Filter Events" description="Refine your search">
-                        <EventFilters
-                            filters={filters}
-                            updateFilter={updateFilter}
-                            clearAllFilters={clearAllFilters}
-                            meta={meta}
-                        />
-                    </FilterSheet>
+                        {/* Mobile Filter */}
+                        <FilterSheet title="Filter Events" description="Refine your search">
+                            <EventFilters
+                                filters={filters}
+                                updateFilter={updateFilter}
+                                clearAllFilters={clearAllFilters}
+                                meta={meta}
+                            />
+                        </FilterSheet>
 
-                    {(isVerifiedArtist || isAdmin) && (
-                       <Button asChild size="sm">
-                          <Link to="/events/new" onClick={() => saveScrollPosition()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Create Event
-                          </Link>
-                       </Button>
-                    )}
+                        {(isVerifiedArtist || isAdmin) && (
+                           <Button asChild size="sm">
+                              <Link to="/events/new" onClick={() => saveScrollPosition()}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create Event
+                              </Link>
+                           </Button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
+
+        {/* Spacer */}
+        <div className="h-[200px] md:h-[120px] w-full" />
 
         <div className="flex flex-col lg:flex-row gap-8 relative items-start">
             {/* DESKTOP SIDEBAR */}
@@ -209,17 +231,13 @@ const EventsPage = () => {
                                         <EventCard key={event._id} event={event} />
                                     ))}
                                 </div>
-                                <div className="flex items-center justify-between mt-4">
-                                    <PageSizeSelector
-                                        value={filters.limit || 12}
-                                        onChange={(size) => updateFilter("limit", size)}
-                                    />
                                     <Pagination
                                         currentPage={pagination.page}
                                         totalPages={pagination.pages}
                                         onPageChange={setPage}
+                                        itemsPerPage={filters.limit || 12}
+                                        onItemsPerPageChange={(size) => updateFilter("limit", size)}
                                     />
-                                </div>
                             </>
                         )}
                     </TabsContent>

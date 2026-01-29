@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { videosAPI } from "../../services/api";
+import { videosAPI, artworksAPI } from "../../services/api";
 import { toast } from "sonner";
 import { 
   Lock, 
@@ -60,6 +60,7 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
   const [showControls, setShowControls] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [hasViewed, setHasViewed] = useState(false);
 
   const video = artwork?.video;
 
@@ -277,6 +278,8 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
             src={videoSrc}
             className="w-full h-full object-contain"
             poster={video.thumbnailUrl || artwork.images?.[0]}
+            onContextMenu={(e) => e.preventDefault()}
+            controlsList="nodownload"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={() => {
@@ -288,6 +291,12 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
             onPlay={() => {
                 setIsPlaying(true);
                 onPlayCallback?.();
+                
+                // Track View
+                if (!hasViewed && artwork?._id) {
+                    artworksAPI.incrementView(artwork._id).catch(err => console.error("Failed to track view", err));
+                    setHasViewed(true);
+                }
             }}
             onPause={() => {
                 setIsPlaying(false);

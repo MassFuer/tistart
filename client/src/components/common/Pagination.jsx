@@ -8,8 +8,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import PageSizeSelector from "./PageSizeSelector";
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange,
+  itemsPerPage,
+  onItemsPerPageChange 
+}) => {
   if (!totalPages || totalPages <= 1) return null;
 
   const getPageNumbers = () => {
@@ -50,42 +57,51 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   };
 
   return (
-    <ShadcnPagination className="my-4">
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious 
-            href="#" 
-            onClick={(e) => handlePageChange(e, currentPage - 1)}
-            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
-        </PaginationItem>
-        
-        {getPageNumbers().map((page, index) => (
-          <PaginationItem key={index}>
-            {page === "ellipsis" ? (
-              <PaginationEllipsis />
-            ) : (
-              <PaginationLink
-                href="#"
-                isActive={currentPage === page}
-                onClick={(e) => handlePageChange(e, page)}
-                className="cursor-pointer"
-              >
-                {page}
-              </PaginationLink>
-            )}
+    <div className="flex flex-col items-center gap-4 mt-8">
+      <ShadcnPagination className="my-0">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              href="#" 
+              onClick={(e) => handlePageChange(e, currentPage - 1)}
+              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
           </PaginationItem>
-        ))}
+          
+          {getPageNumbers().map((page, index) => (
+            <PaginationItem key={index}>
+              {page === "ellipsis" ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  href="#"
+                  isActive={currentPage === page}
+                  onClick={(e) => handlePageChange(e, page)}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
 
-        <PaginationItem>
-          <PaginationNext 
-            href="#" 
-            onClick={(e) => handlePageChange(e, currentPage + 1)}
-            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </ShadcnPagination>
+          <PaginationItem>
+            <PaginationNext 
+              href="#" 
+              onClick={(e) => handlePageChange(e, currentPage + 1)}
+              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </ShadcnPagination>
+
+      {itemsPerPage && onItemsPerPageChange && (
+        <PageSizeSelector 
+            value={itemsPerPage} 
+            onChange={onItemsPerPageChange} 
+        />
+      )}
+    </div>
   );
 };
 

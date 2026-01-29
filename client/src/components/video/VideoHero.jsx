@@ -32,6 +32,16 @@ const VideoHero = ({ compact = false }) => {
     fetchConfig();
   }, []);
 
+  // Ensure audio stops when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
   // Handle mute toggle
   const toggleMute = () => {
     const newState = !isMuted;

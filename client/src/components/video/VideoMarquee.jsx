@@ -3,6 +3,9 @@ import { motion } from "framer-motion";
 import { artworksAPI } from "../../services/api";
 import { Loader2 } from "lucide-react";
 import VideoLibraryCard from "./VideoLibraryCard";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ArrowRight, Popcorn } from "lucide-react";
 
 const VideoMarquee = () => {
   const [videos, setVideos] = useState([]);
@@ -44,37 +47,70 @@ const VideoMarquee = () => {
 
   return (
     <div className="relative h-full w-full bg-black overflow-hidden flex flex-col justify-center">
-      <div className="absolute top-4 left-6 z-10 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          <h3 className="text-sm font-medium tracking-widest uppercase text-white/50">Featured Selection</h3>
+      <div className="absolute top-4 left-6 z-10 flex items-center gap-4">
+          <Link to="/video-library" className="flex items-center gap-2 group/label">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <h3 className="text-sm font-medium tracking-widest uppercase text-white/50 group-hover/label:text-white transition-colors">Featured Selection</h3>
+          </Link>
+          
+          <Button asChild variant="ghost" size="sm" className="text-white hover:bg-gray-500 hover:text-white gap-2 group border border-white/10 bg-white/5">
+              <Link to="/video-library">
+                  Go to library <Popcorn /> 
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+          </Button>
       </div>
 
       <div 
-        className="flex w-full group/marquee" 
+        className="flex flex-col gap-4 w-full group/marquee" 
         style={{ overflow: 'hidden' }}
       >
+        {/* Row 1: Standard Marquee */}
         <div 
             className="flex gap-6 px-6 animate-marquee group-hover/marquee:[animation-play-state:paused] active:[animation-play-state:paused]"
             style={{ width: "max-content" }}
         >
             {marqueeVideos.map((video, index) => (
                 <VideoLibraryCard 
-                    key={`${video._id}-${index}`} 
+                    key={`r1-${video._id}-${index}`} 
                     video={video} 
-                    className="h-[25vh] shrink-0"
+                    className="h-[18vh] w-[32vh] shrink-0"
+                    compact={true}
+                />
+            ))}
+        </div>
+
+        {/* Row 2: Reverse Marquee */}
+        <div 
+            className="flex gap-6 px-6 animate-marquee-reverse group-hover/marquee:[animation-play-state:paused] active:[animation-play-state:paused]"
+            style={{ width: "max-content" }}
+        >
+            {marqueeVideos.map((video, index) => (
+                <VideoLibraryCard 
+                    key={`r2-${video._id}-${index}`} 
+                    video={video} 
+                    className="h-[18vh] w-[32vh] shrink-0"
+                    compact={true}
                 />
             ))}
         </div>
       </div>
       
-      {/* Styles for marquee animation manually injecting style tag since tailwind config might be missing 'animate-marquee' */}
+      {/* Styles for marquee animation */}
       <style>{`
         @keyframes marquee {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
+        @keyframes marquee-reverse {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
         .animate-marquee {
             animation: marquee 150s linear infinite;
+        }
+        .animate-marquee-reverse {
+            animation: marquee-reverse 150s linear infinite;
         }
       `}</style>
     </div>

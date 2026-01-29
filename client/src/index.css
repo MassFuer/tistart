@@ -86,7 +86,7 @@
   html, body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    overflow-x: hidden; /* avoid horizontal scrollbar on mobile */
+    /* overflow-x: hidden; REMOVED to fix sticky sidebar issues */
   }
 }
 

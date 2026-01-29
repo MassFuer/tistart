@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, DollarSign, Users, Package, Palette, HardDrive, Filter } from "lucide-react";
+import { Search, DollarSign, Users, Package, Palette, HardDrive, Filter, Eye, AlertTriangle } from "lucide-react";
 
 const AdminPage = () => {
   const { user: currentUser } = useAuth();
@@ -36,6 +36,7 @@ const AdminPage = () => {
   
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const isSuperAdmin = currentUser?.role === "superAdmin";
   const artistStatuses = ["none", "pending", "incomplete", "verified", "suspended"];
@@ -47,6 +48,16 @@ const AdminPage = () => {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  // Check for pending applications
+  useEffect(() => {
+    // We check this periodically or when users tab is active to show the alert
+    if (activeTab === "users" || activeTab === "stats") {
+        adminAPI.getAllUsers({ artistStatus: 'pending', limit: 1 })
+            .then(res => setPendingCount(res.data.pagination?.total || 0))
+            .catch(err => console.error("Failed to check pending apps", err));
+    }
+  }, [activeTab, stats]); // Re-check when stats refresh or tab changes
 
   // Update URL when active tab changes
   const handleTabChange = (val) => {
@@ -73,7 +84,7 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    if (activeTab === "stats") {
+    if (activeTab === "stats" || activeTab === "analytics") {
       fetchStats();
     }
   }, [statsPeriod, activeTab]);
@@ -95,7 +106,7 @@ const AdminPage = () => {
     refresh: refreshUsers
   } = useListing({
     apiFetcher: fetchUsersWrapper,
-    initialFilters: { artistStatus: "all", limit: 20 },
+    initialFilters: { artistStatus: "all", limit: 20, search: "" },
     enabled: activeTab === "users",
   });
 
@@ -139,6 +150,32 @@ const AdminPage = () => {
       initialFilters: { status: "all", limit: 20 },
       enabled: activeTab === "orders",
   });
+
+  // --- STORAGE LISTING (SuperAdmin) ---
+  const fetchStorageWrapper = useCallback((params) => {
+      return platformAPI.getStorageUsage(params);
+  }, []);
+
+  const {
+      data: storageUsers,
+      loading: storageLoading,
+      pagination: storagePagination,
+      filters: storageFilters,
+      updateFilter: updateStorageFilter,
+      setPage: setStoragePage,
+  } = useListing({
+      apiFetcher: fetchStorageWrapper,
+      initialFilters: { limit: 20, sort: "storage.totalBytes", order: "desc" },
+      enabled: activeTab === "storage" && isSuperAdmin,
+  });
+
+  const handleStorageSort = (column) => {
+      const currentSort = storageFilters.sort;
+      const currentOrder = storageFilters.order || "desc";
+      const newOrder = currentSort === column && currentOrder === "desc" ? "asc" : "desc";
+      
+      updateStorageFilter({ sort: column, order: newOrder });
+  };
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -205,7 +242,7 @@ const AdminPage = () => {
     <div className="container mx-auto py-8 px-4 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
             <p className="text-muted-foreground mt-1">
                 Manage users, artists, orders, and platform statistics.
             </p>
@@ -213,11 +250,13 @@ const AdminPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
           <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="users">Users & Artists</TabsTrigger>
-          <TabsTrigger value="orders">Orders Management</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="theme">Appearance</TabsTrigger>
+          {isSuperAdmin && <TabsTrigger value="storage">Storage</TabsTrigger>}
         </TabsList>
 
         {/* --- STATS TAB --- */}
@@ -291,7 +330,10 @@ const AdminPage = () => {
               {/* Detailed Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  {/* Users Stats */}
-                 <Card>
+                 <Card 
+                    className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => handleTabChange("users")}
+                 >
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/> User Demographics</CardTitle>
                     </CardHeader>
@@ -316,7 +358,10 @@ const AdminPage = () => {
                  </Card>
 
                  {/* Storage Stats */}
-                 <Card>
+                 <Card 
+                    className={isSuperAdmin ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
+                    onClick={() => isSuperAdmin && handleTabChange("storage")}
+                 >
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><HardDrive className="h-5 w-5"/> Storage Usage</CardTitle>
                     </CardHeader>
@@ -415,27 +460,51 @@ const AdminPage = () => {
           )}
         </TabsContent>
 
-         {/* --- USERS TAB --- */}
+             {/* --- USERS TAB --- */}
          <TabsContent value="users" className="space-y-4">
-             <div className="flex items-center gap-4 bg-background p-4 rounded-lg border">
-                 <Filter className="h-4 w-4 text-muted-foreground" />
-                 <span className="text-sm font-medium">Filter by Status:</span>
-                 <Select 
-                    value={usersFilters.artistStatus || "all"} 
-                    onValueChange={(val) => updateUserFilter("artistStatus", val)}
-                 >
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="All Users" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
-                        {artistStatuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                 </Select>
+             {pendingCount > 0 && usersFilters.artistStatus !== 'pending' && (
+                <div 
+                    className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors mb-4"
+                    onClick={() => updateUserFilter("artistStatus", "pending")}
+                >
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    <div>
+                         <p className="font-semibold">Action Required</p>
+                         <p className="text-sm">You have {pendingCount} pending artist application{pendingCount !== 1 ? 's' : ''}. Click here to review them.</p>
+                    </div>
+                </div>
+             )}
+
+             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-background p-4 rounded-lg border">
+                 <div className="relative w-full md:w-auto">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search users..." 
+                        value={usersFilters.search || ""} 
+                        onChange={(e) => updateUserFilter("search", e.target.value)}
+                        className="pl-8 w-full md:w-[300px]"
+                    />
+                 </div>
+                 <div className="flex items-center gap-2">
+                     <Filter className="h-4 w-4 text-muted-foreground" />
+                     <span className="text-sm font-medium">Status:</span>
+                     <Select 
+                        value={usersFilters.artistStatus || "all"} 
+                        onValueChange={(val) => updateUserFilter("artistStatus", val)}
+                     >
+                        <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder="All Users" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Users</SelectItem>
+                            {artistStatuses.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                     </Select>
+                 </div>
                  
                  {users && (
                      <div className="ml-auto text-sm text-muted-foreground">
@@ -454,6 +523,7 @@ const AdminPage = () => {
                                  <TableHead>User</TableHead>
                                  <TableHead>Role</TableHead>
                                  <TableHead>Status</TableHead>
+                                 <TableHead>Storage</TableHead>
                                  <TableHead>Company</TableHead>
                                  <TableHead>Actions</TableHead>
                              </TableRow>
@@ -461,7 +531,7 @@ const AdminPage = () => {
                          <TableBody>
                              {users.length === 0 ? (
                                  <TableRow>
-                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                          No users found.
                                      </TableCell>
                                  </TableRow>
@@ -511,6 +581,9 @@ const AdminPage = () => {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
+                                            <span className="text-xs text-muted-foreground">{formatBytes(user.storage?.totalBytes || 0)}</span>
+                                        </TableCell>
+                                        <TableCell>
                                             {user.artistInfo?.companyName || <span className="text-muted-foreground">-</span>}
                                         </TableCell>
                                         <TableCell>
@@ -557,6 +630,201 @@ const AdminPage = () => {
                  <ThemeEditor />
              </div>
         </TabsContent>
+
+        {/* --- ANALYTICS TAB --- */}
+        <TabsContent value="analytics" className="space-y-6">
+             <div className="flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Time Period:</span>
+                    <Select value={statsPeriod} onValueChange={setStatsPeriod}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select period" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Time</SelectItem>
+                            <SelectItem value="today">Today (Filtered)</SelectItem>
+                            <SelectItem value="week">Last 7 Days (Filtered)</SelectItem>
+                            <SelectItem value="month">Last 30 Days (Filtered)</SelectItem>
+                            <SelectItem value="year">Last Year (Filtered)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+             </div>
+             <p className="text-sm text-muted-foreground -mt-4 italic">
+                * Note: Currently view counts are all-time cumulative. Date filters apply to other stats.
+             </p>
+
+             {statsLoading ? (
+                 <div className="py-20 flex justify-center"><Loading message="Loading analytics..." /></div>
+             ) : stats ? (
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                     {/* Top Viewed Videos */}
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Eye className="h-5 w-5"/> Top Viewed Videos</CardTitle>
+                            <CardDescription>Most watched video content</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.topViewedVideos?.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Video Title</TableHead>
+                                            <TableHead>Artist</TableHead>
+                                            <TableHead className="text-right">Views</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {stats.topViewedVideos.map((video) => (
+                                            <TableRow 
+                                                key={video._id} 
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() => navigate(`/videos/${video._id}`)}
+                                            >
+                                                <TableCell className="font-medium truncate max-w-[200px]">{video.title}</TableCell>
+                                                <TableCell>{video.companyName || video.artistName}</TableCell>
+                                                <TableCell className="text-right font-bold">{video.views.toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="py-8 text-center text-muted-foreground">No video views yet</div>
+                            )}
+                        </CardContent>
+                     </Card>
+
+                     {/* Top Viewed Artworks */}
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5"/> Top Viewed Artworks</CardTitle>
+                            <CardDescription>Most viewed images and other media</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.topViewedOther?.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Title</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead className="text-right">Views</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {stats.topViewedOther.map((artwork) => (
+                                            <TableRow 
+                                                key={artwork._id}
+                                                className="cursor-pointer hover:bg-muted/50"
+                                                onClick={() => navigate(`/artworks/${artwork._id}`)}
+                                            >
+                                                <TableCell className="font-medium truncate max-w-[200px]">{artwork.title}</TableCell>
+                                                <TableCell className="capitalize">{artwork.category}</TableCell>
+                                                <TableCell className="text-right font-bold">{artwork.views.toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="py-8 text-center text-muted-foreground">No artwork views yet</div>
+                            )}
+                        </CardContent>
+                     </Card>
+                 </div>
+             ) : (
+                 <div className="text-center py-12 text-muted-foreground">Failed to load analytics</div>
+             )}
+        </TabsContent>
+
+        {isSuperAdmin && (
+             <TabsContent value="storage" className="space-y-4">
+                 <div className="flex justify-between items-center bg-background p-4 rounded-lg border">
+                    <h3 className="text-lg font-medium">Storage Usage by Artist</h3>
+                    <div className="text-sm text-muted-foreground">
+                        Showing {storageUsers?.length || 0} of {storagePagination.total} artists
+                    </div>
+                 </div>
+
+                 {storageLoading ? (
+                     <div className="py-20 flex justify-center"><Loading message="Loading storage data..." /></div>
+                 ) : (
+                     <Card>
+                         <Table>
+                             <TableHeader className="bg-muted/40">
+                                 <TableRow className="border-b-0 hover:bg-transparent">
+                                     <TableHead className="w-[250px] cursor-pointer" onClick={() => handleStorageSort("firstName")}>Artist / User</TableHead>
+                                     <TableHead className="cursor-pointer" onClick={() => handleStorageSort("artistInfo.companyName")}>Company</TableHead>
+                                     <TableHead className="cursor-pointer" onClick={() => handleStorageSort("subscriptionTier")}>Tier</TableHead>
+                                     <TableHead className="w-[300px] cursor-pointer" onClick={() => handleStorageSort("storage.totalBytes")}>Storage Usage</TableHead>
+                                     <TableHead className="text-right">Content</TableHead>
+                                     <TableHead className="text-right cursor-pointer" onClick={() => handleStorageSort("updatedAt")}>Last Update</TableHead>
+                                 </TableRow>
+                             </TableHeader>
+                             <TableBody>
+                                 {storageUsers?.length === 0 ? (
+                                      <TableRow>
+                                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No data found.</TableCell>
+                                      </TableRow>
+                                 ) : (
+                                     storageUsers?.map((u) => {
+                                         const usage = u.storage?.totalBytes || 0;
+                                         const limit = u.storage?.quotaBytes || 5 * 1024 * 1024 * 1024;
+                                         const percent = Math.min((usage / limit) * 100, 100);
+                                         
+                                         return (
+                                             <TableRow key={u._id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedUserId(u._id)}>
+                                                 <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                                                            {u.profilePicture ? <img src={u.profilePicture} className="h-full w-full object-cover" /> : u.firstName?.[0]}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-medium">{u.firstName} {u.lastName}</span>
+                                                            <span className="text-xs text-muted-foreground">{u.email}</span>
+                                                        </div>
+                                                    </div>
+                                                 </TableCell>
+                                                 <TableCell>{u.artistInfo?.companyName || "-"}</TableCell>
+                                                 <TableCell><Badge variant="outline" className="uppercase">{u.subscriptionTier}</Badge></TableCell>
+                                                 <TableCell>
+                                                     <div className="space-y-1">
+                                                         <div className="flex justify-between text-xs">
+                                                             <span>{formatBytes(usage)}</span>
+                                                             <span className="text-muted-foreground">of {formatBytes(limit)}</span>
+                                                         </div>
+                                                         <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                                             <div 
+                                                                className={`h-full ${percent > 90 ? "bg-destructive" : percent > 75 ? "bg-yellow-500" : "bg-primary"}`} 
+                                                                style={{ width: `${percent}%` }}
+                                                             />
+                                                         </div>
+                                                     </div>
+                                                 </TableCell>
+                                                 <TableCell className="text-right text-xs">
+                                                     <div title={formatBytes(u.storage?.videoBytes)}>
+                                                        {u.videoCount || 0} Videos <span className="text-muted-foreground">({formatBytes(u.storage?.videoBytes)})</span>
+                                                     </div>
+                                                     <div title={formatBytes(u.storage?.imageBytes)}>
+                                                        {u.imageCount || 0} Images <span className="text-muted-foreground">({formatBytes(u.storage?.imageBytes)})</span>
+                                                     </div>
+                                                 </TableCell>
+                                                  <TableCell className="text-right text-xs text-muted-foreground">
+                                                     {new Date(u.updatedAt).toLocaleDateString()}
+                                                  </TableCell>
+                                             </TableRow>
+                                         )
+                                     })
+                                 )}
+                             </TableBody>
+                         </Table>
+                         {storagePagination.pages > 1 && (
+                             <div className="p-4 border-t">
+                                 <Pagination currentPage={storagePagination.page} totalPages={storagePagination.pages} onPageChange={setStoragePage} />
+                             </div>
+                         )}
+                     </Card>
+                 )}
+             </TabsContent>
+        )}
 
         {/* --- ORDERS TAB --- */}
         <TabsContent value="orders" className="space-y-4">

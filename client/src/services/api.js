@@ -110,6 +110,7 @@ export const artworksAPI = {
     api.post(`/api/artworks/${id}/video/thumbnail`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  incrementView: (id) => api.post(`/api/artworks/${id}/view`),
 };
 
 // Events API
@@ -150,6 +151,8 @@ export const usersAPI = {
     api.delete(`/api/users/favorites/${artworkId}`),
   getAllArtists: () => api.get("/api/users/artists/all"),
   getArtistProfile: (id) => api.get(`/api/users/artist/${id}`),
+  getMyFiles: () => api.get("/api/users/storage/files"),
+  syncStorage: (userId) => api.post("/api/users/storage/sync", { userId }),
 };
 
 // Admin API
@@ -221,10 +224,10 @@ export const platformAPI = {
   updateSettings: (settings) => api.patch("/api/platform/settings", settings),
   // Statistics (Admin & SuperAdmin)
   getStats: (period) => api.get("/api/platform/stats", { params: { period } }),
-  // Storage management (SuperAdmin only)
+  // Storage (SuperAdmin)
   getStorageUsage: (params) => api.get("/api/platform/storage", { params }),
-  updateUserStorage: (userId, data) =>
-    api.patch(`/api/platform/storage/${userId}`, data),
+  updateStorageQuota: (userId, data) => api.patch(`/api/platform/storage/${userId}`, data),
+  getUserFiles: (userId) => api.get(`/api/platform/storage/${userId}/files`),
   // Maintenance mode (SuperAdmin only)
   toggleMaintenance: (data) => api.post("/api/platform/maintenance", data),
   // Asset Management (SuperAdmin only)

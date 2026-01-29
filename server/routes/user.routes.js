@@ -354,10 +354,23 @@ router.get("/", isAuthenticated, isAdmin, async (req, res, next) => {
 // GET /api/users/:id - Get single user (admin only)
 router.get("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await User.findById(req.params.id).select("-password").lean();
 
     if (!user) {
       return res.status(404).json({ error: "User not found." });
+    }
+
+    // Append storage counts for artists and admins
+    if (["artist", "admin", "superAdmin"].includes(user.role)) {
+        const [videoCount, totalArtworks] = await Promise.all([
+             Artwork.countDocuments({ artist: user._id, category: "video" }),
+             Artwork.countDocuments({ artist: user._id })
+        ]);
+        
+        user.storage = user.storage || {};
+        user.storage.videoCount = videoCount;
+        user.storage.imageCount = totalArtworks - videoCount;
+        user.storage.artworkCount = totalArtworks;
     }
 
     res.status(200).json({ data: user });
@@ -687,6 +700,128 @@ router.get("/artists/all", async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+// POST /api/users/storage/sync - Recalculate storage for current user or specific user (admin)
+router.post("/storage/sync", isAuthenticated, attachUser, async (req, res, next) => {
+  try {
+     const { userId } = req.body; // Optional userId for admins
+     const { listFolderContent } = require("../utils/r2");
+     const User = require("../models/User.model");
+
+     let targetUserId = req.user._id.toString();
+     let isTargetSuperAdmin = req.user.role === "superAdmin";
+
+     // If admin wants to sync another user
+     if (userId && (req.user.role === "admin" || req.user.role === "superAdmin")) {
+         targetUserId = userId;
+         const targetUser = await User.findById(userId);
+         if (!targetUser) return res.status(404).json({ error: "User not found" });
+         isTargetSuperAdmin = targetUser.role === "superAdmin";
+     }
+
+     // Folders to check
+     const folders = [
+         `artworks/${targetUserId}`,
+         `videos/${targetUserId}`,
+         `events/${targetUserId}`,
+         `profiles/${targetUserId}`,
+         `logos/${targetUserId}`
+     ];
+     
+     if (isTargetSuperAdmin) {
+         folders.push("platform/hero");
+     }
+
+     console.log(`[STORAGE SYNC] Syncing user ${targetUserId}, Is SuperAdmin: ${isTargetSuperAdmin}`);
+     console.log(`[STORAGE SYNC] Checking folders:`, folders);
+     
+     // Fetch all parallely
+     try {
+        const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
+        
+        let totalBytes = 0;
+        let imageBytes = 0;
+        let videoBytes = 0;
+        let fileCount = 0;
+
+        const flatFiles = results.flat();
+        console.log(`[STORAGE SYNC] Found ${flatFiles.length} files`);
+
+        flatFiles.forEach(file => {
+             totalBytes += file.size;
+             fileCount++;
+             if (file.key.includes("/videos/") || file.key.endsWith(".mp4") || file.key.endsWith(".mov")) {
+                 videoBytes += file.size;
+             } else {
+                 imageBytes += file.size;
+             }
+        });
+        
+        console.log(`[STORAGE SYNC] Calculated Total: ${totalBytes} bytes (${(totalBytes/1024/1024).toFixed(2)} MB)`);
+
+        // Update User
+        const updatedUser = await User.findByIdAndUpdate(targetUserId, {
+            "storage.totalBytes": totalBytes,
+            "storage.imageBytes": imageBytes,
+            "storage.videoBytes": videoBytes,
+            "storage.fileCount": fileCount
+        }, { new: true });
+
+        res.status(200).json({ 
+            data: updatedUser,
+            debug: {
+                targetUserId,
+                foldersChecked: folders,
+                filesFound: flatFiles.length,
+                totalBytesCalculated: totalBytes,
+                sampleFiles: flatFiles.slice(0, 3).map(f => ({ key: f.key, size: f.size }))
+            }
+        });
+     } catch (err) {
+        console.error("[STORAGE SYNC] Error:", err);
+        throw err;
+     }
+  } catch (error) {
+     next(error);
+  }
+});
+
+// GET /api/users/storage/files - Get current user's files
+router.get("/storage/files", isAuthenticated, attachUser, async (req, res, next) => {
+  try {
+     const { listFolderContent } = require("../utils/r2");
+     const userId = req.user._id.toString();
+     
+     // Folders to check
+     const folders = [
+         `artworks/${userId}`,
+         `videos/${userId}`,
+         `events/${userId}`,
+         `profiles/${userId}`,
+         `logos/${userId}`
+     ];
+     
+     // Fetch all parallely
+     const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
+     
+     // Flatten and categorize
+     const files = results.flat().map(file => {
+          // Add type based on key
+          let type = "other";
+          if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
+          else if (file.key.startsWith(`videos/${userId}`)) type = "video";
+          else if (file.key.startsWith(`events/${userId}`)) type = "event";
+          else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
+          else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
+          
+          return { ...file, type };
+     });
+     
+     res.status(200).json({ data: files });
+  } catch (error) {
+     next(error);
   }
 });
 

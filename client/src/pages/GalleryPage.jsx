@@ -8,6 +8,7 @@ import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
+import { useNavigation } from "../context/NavigationContext";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
@@ -29,6 +30,7 @@ import ArtworkFilters from "../components/artwork/ArtworkFilters";
 
 const GalleryPage = () => {
   const { isVerifiedArtist, isAdmin } = useAuth();
+  const { isNavbarHidden } = useNavigation();
   const {
     data: artworks,
     loading: isLoading,
@@ -143,59 +145,65 @@ const GalleryPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      {/* Static Header - No overlap */}
-      <div className="bg-background py-4 mb-8 border-b">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Gallery</h1>
-                  <p className="text-muted-foreground">
-                      Showing {artworks.length} of {pagination.total || 0} artworks
-                  </p>
-              </div>
-              
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                  {/* Mobile Filter Sheet */}
-                  <FilterSheet title="Filter Artworks" description="Refine your search results">
-                      <ArtworkFilters
-                            filters={filters}
-                            updateFilter={updateFilter}
-                            categories={categories}
-                            priceRange={priceRange}
-                            handlePriceChange={handlePriceChange}
-                            handlePriceCommit={handlePriceCommit}
-                            artists={artists}
-                            materialsOptions={materialsOptions}
-                            colorsOptions={colorsOptions}
-                            clearAllFilters={clearAllFilters}
-                      />
-                  </FilterSheet>
-
-
-                  
-                  <div className="w-[180px]">
-                      <Select value={sort} onValueChange={setSort}>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Sort by" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              {sortOptions.map(opt => (
-                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
+      {/* Fixed Header */}
+      <div 
+        className="fixed left-0 right-0 z-40 bg-background/95 backdrop-blur border-b transition-[top] duration-300 ease-in-out shadow-sm"
+        style={{ top: isNavbarHidden ? "0px" : "4rem" }}
+      >
+          <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                      <h1 className="text-3xl font-bold tracking-tight">Gallery</h1>
+                      <p className="text-muted-foreground">
+                          Showing {artworks.length} of {pagination.total || 0} artworks
+                      </p>
                   </div>
+                  
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                      {/* Mobile Filter Sheet */}
+                      <FilterSheet title="Filter Artworks" description="Refine your search results">
+                          <ArtworkFilters
+                                filters={filters}
+                                updateFilter={updateFilter}
+                                categories={categories}
+                                priceRange={priceRange}
+                                handlePriceChange={handlePriceChange}
+                                handlePriceCommit={handlePriceCommit}
+                                artists={artists}
+                                materialsOptions={materialsOptions}
+                                colorsOptions={colorsOptions}
+                                clearAllFilters={clearAllFilters}
+                          />
+                      </FilterSheet>
 
-                  {(isVerifiedArtist || isAdmin) && (
-                      <Button asChild size="sm">
-                          <Link to="/artworks/new">
-                              <Plus className="mr-2 h-4 w-4" />
-                              Create Artwork
-                          </Link>
-                      </Button>
-                  )}
+                      <div className="w-[180px]">
+                          <Select value={sort} onValueChange={setSort}>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Sort by" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {sortOptions.map(opt => (
+                                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                  ))}
+                              </SelectContent>
+                          </Select>
+                      </div>
+
+                      {(isVerifiedArtist || isAdmin) && (
+                          <Button asChild size="sm">
+                              <Link to="/artworks/new">
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Create Artwork
+                              </Link>
+                          </Button>
+                      )}
+                  </div>
               </div>
           </div>
       </div>
+
+      {/* Spacer */}
+      <div className="h-[210px] md:h-[120px] w-full" />
 
       <div className="flex flex-col lg:flex-row gap-8 relative items-start">
           {/* DESKTOP SIDEBAR */}
@@ -239,17 +247,13 @@ const GalleryPage = () => {
                            ))}
                        </div>
                        
-                       <div className="mt-12 flex items-center justify-between">
-                           <PageSizeSelector
-                               value={filters.limit || 12}
-                               onChange={(size) => updateFilter("limit", size)}
-                           />
-                           <Pagination
-                               currentPage={pagination.page}
-                               totalPages={pagination.pages}
-                               onPageChange={setPage}
-                           />
-                       </div>
+                        <Pagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.pages}
+                            onPageChange={setPage}
+                            itemsPerPage={filters.limit || 12}
+                            onItemsPerPageChange={(size) => updateFilter("limit", size)}
+                        />
                    </>
                )}
           </main>
