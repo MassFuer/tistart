@@ -1,131 +1,127 @@
 # Nemesis Art Platform
 
-A comprehensive platform for artists to showcase and sell their work, manage events, and connect with art lovers.
+A full-stack art marketplace and community platform for artists, collectors, and event organizers.
 
 <img src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg" alt="nemesis banner" width="500" height="334">
 
-## 🎨 Overview
+## Overview
 
-Nemesis is a full-stack art marketplace and community platform where:
-- **Art Lovers** can browse, favorite, and purchase artworks (paintings, sculpture, digital, music, video).
-- **Artists** can manage their portfolio, sell products, host events, and track sales.
-- **Admins** oversee the platform, manage users, and monitor performance.
+Nemesis connects artists with collectors through a modern e-commerce platform, event management system, and internal messaging. Built with the MERN stack (MongoDB, Express, React, Node.js).
 
-## ✨ Key Features
+**Artists** manage portfolios, sell artworks and video content, host events, and track analytics.
+**Collectors** discover art via advanced search, purchase securely via Stripe, and communicate directly with artists.
+**Admins & SuperAdmins** oversee users, moderate content, configure platform settings, and manage themes.
 
-- **E-Commerce**: Full shopping cart, checkout, payments (Stripe), and order management.
-- **Artist Portfolio**: Artists upload images/videos (stored on Cloudflare R2), manage pricing, and view analytics.
-- **Events Calendar**: Interactive map and calendar for art exhibitions, concerts, and workshops.
-- **Video Streaming**: Pay-per-view video content with secure streaming.
-- **Geolocation**: Find events and artists near you.
-- **Advanced Search**: N-gram search by title, artist, or company name.
-- **Internal Messaging**: Secure chat system for collectors to inquire about artworks directly with artists.
-- **Unified Dashboards**: Tailored experiences for Artists (Analytics, Sales) and Collectors (Orders, Favorites).
-- **Role-Based Access**: User, Artist (verified), Admin, and SuperAdmin roles.
-- **Frontend Refactoring**: Reduced code duplication across the client application.
-- **Enhanced Mobile UI/UX**: Improved dashboard responsiveness and introduced a streamlined `EventManagement` component.
-- **Security Improvements**: Hardened streaming upload endpoints.
-- **Optimized Stats**: Improved caching and calculation strategies for user and artist statistics (including on-the-fly revenue calculation).
-- **Storage Management**: Implemented quota tracking for artists/users with automatic file cleanup on deletion.
-- **Admin Capabilities**: Extended profile management, Platform Settings, and granular Theme Customization (Light/Dark modes).
+## Features
 
+- **E-Commerce** -- Shopping cart, Stripe checkout, order management, and pay-per-view video purchases
+- **Gallery & Search** -- N-gram search, category/medium/price filters, pagination with configurable page sizes
+- **Events** -- Calendar view, interactive maps, attendance with email confirmation flow, capacity tracking
+- **Messaging** -- Real-time internal chat (Socket.io) between collectors and artists with offer negotiation
+- **Video Streaming** -- Secure streaming with access control, preview mode, and purchase gating
+- **Artist Tools** -- Portfolio management, sales analytics, revenue tracking, storage quota monitoring
+- **Admin Dashboard** -- User management, platform statistics, artist application review
+- **SuperAdmin** -- Platform settings, theme customization (light/dark), appearance configuration, maintenance mode
+- **Security** -- JWT (HTTP-only cookies), CSRF protection (double-submit cookie), rate limiting, XSS/NoSQL sanitization, Helmet headers
+- **Geolocation** -- Leaflet cluster maps, address geocoding, event location display
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-**Frontend:**
-- React 19 (Vite)
-- React Router DOM
-- FullCalendar & React Leaflet (Maps)
-- Stripe Elements
-- Tailwind CSS & Shadcn UI
-- Sonner (Notifications)
+| Layer | Technologies |
+|-------|-------------|
+| Frontend | React 19, Vite, Tailwind CSS, Shadcn/UI, Framer Motion |
+| Backend | Node.js, Express 5, MongoDB (Mongoose 9) |
+| Auth | JWT, HTTP-only cookies, CSRF double-submit cookie |
+| Payments | Stripe (Elements, Webhooks) |
+| Storage | Cloudflare R2 (S3-compatible), Cloudinary |
+| Email | Resend (Handlebars templates) |
+| Real-time | Socket.io |
+| Maps | Leaflet, FullCalendar |
+| Deploy | Docker, Nginx, docker-compose |
 
-**Backend:**
-- Node.js & Express
-- MongoDB (Mongoose)
-- JWT Authentication (HTTP-only cookies)
-- Cloudflare R2 (Object Storage)
-- Nodemailer (Email)
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Node.js (v18+)
-- MongoDB running locally or Atlas URI
-- Cloudflare R2 credentials (or AWS S3 compatible)
+
+- Node.js v18+
+- MongoDB (local or Atlas)
+- Cloudflare R2 or S3-compatible storage credentials
 
 ### Installation
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/MassFuer/tistart.git
-    cd tistart
-    ```
+```bash
+git clone https://github.com/MassFuer/tistart.git
+cd tistart
 
-2.  **Install Dependencies**
-    ```bash
-    # Root (optional if you have scripts)
-    npm install
+# Server
+cd server
+npm install
 
-    # Server
-    cd server
-    npm install
+# Client
+cd ../client
+npm install
+```
 
-    # Client
-    cd ../client
-    npm install
-    ```
+### Environment Setup
 
-3.  **Environment Setup**
-    - Create `server/.env` (see [Server Docs](server/README.md))
-    - Create `client/.env` (see [Client Docs](client/README.md))
+- Copy `server/.env.example` to `server/.env` and fill in values (see [Server README](server/README.md))
+- Create `client/.env` with `VITE_API_URL` (see [Client README](client/README.md))
 
-4.  **Run Application**
+### Run Development
 
-    *Terminal 1 (Backend):*
-    ```bash
-    cd server
-    npm run dev
-    ```
+```bash
+# Terminal 1 - Backend
+cd server
+npm run dev
 
-    *Terminal 2 (Frontend):*
-    ```bash
-    cd client
-    npm run dev
-    ```
+# Terminal 2 - Frontend
+cd client
+npm run dev
+```
 
-5.  **Seed Data (Optional)**
-    ```bash
-    cd server
-    npm run seed
-    ```
+The API runs on `http://localhost:5005` and the client on `http://localhost:5173`.
 
-## 📚 Documentation
+### Seed Database (Optional)
+
+```bash
+cd server
+npm run seed
+```
+
+### Docker
+
+```bash
+docker compose up --build
+```
+
+This starts the client (Nginx on port 80), server (port 5005), and MongoDB (port 27017).
+
+## Project Structure
+
+```
+nemesis/
+  client/             # React frontend (Vite)
+  server/             # Express API backend
+  docker-compose.yml  # Multi-service orchestration
+```
+
+See [Client README](client/README.md) and [Server README](server/README.md) for detailed docs.
+
+## Documentation
 
 - [Frontend Documentation](client/README.md)
 - [Backend Documentation](server/README.md)
+- [Environment Template](server/.env.example)
 
-## 📝 Project Summary
+## Author
 
-**Nemesis** represents a complete solution for the modern art market. It bridges the gap between digital and physical art sales by offering:
+**MassFuer** -- Fullstack Developer
 
-1.  **For Artists**: A professional suite of tools to manage inventory, track sales, and reach a global audience without the overhead of building their own website. Features like "Quitzon and Sons" company branding (as seen in our extensive search optimization) support professional identities.
-2.  **For Collectors**: A secure, transparent platform to discover art via advanced search (including n-gram partial matching), view high-quality media (images/video), and purchase with confidence via Stripe.
-3.  **For Community**: An event-driven architecture that brings people together through physical and digital events, fostering a vibrant art ecosystem.
+## License
 
-The project demonstrates a robust implementation of the MERN stack (MongoDB, Express, React, Node) with enterprise-grade features like Authentication (JWT), Role-Based Access Control (RBAC), secure file storage (Cloudflare R2), and geolocation services.
-
-## 👥 Authors
-
-- **MassFuer** - *Fullstack Developer*
-
-## 📄 License
-
-This project is licensed under the MIT License.
+MIT License
 
 ## Links
 
 - [Frontend (Live)](https://tistart.netlify.app/)
 - [Backend (API)](https://tistart.onrender.com/)
-- [Deployment Guide](DEPLOYMENT.md)
-- [Database](https://www.mongodb.com/cloud/atlas)

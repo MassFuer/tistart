@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Volume2, VolumeX, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VideoText } from "@/components/ui/video-text";
 // Import API to fetch dynamic config
 import { platformAPI } from "../../services/api";
 
@@ -15,6 +14,7 @@ const VideoHero = ({ compact = false }) => {
   const [heroConfig, setHeroConfig] = useState({
       videoUrl: "",
       text: "",
+      textSize: "15vw",
       backgroundSoundUrl: ""
   });
 
@@ -47,23 +47,38 @@ const VideoHero = ({ compact = false }) => {
     }
   };
 
-  // Ensure fallback is a valid video format, not a GIF
-  const videoSource = heroConfig.videoUrl || "/videos/sequence_index_portrait.mp4"; 
+  // Ensure fallback
+  const videoSource = heroConfig.videoUrl || "https://cdn.fuer.fr/platform/hero/1769675533651-8a01626e4d5d0aec493b89bf00c594f0.mp4"; 
   const heroText = heroConfig.text || "VIDEO ARTWORKS by NEMESIS ART";
+  const backgroundSoundUrl = heroConfig.backgroundSoundUrl || "https://cdn.fuer.fr/platform/hero/1769675604532-a3b7ae66411d1a39dfac3f62f482ba4e.mp3";
 
   return (
     <div className={`relative w-full bg-black ${compact ? "h-full" : "h-[150vh]"}`}>
       {/* Sticky Container for the video effect */}
       <div className={`${compact ? "absolute inset-0 h-full" : "sticky top-0 h-screen"} w-full overflow-hidden flex items-center justify-center`}>
         
-        {/* Magic UI Video Text */}
-        <VideoText
-          src={videoSource}
-          muted={isMuted}
-          className="text-[8vw] md:text-[6vw] font-black uppercase text-center leading-none tracking-tighter"
-        >
-          {heroText}
-        </VideoText>
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-black/40 z-10" /> {/* Dimming Overlay */}
+             <video
+                className="w-full h-full object-cover"
+                autoPlay
+                muted={isMuted}
+                loop
+                playsInline
+                src={videoSource}
+             />
+        </div>
+
+        {/* Text Overlay */}
+        <div className="relative z-20 px-8 max-w-[90vw]">
+             <h1 
+                className="font-black uppercase text-center leading-none tracking-tighter text-white drop-shadow-xl"
+                style={{ fontSize: heroConfig.textSize || "15vw" }}
+             >
+                 {heroText}
+             </h1>
+        </div>
 
         {/* Controls */}
         <div className="absolute bottom-10 left-0 right-0 z-30 flex items-center justify-between px-8 sm:px-12 pointer-events-auto">
@@ -72,8 +87,8 @@ const VideoHero = ({ compact = false }) => {
           </motion.div>
 
           {/* Optional: Background Audio Player */}
-           {heroConfig.backgroundSoundUrl && (
-             <audio ref={audioRef} src={heroConfig.backgroundSoundUrl} loop />
+           {backgroundSoundUrl && (
+             <audio ref={audioRef} src={backgroundSoundUrl} loop />
            )}
 
           <Button

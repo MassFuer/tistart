@@ -8,6 +8,7 @@ const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
 const Event = require("../models/Event.model");
 const Review = require("../models/Review.model");
+const PlatformStats = require("../models/PlatformStats.model");
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/nemesis";
 
@@ -423,6 +424,7 @@ const seed = async () => {
       Artwork.deleteMany({}),
       Event.deleteMany({}),
       Review.deleteMany({}),
+      PlatformStats.deleteMany({}),
     ]);
 
     // Create data

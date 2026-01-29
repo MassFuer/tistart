@@ -123,39 +123,77 @@ const ThemeEditor = () => {
      return { h: parseFloat(parts[0]), s: parseFloat(parts[1]), l: parseFloat(parts[2]) };
   };
 
+  // Video Hero State
+  const [heroConfig, setHeroConfig] = useState({
+      text: "VIDEO ARTWORKS",
+      textSize: "15vw",
+      videoUrl: "",
+      backgroundSoundUrl: ""
+  });
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [availableVideos, setAvailableVideos] = useState([]);
+  const [availableSounds, setAvailableSounds] = useState([]);
+
   // Initialize
   useEffect(() => {
-    if (themeSettings) {
-        if (themeSettings.primary) {
-            setPrimaryColor(hslToHex(themeSettings.primary));
-        }
-        if (themeSettings.radius) setRadius(parseFloat(themeSettings.radius) || 0.5);
-        if (themeSettings.fontFamily) setFontFamily(themeSettings.fontFamily);
-        
-        // Initialize Light Mode Colors
-        if (themeSettings.cssVarsLight) {
-            if (themeSettings.cssVarsLight["--background"]) setBgColorLight(hslToHex(themeSettings.cssVarsLight["--background"]));
-            if (themeSettings.cssVarsLight["--foreground"]) setTextColorLight(hslToHex(themeSettings.cssVarsLight["--foreground"]));
-            if (themeSettings.cssVarsLight["--card"]) setCardColorLight(hslToHex(themeSettings.cssVarsLight["--card"]));
-            if (themeSettings.cssVarsLight["--card-foreground"]) setCardTextColorLight(hslToHex(themeSettings.cssVarsLight["--card-foreground"]));
-            
-            if (themeSettings.cssVarsLight["--primary-foreground"]) setPrimaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--primary-foreground"]));
-            if (themeSettings.cssVarsLight["--secondary"]) setSecondaryColorLight(hslToHex(themeSettings.cssVarsLight["--secondary"]));
-            if (themeSettings.cssVarsLight["--secondary-foreground"]) setSecondaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--secondary-foreground"]));
+    const init = async () => {
+        try {
+            // Fetch platform settings for Hero
+            const settingsRes = await platformAPI.getSettings();
+            if (settingsRes.data.data.hero) {
+                setHeroConfig(prev => ({ ...prev, ...settingsRes.data.data.hero }));
+            }
+
+            // Fetch available assets
+            const assetsRes = await platformAPI.listAssets("platform/hero");
+            if (assetsRes.data.data) {
+                const videos = assetsRes.data.data.filter(a => 
+                    a.key.endsWith('.mp4') || a.key.endsWith('.webm') || a.key.endsWith('.mov')
+                );
+                const sounds = assetsRes.data.data.filter(a => 
+                    a.key.endsWith('.mp3') || a.key.endsWith('.wav') || a.key.endsWith('.aac')
+                );
+                setAvailableVideos(videos);
+                setAvailableSounds(sounds);
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch settings or assets", error);
         }
 
-        // Initialize Dark Mode Colors
-        if (themeSettings.cssVarsDark) {
-            if (themeSettings.cssVarsDark["--background"]) setBgColorDark(hslToHex(themeSettings.cssVarsDark["--background"]));
-            if (themeSettings.cssVarsDark["--foreground"]) setTextColorDark(hslToHex(themeSettings.cssVarsDark["--foreground"]));
-            if (themeSettings.cssVarsDark["--card"]) setCardColorDark(hslToHex(themeSettings.cssVarsDark["--card"]));
-            if (themeSettings.cssVarsDark["--card-foreground"]) setCardTextColorDark(hslToHex(themeSettings.cssVarsDark["--card-foreground"]));
+        if (themeSettings) {
+            if (themeSettings.primary) {
+                setPrimaryColor(hslToHex(themeSettings.primary));
+            }
+            if (themeSettings.radius) setRadius(parseFloat(themeSettings.radius) || 0.5);
+            if (themeSettings.fontFamily) setFontFamily(themeSettings.fontFamily);
             
-            if (themeSettings.cssVarsDark["--primary-foreground"]) setPrimaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--primary-foreground"]));
-            if (themeSettings.cssVarsDark["--secondary"]) setSecondaryColorDark(hslToHex(themeSettings.cssVarsDark["--secondary"]));
-            if (themeSettings.cssVarsDark["--secondary-foreground"]) setSecondaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--secondary-foreground"]));
+            // Initialize Light Mode Colors
+            if (themeSettings.cssVarsLight) {
+                if (themeSettings.cssVarsLight["--background"]) setBgColorLight(hslToHex(themeSettings.cssVarsLight["--background"]));
+                if (themeSettings.cssVarsLight["--foreground"]) setTextColorLight(hslToHex(themeSettings.cssVarsLight["--foreground"]));
+                if (themeSettings.cssVarsLight["--card"]) setCardColorLight(hslToHex(themeSettings.cssVarsLight["--card"]));
+                if (themeSettings.cssVarsLight["--card-foreground"]) setCardTextColorLight(hslToHex(themeSettings.cssVarsLight["--card-foreground"]));
+                
+                if (themeSettings.cssVarsLight["--primary-foreground"]) setPrimaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--primary-foreground"]));
+                if (themeSettings.cssVarsLight["--secondary"]) setSecondaryColorLight(hslToHex(themeSettings.cssVarsLight["--secondary"]));
+                if (themeSettings.cssVarsLight["--secondary-foreground"]) setSecondaryForegroundLight(hslToHex(themeSettings.cssVarsLight["--secondary-foreground"]));
+            }
+
+            // Initialize Dark Mode Colors
+            if (themeSettings.cssVarsDark) {
+                if (themeSettings.cssVarsDark["--background"]) setBgColorDark(hslToHex(themeSettings.cssVarsDark["--background"]));
+                if (themeSettings.cssVarsDark["--foreground"]) setTextColorDark(hslToHex(themeSettings.cssVarsDark["--foreground"]));
+                if (themeSettings.cssVarsDark["--card"]) setCardColorDark(hslToHex(themeSettings.cssVarsDark["--card"]));
+                if (themeSettings.cssVarsDark["--card-foreground"]) setCardTextColorDark(hslToHex(themeSettings.cssVarsDark["--card-foreground"]));
+                
+                if (themeSettings.cssVarsDark["--primary-foreground"]) setPrimaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--primary-foreground"]));
+                if (themeSettings.cssVarsDark["--secondary"]) setSecondaryColorDark(hslToHex(themeSettings.cssVarsDark["--secondary"]));
+                if (themeSettings.cssVarsDark["--secondary-foreground"]) setSecondaryForegroundDark(hslToHex(themeSettings.cssVarsDark["--secondary-foreground"]));
+            }
         }
-    }
+    };
+    init();
   }, [themeSettings]);
 
   // Handle changes
@@ -283,6 +321,42 @@ const ThemeEditor = () => {
       });
   };
 
+  // Handle Asset Upload
+  const handleAssetUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Basic validation
+    if (type === "videoUrl" && !file.type.startsWith("video/")) {
+        toast.error("Please upload a valid video file.");
+        return;
+    }
+    if (type === "backgroundSoundUrl" && !file.type.startsWith("audio/")) {
+        toast.error("Please upload a valid audio file.");
+        return;
+    }
+
+    setUploadingHero(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await platformAPI.uploadAsset(formData);
+        const { url } = response.data.data;
+        
+        setHeroConfig(prev => ({
+            ...prev,
+            [type]: url
+        }));
+        toast.success(`${type === "videoUrl" ? "Video" : "Audio"} uploaded successfully!`);
+    } catch (error) {
+        console.error("Asset upload failed", error);
+        toast.error("Failed to upload file.");
+    } finally {
+        setUploadingHero(false);
+    }
+  };
+
   const handleSave = async () => {
       setIsLoading(true);
       try {
@@ -295,10 +369,11 @@ const ThemeEditor = () => {
                   fontFamily,
                   cssVarsLight: generateCssVars("light"),
                   cssVarsDark: generateCssVars("dark")
-              }
+              },
+              hero: heroConfig
           };
           await platformAPI.updateSettings(payload);
-          toast.success("Theme saved! Reloading...", {
+          toast.success("Theme & Hero saved! Reloading...", {
             action: {
               label: "Reload Now",
               onClick: () => window.location.reload(),
@@ -306,9 +381,6 @@ const ThemeEditor = () => {
             onDismiss: () => window.location.reload(),
             onAutoClose: () => window.location.reload(),
           });
-          // Fallback reload after a short delay if they don't interact? 
-          // Actually onDismiss covers manual close and auto close usually.
-          // Yet, let's keep it simple.
           setTimeout(() => window.location.reload(), 2000); 
       } catch (error) {
           console.error("Failed to save theme", error);
@@ -377,222 +449,345 @@ const ThemeEditor = () => {
   };
 
   return (
-    <Card className="w-full">
-        <CardHeader>
-            <CardTitle>Theme Customization</CardTitle>
-            <CardDescription>Customize the primary brand color and typography.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-            
-
-
-
-            
-            <div className="h-px bg-border" />
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-                <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="radius">Radius: {radius}rem</Label>
-                    <Slider
-                        id="radius"
-                        min={0}
-                        max={2}
-                        step={0.1}
-                        value={[radius]}
-                        onValueChange={handleRadiusChange}
-                        className="py-2"
-                    />
-                </div>
-
-                <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="font-family">Font Family</Label>
-                    <Select value={fontFamily} onValueChange={handleFontChange}>
-                        <SelectTrigger className="w-full h-9">
-                            <SelectValue placeholder="Select a font" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {fontOptions.map((font) => (
-                                <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                                    {font.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                
-                 <div className="space-y-2 col-span-2 md:col-span-2">
-                     <Label>Primary Brand Color</Label>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            id="primary-color"
-                            type="color"
-                            value={primaryColor}
-                            onChange={handleColorChange}
-                            className="w-12 h-9 p-0.5 cursor-pointer"
+    <div className="space-y-6">
+        {/* --- HERO CUSTOMIZATION --- */}
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle>Video Page Hero</CardTitle>
+                <CardDescription>Customize the background video, overlay text, and ambient sound for the /videos page.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2 md:col-span-3">
+                        <Label htmlFor="hero-text">Overlay Text</Label>
+                        <Input 
+                            id="hero-text" 
+                            value={heroConfig.text} 
+                            onChange={(e) => setHeroConfig(prev => ({ ...prev, text: e.target.value }))}
+                            placeholder="e.g. VIDEO ARTWORKS"
                         />
-                        <Input
-                            value={primaryColor}
-                            onChange={handleColorChange}
-                            className="font-mono text-xs w-24 h-9"
+                    </div>
+                    <div className="space-y-2 md:col-span-1">
+                        <Label htmlFor="hero-text-size">Text Size</Label>
+                        <Input 
+                            id="hero-text-size" 
+                            value={heroConfig.textSize || "15vw"} 
+                            onChange={(e) => setHeroConfig(prev => ({ ...prev, textSize: e.target.value }))}
+                            placeholder="e.g. 15vw"
                         />
-                        <p className="text-xs text-muted-foreground ml-2">
-                             Used for main buttons & active states.
-                        </p>
+                        <p className="text-[10px] text-muted-foreground">Use vw, rem, or px</p>
                     </div>
                 </div>
-            </div>
 
-            <div className="h-px bg-border" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>Background Video</Label>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex gap-2">
+                                <Input 
+                                    type="file" 
+                                    accept="video/*" 
+                                    onChange={(e) => handleAssetUpload(e, "videoUrl")}
+                                    disabled={uploadingHero}
+                                    className="cursor-pointer flex-1"
+                                />
+                                 <Select 
+                                    onValueChange={(val) => setHeroConfig(prev => ({ ...prev, videoUrl: val }))} 
+                                    value={availableVideos.find(v => v.url === heroConfig.videoUrl) ? heroConfig.videoUrl : ""}
+                                 >
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Select existing" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableVideos.map((vid) => (
+                                            <SelectItem key={vid.key} value={vid.url}>
+                                                {vid.key.split('/').pop()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-            {/* Mode Switcher */}
-            <div className="flex justify-center pb-2">
-                <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-                    <Button 
-                        variant={activeMode === "light" ? "default" : "ghost"} 
-                        size="sm"
-                        onClick={() => setActiveMode("light")}
-                        className="w-32 h-8"
-                    >
-                        ☀ Light Mode
-                    </Button>
-                    <Button 
-                        variant={activeMode === "dark" ? "default" : "ghost"} 
-                        size="sm"
-                        onClick={() => setActiveMode("dark")}
-                         className="w-32 h-8"
-                    >
-                        🌙 Dark Mode
-                    </Button>
+                            {heroConfig.videoUrl && (
+                                <div className="space-y-2 p-2 border rounded-md">
+                                    <p className="text-xs text-muted-foreground break-all">
+                                        Current: {heroConfig.videoUrl.split('/').pop()}
+                                    </p>
+                                    <video 
+                                        src={heroConfig.videoUrl} 
+                                        className="w-full h-auto max-h-[200px] rounded" 
+                                        controls 
+                                        muted
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Ambient Sound (Loop)</Label>
+                        <div className="flex flex-col gap-3">
+                             <div className="flex gap-2">
+                                <Input 
+                                    type="file" 
+                                    accept="audio/*" 
+                                    onChange={(e) => handleAssetUpload(e, "backgroundSoundUrl")}
+                                    disabled={uploadingHero}
+                                    className="cursor-pointer flex-1"
+                                />
+                                <Select 
+                                    onValueChange={(val) => setHeroConfig(prev => ({ ...prev, backgroundSoundUrl: val }))}
+                                    value={availableSounds.find(s => s.url === heroConfig.backgroundSoundUrl) ? heroConfig.backgroundSoundUrl : ""}
+                                >
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Select existing" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableSounds.map((snd) => (
+                                            <SelectItem key={snd.key} value={snd.url}>
+                                                {snd.key.split('/').pop()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {heroConfig.backgroundSoundUrl && (
+                                <div className="space-y-2 p-2 border rounded-md">
+                                    <p className="text-xs text-muted-foreground break-all">
+                                        Current: {heroConfig.backgroundSoundUrl.split('/').pop()}
+                                    </p>
+                                    <audio 
+                                        src={heroConfig.backgroundSoundUrl} 
+                                        className="w-full h-8" 
+                                        controls 
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </CardContent>
+        </Card>
 
-            <div className="p-4 border rounded-lg bg-card/50">
-                <div className="text-center pb-4">
-                    <h3 className="font-semibold text-lg">
-                        {activeMode === "light" ? "Light Mode Palette" : "Dark Mode Palette"}
-                    </h3>
-                    <p className="text-muted-foreground text-xs">
-                        {activeMode === "light" ? "Light" : "Dark"} mode specific overrides.
-                    </p>
-                </div>
+        {/* --- THEME CUSTOMIZATION --- */}
+        <Card className="w-full">
+            <CardHeader>
+                <CardTitle>Theme Customization</CardTitle>
+                <CardDescription>Customize the primary brand color and typography.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
                 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Background Color */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">App Background</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="color"
-                                value={activeMode === "light" ? bgColorLight : bgColorDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "bgColor", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
-                            />
-                        </div>
+                <div className="h-px bg-border" />
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                    <div className="space-y-2 col-span-2 md:col-span-1">
+                        <Label htmlFor="radius">Radius: {radius}rem</Label>
+                        <Slider
+                            id="radius"
+                            min={0}
+                            max={2}
+                            step={0.1}
+                            value={[radius]}
+                            onValueChange={handleRadiusChange}
+                            className="py-2"
+                        />
                     </div>
 
-                    {/* Text Color */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">App Text</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="color"
-                                value={activeMode === "light" ? textColorLight : textColorDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "textColor", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Card Background */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Card Background</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="color"
-                                value={activeMode === "light" ? cardColorLight : cardColorDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "cardColor", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Card Text */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Card Text</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="color"
-                                value={activeMode === "light" ? cardTextColorLight : cardTextColorDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "cardTextColor", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
-                            />
-                        </div>
+                    <div className="space-y-2 col-span-2 md:col-span-1">
+                        <Label htmlFor="font-family">Font Family</Label>
+                        <Select value={fontFamily} onValueChange={handleFontChange}>
+                            <SelectTrigger className="w-full h-9">
+                                <SelectValue placeholder="Select a font" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {fontOptions.map((font) => (
+                                    <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                                        {font.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     
-                    {/* Secondary Button */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Secondary Btn</Label>
+                     <div className="space-y-2 col-span-2 md:col-span-2">
+                         <Label>Primary Brand Color</Label>
                         <div className="flex items-center gap-2">
                             <Input
+                                id="primary-color"
                                 type="color"
-                                value={activeMode === "light" ? secondaryColorLight : secondaryColorDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "secColor", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
+                                value={primaryColor}
+                                onChange={handleColorChange}
+                                className="w-12 h-9 p-0.5 cursor-pointer"
                             />
-                        </div>
-                    </div>
-
-                    {/* Secondary Text */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Secondary Text</Label>
-                        <div className="flex items-center gap-2">
                             <Input
-                                type="color"
-                                value={activeMode === "light" ? secondaryForegroundLight : secondaryForegroundDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "secFg", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
+                                value={primaryColor}
+                                onChange={handleColorChange}
+                                className="font-mono text-xs w-24 h-9"
                             />
-                        </div>
-                    </div>
-
-                    {/* Primary Text */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs">Primary Btn Text</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="color"
-                                value={activeMode === "light" ? primaryForegroundLight : primaryForegroundDark}
-                                onChange={(e) => handleModeColorChange(activeMode, "primaryFg", e.target.value)}
-                                className="w-full h-8 p-1 cursor-pointer"
-                            />
+                            <p className="text-xs text-muted-foreground ml-2">
+                                 Used for main buttons & active states.
+                            </p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="p-6 border rounded-lg bg-card text-card-foreground shadow-sm">
-                <h4 className="text-sm font-medium mb-4">Preview Elements</h4>
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-3">
-                        <Button>Primary Action</Button>
-                        <Button variant="secondary">Secondary</Button>
-                        <Button variant="outline">Outline</Button>
-                        <Button variant="destructive">Destructive</Button>
-                        <Button variant="ghost">Ghost</Button>
+                <div className="h-px bg-border" />
+
+                {/* Mode Switcher */}
+                <div className="flex justify-center pb-2">
+                    <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+                        <Button 
+                            variant={activeMode === "light" ? "default" : "ghost"} 
+                            size="sm"
+                            onClick={() => setActiveMode("light")}
+                            className="w-32 h-8"
+                        >
+                            ☀ Light Mode
+                        </Button>
+                        <Button 
+                            variant={activeMode === "dark" ? "default" : "ghost"} 
+                            size="sm"
+                            onClick={() => setActiveMode("dark")}
+                             className="w-32 h-8"
+                        >
+                            🌙 Dark Mode
+                        </Button>
                     </div>
                 </div>
-            </div>
 
-        </CardContent>
-        <CardFooter className="flex justify-between">
-            <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
-                <RefreshCcw className="mr-2 h-4 w-4" /> Reset to Defaults
-            </Button>
-            <Button onClick={handleSave} disabled={isLoading}>
-                <Save className="mr-2 h-4 w-4" /> Save Changes
-            </Button>
-        </CardFooter>
-    </Card>
+                <div className="p-4 border rounded-lg bg-card/50">
+                    <div className="text-center pb-4">
+                        <h3 className="font-semibold text-lg">
+                            {activeMode === "light" ? "Light Mode Palette" : "Dark Mode Palette"}
+                        </h3>
+                        <p className="text-muted-foreground text-xs">
+                            {activeMode === "light" ? "Light" : "Dark"} mode specific overrides.
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Background Color */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">App Background</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? bgColorLight : bgColorDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "bgColor", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Text Color */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">App Text</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? textColorLight : textColorDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "textColor", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Card Background */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Card Background</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? cardColorLight : cardColorDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "cardColor", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Card Text */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Card Text</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? cardTextColorLight : cardTextColorDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "cardTextColor", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                        
+                        {/* Secondary Button */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Secondary Btn</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? secondaryColorLight : secondaryColorDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "secColor", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Secondary Text */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Secondary Text</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? secondaryForegroundLight : secondaryForegroundDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "secFg", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Primary Text */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs">Primary Btn Text</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="color"
+                                    value={activeMode === "light" ? primaryForegroundLight : primaryForegroundDark}
+                                    onChange={(e) => handleModeColorChange(activeMode, "primaryFg", e.target.value)}
+                                    className="w-full h-8 p-1 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 border rounded-lg bg-card text-card-foreground shadow-sm">
+                    <h4 className="text-sm font-medium mb-4">Preview Elements</h4>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap gap-3">
+                            <Button>Primary Action</Button>
+                            <Button variant="secondary">Secondary</Button>
+                            <Button variant="outline">Outline</Button>
+                            <Button variant="destructive">Destructive</Button>
+                            <Button variant="ghost">Ghost</Button>
+                        </div>
+                    </div>
+                </div>
+
+            </CardContent>
+            <CardFooter className="flex justify-between">
+                <Button variant="ghost" onClick={handleReset} disabled={isLoading}>
+                    <RefreshCcw className="mr-2 h-4 w-4" /> Reset to Defaults
+                </Button>
+                <Button onClick={handleSave} disabled={isLoading || uploadingHero}>
+                    {uploadingHero ? (
+                        <>Uploading...</>
+                    ) : (
+                        <><Save className="mr-2 h-4 w-4" /> Save Changes</>
+                    )}
+                </Button>
+            </CardFooter>
+        </Card>
+    </div>
   );
 };
 

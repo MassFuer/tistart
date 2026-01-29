@@ -28,6 +28,7 @@ import ApplyArtistPage from "./pages/ApplyArtistPage";
 import PricingPage from "./pages/PricingPage";
 import VideoPage from "./pages/VideoPage";
 import VideoDetailPage from "./pages/VideoDetailPage";
+import ConfirmAttendancePage from "./pages/ConfirmAttendancePage";
 
 import ArtworkFormPage from "./pages/ArtworkFormPage";
 import EventFormPage from "./pages/EventFormPage";
@@ -84,6 +85,7 @@ function App() {
                   <Route path="/videos/:id" element={withEB(<VideoDetailPage />)} />
                   <Route path="/events" element={withEB(<EventsPage />)} />
                   <Route path="/events/:id" element={withEB(<EventDetailPage />)} />
+                  <Route path="/events/:id/confirm-attendance/:token" element={withEB(<ConfirmAttendancePage />)} />
                   <Route path="/artists/:id" element={withEB(<ArtistProfilePage />)} />
 
                   {/* Protected Routes (any logged-in user) */}

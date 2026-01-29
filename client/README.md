@@ -1,11 +1,12 @@
-# Nemesis Client (Frontend)
+# Nemesis Client
 
-The frontend application for Nemesis, built with **React 19** and **Vite**.
+React 19 frontend for the Nemesis art platform, built with Vite, Tailwind CSS, and Shadcn/UI.
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18+)
+
+- Node.js v18+
 - Backend server running on port 5005
 
 ### Installation
@@ -20,68 +21,122 @@ npm install
 Create a `.env` file in the `client` directory:
 
 ```env
-VITE_API_URL=http://localhost:5005 # On Netlify: https://tistart.onrender.com (No trailing slash)
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...  # Optional (for payments)
+VITE_API_URL=http://localhost:5005
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
-### Running Locally
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:5005` | Backend API URL (no trailing slash) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | -- | Stripe publishable key (for checkout) |
+
+### Running
 
 ```bash
-npm run dev
-```
-Access the app at `http://localhost:5173`.
-
-
-## 📂 Project Structure
-
-```
-/src
-  /components
-    /ui            # Shadcn UI components (Button, Card, etc.)
-    /artwork       # ArtworkCard, etc.
-    /common        # Reusable custom components
-    /layout        # Navbar, Footer
-    /map           # Leaflet map components
-  /context         # React Context (Auth, Cart, Theme)
-  /hooks           # Custom hooks (useAuth, useCart)
-  /pages           # Page views (Gallery, Profile, etc.)
-  /services        # API service (Axios configuration)
+npm run dev      # Development server (http://localhost:5173)
+npm run build    # Production build
+npm run preview  # Preview production build
+npm run lint     # Run ESLint
 ```
 
-## 📦 Key Dependencies
+## Project Structure
 
-- **Routing**: `react-router-dom`
-- **UI Framework**: `tailwindcss`, `class-variance-authority`, `clsx`, `tailwind-merge`
-- **Components**: Radix UI Primitives (via Shadcn)
-- **Maps**: `react-leaflet`, `leaflet-geosearch`
-- **Calendar**: `@fullcalendar/react`, `react-datepicker`
-- **Notifications**: `sonner`
-- **Icons**: `lucide-react`, `react-icons`
-- **Animations**: `framer-motion`
-- **Payments**: `@stripe/react-stripe-js`
+```
+client/src/
+  components/
+    admin/          # Admin dashboard components
+    artwork/        # ArtworkCard and artwork-related components
+    auth/           # ProtectedRoute, ArtistRoute, AdminRoute, SuperAdminRoute
+    common/         # Reusable: ErrorBoundary, RouteErrorBoundary, FilterSidebar,
+                    #   StarRating, QuantityControl, PageSizeSelector, Loading
+    dashboard/      # Dashboard tabs and widgets
+    event/          # AttendeesModal, event components
+    events/         # Event listing components
+    layout/         # Navbar, Footer
+    map/            # Leaflet map, LocationDisplay, LocationPicker
+    messaging/      # Chat UI components
+    payment/        # Stripe checkout components
+    review/         # ReviewSection
+    ui/             # Shadcn/UI primitives (Button, Card, Dialog, Select, etc.)
+    video/          # VideoPlayer, VideoGallery, VideoHero
+  context/
+    AuthContext     # Authentication state, login/logout, user data
+    CartContext     # Shopping cart state and operations
+    ThemeContext    # Light/dark theme toggle
+    MessagingContext # Real-time messaging (Socket.io)
+    NavigationContext # Route-level navigation state
+  hooks/ & lib/
+    useListing      # Generic paginated listing hook (filters, pagination, sorting)
+    useScrollRestore # Restore scroll position on navigation
+    use-mobile      # Mobile breakpoint detection
+    formatters      # Shared formatters (formatPrice, formatDate, getArtistDisplayName)
+    utils           # Tailwind class merging (cn)
+  pages/
+    HomePage        # Landing page with hero, featured artworks, FAQ
+    GalleryPage     # Artwork gallery with filters, search, pagination
+    ArtworkDetailPage # Artwork detail with reviews, related works
+    EventsPage      # Event listing with filters, map/calendar views
+    EventDetailPage # Event detail with registration, attendees modal
+    ConfirmAttendancePage # Email confirmation landing page
+    VideoPage       # Video catalog
+    VideoDetailPage # Video player with purchase gating
+    DashboardPage   # User/Artist dashboard (tabs: overview, orders, artworks, events, analytics)
+    CartPage        # Shopping cart
+    CheckoutPage    # Stripe checkout
+    OrderDetailPage # Order receipt/status
+    MessagesPage    # Conversations list and chat
+    AdminPage       # Admin user/content management
+    SuperAdminPage  # Platform settings, theme editor, appearance config
+    ArtistProfilePage # Public artist profile
+    PricingPage     # Subscription/pricing info
+    Login/Signup/Verify/Reset pages # Auth flow
+  services/
+    api.js          # Axios instance with CSRF token, auth interceptor, all API methods
+```
 
-## 🎨 Features & UI
+## Key Dependencies
 
-- **Modern UI**: Built with Shadcn UI & Tailwind CSS.
-- **Responsive Design**: Mobile-first layouts.
-- **Dark Mode**: Toggleable theme support.
-- **Real-time Search**: Debounced search filters.
-- **Interactive Maps**: Cluster maps for events.
-- **Toast Notifications**: Stackable, theme-aware notifications via Sonner.
-- **Admin Dashboard**: Comprehensive stats, data tables, and management tools.
-- **Artist Onboarding**: Dedicated application flow with status tracking.
-- **Event Discovery**: Advanced filtering and map integration.
-- **Direct Messaging**: Internal chat system between collectors and artists.
-- **Custom Video Player**: Simplified, elegant video playback experience.
-- **Unified Dashboards**: Dedicated views for Artists (Sales, Analytics) and Collectors (Purchases, Favorites).
-- **Role Badges** for clear user status identification.
-- **EventManagement** interface.
-- **Enhanced mobile responsiveness**
-- **Storage Usage** indicators for artists.
-- **Advanced Theme Editor** with mode-specific (Light/Dark) customization.
-- **Self-Hosted Fonts** via `@fontsource` (Inter, Roboto, Segoe UI, Geist, Manrope, etc.) for performance and privacy.
-- **Interactive Hero Animation** featuring dynamic `WordRotate` transitions.
-- **Enhanced Toast Notifications** with global dismiss and smart auto-reload logic.
-- **Video Player**: Integrated robust access control, preview mode for non-purchased users, and high-contrast UI controls.
-- **HomePage FAQ**: Added using Shadcn Accordion.
-- **Mobile Optimizations**: Improved responsive layouts for Artwork Cards and Hero sections.
+| Category | Packages |
+|----------|----------|
+| Routing | `react-router-dom` |
+| UI Framework | `tailwindcss`, Shadcn/UI (`@radix-ui/*`, `class-variance-authority`, `clsx`, `tailwind-merge`) |
+| Animation | `framer-motion` |
+| Maps | `react-leaflet`, `leaflet-geosearch` |
+| Calendar | `@fullcalendar/react`, `react-datepicker` |
+| Payments | `@stripe/react-stripe-js`, `@stripe/stripe-js` |
+| Icons | `lucide-react`, `react-icons` |
+| Notifications | `sonner` |
+| Real-time | `socket.io-client` |
+| Markdown | `react-markdown`, `react-simplemde-editor` |
+| Fonts | `@fontsource/inter`, `@fontsource/geist-sans`, `@fontsource/manrope`, `@fontsource/poppins`, `@fontsource/roboto` |
+
+## Features
+
+- **Responsive Design** -- Mobile-first layouts with sticky action bars and adaptive grids
+- **Dark Mode** -- Theme toggle with mode-specific CSS variables managed via SuperAdmin
+- **Route Error Boundaries** -- Errors in individual pages don't crash the entire app
+- **Dynamic Page Sizes** -- Configurable items-per-page via PageSizeSelector component
+- **CSRF Protection** -- Automatic CSRF token injection via axios request interceptor
+- **Real-time Chat** -- Socket.io-powered messaging with typing indicators
+- **Interactive Maps** -- Leaflet cluster maps for events, geocoded locations
+- **Secure Video** -- Preview mode for non-purchased videos, streaming access control
+- **Advanced Filters** -- Responsive filter sidebar (sheet on mobile, aside on desktop)
+- **Platform Config** -- Display settings (currency, page sizes, colors) driven by PlatformSettings API
+
+## Docker
+
+Multi-stage build with Nginx for production:
+
+```dockerfile
+# Build
+FROM node:20-alpine AS build
+COPY . .
+RUN npm ci && npm run build
+
+# Serve
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+```
+
+The Nginx config handles SPA routing, static asset caching, and proxies `/api/`, `/auth/`, and `/socket.io/` to the backend.

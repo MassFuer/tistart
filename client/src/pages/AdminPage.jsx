@@ -51,7 +51,11 @@ const AdminPage = () => {
   // Update URL when active tab changes
   const handleTabChange = (val) => {
     setActiveTab(val);
-    setSearchParams({ tab: val });
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("tab", val);
+      return newParams;
+    });
   };
 
   // --- STATS LOGIC ---

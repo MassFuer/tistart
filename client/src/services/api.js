@@ -7,9 +7,19 @@ const api = axios.create({
   withCredentials: true, // Send cookies with requests
 });
 
-// Request interceptor
+// Helper to read a cookie value
+const getCookie = (name) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+// Request interceptor - attach CSRF token
 api.interceptors.request.use(
   (config) => {
+    const csrfToken = getCookie("csrf_token");
+    if (csrfToken) {
+      config.headers["x-csrf-token"] = csrfToken;
+    }
     return config;
   },
   (error) => {
@@ -42,9 +52,16 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 403 errors (forbidden)
+    // Handle 403 errors (forbidden / CSRF)
     if (status === 403) {
-      console.warn("Access denied:", error.response?.data?.error);
+      const msg = error.response?.data?.error;
+      if (msg === "Invalid CSRF token") {
+        // CSRF cookie may have expired — reload to get a fresh one
+        console.warn("CSRF token mismatch — reloading page");
+        window.location.reload();
+        return new Promise(() => {}); // never resolve
+      }
+      console.warn("Access denied:", msg);
     }
 
     // Handle 429 errors (rate limited)
@@ -110,7 +127,8 @@ export const eventsAPI = {
     }),
   join: (id) => api.post(`/api/events/${id}/attend`),
   leave: (id) => api.delete(`/api/events/${id}/attend`),
-  getAttendees: (id) => api.get(`/api/events/${id}/attendees`),
+  getAttendees: (id, params) => api.get(`/api/events/${id}/attendees`, { params }),
+  confirmAttendance: (id, token) => api.post(`/api/events/${id}/confirm-attendance/${token}`),
 };
 
 // Users API
@@ -214,6 +232,7 @@ export const platformAPI = {
     api.post("/api/platform/assets", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  listAssets: (folder) => api.get("/api/platform/assets", { params: { folder } }),
 };
 
 // Payments API (Stripe)

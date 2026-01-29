@@ -5,6 +5,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 // Note: express-mongo-sanitize removed due to Express 5 incompatibility (req.query is read-only)
 const { sanitizeInput } = require("../utils/sanitize");
+const { setCsrfCookie, validateCsrf } = require("../middleware/csrf.middleware");
 
 // Build allowed origins list - always include localhost for development
 const allowedOrigins = [
@@ -65,6 +66,10 @@ module.exports = (app) => {
 
   // Cookie parser
   app.use(cookieParser());
+
+  // CSRF protection (double-submit cookie)
+  app.use(setCsrfCookie);
+  app.use(validateCsrf);
 
   // Serve static files
   app.use(express.static("public"));

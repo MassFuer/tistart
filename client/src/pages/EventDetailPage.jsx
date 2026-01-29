@@ -49,11 +49,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-  } from "@/components/ui/avatar"
 
 const EventDetailPage = () => {
   const { id } = useParams();
@@ -83,13 +78,12 @@ const EventDetailPage = () => {
   };
 
   const [isJoining, setIsJoining] = useState(false);
-  const [attendees, setAttendees] = useState([]);
   const [showAttendees, setShowAttendees] = useState(false);
 
   // Check if current user is attending (from local event state)
   const isAttending = event?.attendees?.some(id => id === user?._id || id?._id === user?._id);
-  // Check if user is admin or owner
-  const canManage = isAuthenticated && (user?.role === "admin" || user?._id === event?.artist?._id);
+  // Check if user is admin, superAdmin, or event owner
+  const canManage = isAuthenticated && (user?.role === "admin" || user?.role === "superAdmin" || user?._id === event?.artist?._id);
 
   const handleBuyTicket = async () => {
       if (!isAuthenticated) {
@@ -146,20 +140,7 @@ const EventDetailPage = () => {
       }
   };
 
-  const toggleAttendees = async () => {
-    if (showAttendees) {
-      setShowAttendees(false);
-      return;
-    }
-
-    try {
-      const response = await eventsAPI.getAttendees(id);
-      setAttendees(response.data.data);
-      setShowAttendees(true);
-    } catch (error) {
-      toast.error("Failed to load attendees");
-    }
-  };
+  const toggleAttendees = () => setShowAttendees((prev) => !prev);
 
   const formatDate = (dateString) => {
     return format(new Date(dateString), "EEEE, MMMM d, yyyy");
@@ -355,29 +336,7 @@ const EventDetailPage = () => {
                                      </AlertDialogContent>
                                  </AlertDialog>
                                
-                               {showAttendees && (
-                                    <div className="mt-4 pt-4 border-t">
-                                        <h4 className="font-semibold mb-2 text-sm">Registered Users ({attendees.length})</h4>
-                                        {attendees.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">No attendees yet.</p>
-                                        ) : (
-                                            <ul className="space-y-3">
-                                                {attendees.map(att => (
-                                                    <li key={att._id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={att.profilePicture} />
-                                                            <AvatarFallback>{att.firstName?.[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex-1 overflow-hidden">
-                                                            <p className="text-sm font-medium truncate">{att.firstName} {att.lastName}</p>
-                                                            <p className="text-xs text-muted-foreground truncate">{att.email}</p>
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
-                               )}
+                               <AttendeesModal eventId={id} open={showAttendees} onOpenChange={setShowAttendees} />
                            </CardContent>
                        </Card>
                    )}

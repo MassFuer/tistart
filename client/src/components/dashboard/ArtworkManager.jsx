@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { artworksAPI, platformAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigation } from "../../context/NavigationContext";
+import { formatPrice } from "../../lib/formatters";
 import { toast } from "sonner";
 import { 
   Plus, 
@@ -273,17 +274,17 @@ const ArtworkManager = ({ isAdmin = false }) => {
                 filteredArtworks.map((artwork) => (
                     <TableRow key={artwork._id}>
                         <TableCell>
-                             <div className="h-12 w-12 rounded overflow-hidden bg-muted">
+                             <Link to={`/artworks/${artwork._id}`} className="block h-12 w-12 rounded overflow-hidden bg-muted">
                                 <img
                                     src={artwork.images?.[0] || "/placeholder.jpg"}
                                     alt=""
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-cover hover:scale-105 transition-transform"
                                 />
-                             </div>
+                             </Link>
                         </TableCell>
                         <TableCell className="font-medium">
                             <div className="flex flex-col">
-                                <span>{artwork.title}</span>
+                                <Link to={`/artworks/${artwork._id}`} className="hover:underline text-primary">{artwork.title}</Link>
                                 <span className="text-xs text-muted-foreground">{formatPrice(artwork.price)}</span>
                             </div>
                         </TableCell>
@@ -313,7 +314,7 @@ const ArtworkManager = ({ isAdmin = false }) => {
                          <TableCell>
                              <div className="flex items-center gap-1">
                                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                <span>{artwork.averageRating || 0}</span>
+                                <span>{(artwork.averageRating || 0).toFixed(1)}</span>
                                 <span className="text-xs text-muted-foreground">({artwork.numOfReviews || 0})</span>
                              </div>
                         </TableCell>

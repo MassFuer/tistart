@@ -186,6 +186,7 @@ const platformSettingsSchema = new Schema(
       videoUrl: { type: String, default: "" }, // Full URL to R2
       mobileVideoUrl: { type: String, default: "" }, // Optional optimized video
       text: { type: String, default: "VIDEO ARTWORKS" }, // Text for the Video Hero mask
+      textSize: { type: String, default: "15vw" }, // Custom text size (e.g., "15vw", "12rem")
       backgroundSoundUrl: { type: String, default: "" },
     },
 

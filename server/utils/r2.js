@@ -4,6 +4,7 @@ const {
   DeleteObjectCommand,
   HeadObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
 } = require("@aws-sdk/client-s3");
 const { Upload } = require("@aws-sdk/lib-storage");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -155,6 +156,29 @@ const getFileInfo = async (key) => {
     console.error("Error getting file info:", error);
     return null;
   }
+};
+
+// List files in a folder
+const listFolderContent = async (prefix) => {
+    try {
+        const command = new ListObjectsV2Command({
+            Bucket: BUCKET_NAME,
+            Prefix: prefix
+        });
+        const response = await r2Client.send(command);
+        
+        if (!response.Contents) return [];
+
+        return response.Contents.map(item => ({
+            key: item.Key,
+            url: `${PUBLIC_URL}/${item.Key}`,
+            lastModified: item.LastModified,
+            size: item.Size
+        }));
+    } catch (error) {
+        console.error("Error listing folder content:", error);
+        return [];
+    }
 };
 
 // Extract key from R2 URL
@@ -613,6 +637,7 @@ module.exports = {
   deleteFromR2,
   deleteFile,
   getFileInfo,
+  listFolderContent,
   getKeyFromUrl,
   processImage,
   isVideo,

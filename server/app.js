@@ -2,6 +2,10 @@
 // https://www.npmjs.com/package/dotenv
 require("dotenv").config();
 
+// Validate environment variables before anything else
+const { validateEnv } = require("./utils/validateEnv");
+validateEnv();
+
 // ℹ️ Connects to the database
 require("./db");
 

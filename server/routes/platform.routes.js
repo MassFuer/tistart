@@ -149,6 +149,23 @@ router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => 
   } catch (error) {
     next(error);
   }
+});
+
+// GET /api/platform/assets - List platform assets (SuperAdmin Only)
+router.get("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  try {
+    const { folder = "platform/hero" } = req.query; // Default to hero folder
+    // Security check: only allow listing platform subfolders
+    if (!folder.startsWith("platform/")) {
+       return res.status(403).json({ error: "Access denied. Can only list platform assets." });
+    }
+
+    const { listFolderContent } = require("../utils/r2");
+    const assets = await listFolderContent(folder);
+    res.status(200).json({ data: assets });
+  } catch (error) {
+    next(error);
+  }
 }); 
 
 // ==================== PLATFORM STATISTICS (Admin & SuperAdmin) ====================
