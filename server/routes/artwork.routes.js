@@ -250,8 +250,8 @@ router.post(
       // Determine artist ID:
       // If admin and artist ID provided in body, use that.
       // Otherwise default to current user ID.
-      let artistId = req.user._id;
-      if (req.user.role === "admin" && req.body.artist) {
+      let artistId = req.payload._id;
+      if (isAdminRole(req.payload.role) && req.body.artist) {
         artistId = req.body.artist;
       }
 
@@ -287,7 +287,7 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     }
 
     // Check if user is the owner OR admin
-    if (req.user.role !== "admin" && artwork.artist.toString() !== req.user._id.toString()) {
+    if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
       return res.status(403).json({ error: "You can only update your own artworks." });
     }
 
@@ -382,7 +382,7 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
     }
 
     // Check if user is the owner OR admin/superAdmin
-    if (!isAdminRole(req.user.role) && artwork.artist.toString() !== req.user._id.toString()) {
+    if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
       return res.status(403).json({ error: "You can only delete your own artworks." });
     }
 
@@ -430,7 +430,7 @@ router.post(
       }
 
       // Check if user is the owner OR admin/superAdmin
-      if (!isAdminRole(req.user.role) && artwork.artist.toString() !== req.user._id.toString()) {
+      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
         return res.status(403).json({ error: "You can only upload images to your own artworks." });
       }
 
@@ -473,7 +473,7 @@ router.post(
       }
 
       // Check if user is the owner OR admin
-      if (req.user.role !== "admin" && artwork.artist.toString() !== req.user._id.toString()) {
+      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
         return res.status(403).json({ error: "You can only upload videos to your own artworks." });
       }
 
@@ -540,7 +540,7 @@ router.post(
         return res.status(404).json({ error: "Artwork not found." });
       }
 
-      if (req.user.role !== "admin" && artwork.artist.toString() !== req.user._id.toString()) {
+      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
         return res.status(403).json({ error: "You can only update your own artworks." });
       }
 

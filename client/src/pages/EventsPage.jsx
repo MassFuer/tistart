@@ -102,7 +102,7 @@ const EventsPage = () => {
               }));
             setCalendarEvents(formattedEvents);
         } else if (viewMode === "map") {
-            const params = { limit: 200, ...filters };
+            const params = { ...filters, limit: 200 };
             const response = await eventsAPI.getAll(params);
             setAllEventsForMap(response.data.data);
         }
@@ -134,7 +134,7 @@ const EventsPage = () => {
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
         {/* HEADER */}
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-4 px-4 mb-8 border-b">
+        <div className="bg-background py-4 mb-8 border-b">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Events</h1>
@@ -204,7 +204,7 @@ const EventsPage = () => {
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                                     {events.map(event => (
                                         <EventCard key={event._id} event={event} />
                                     ))}

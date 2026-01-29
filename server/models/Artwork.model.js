@@ -86,7 +86,6 @@ const artworkSchema = new Schema(
       quality: { 
         type: String, 
         enum: ["8K", "4K", "2K", "1080p", "720p", "High Quality", "Other", "480p", "360p"],
-        default: "" 
       },
       synopsis: { type: String, maxlength: 2000 },
       director: { type: String },

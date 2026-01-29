@@ -183,11 +183,11 @@ const platformSettingsSchema = new Schema(
 
     // Hero Section Configuration
     hero: {
-      videoUrl: { type: String, default: "" }, // Full URL to R2
+      videoUrl: { type: String, default: "https://cdn.fuer.fr/platform/hero/1769675533651-8a01626e4d5d0aec493b89bf00c594f0.mp4" }, // Full URL to R2
       mobileVideoUrl: { type: String, default: "" }, // Optional optimized video
       text: { type: String, default: "VIDEO ARTWORKS" }, // Text for the Video Hero mask
       textSize: { type: String, default: "15vw" }, // Custom text size (e.g., "15vw", "12rem")
-      backgroundSoundUrl: { type: String, default: "" },
+      backgroundSoundUrl: { type: String, default: "https://cdn.fuer.fr/platform/hero/1769675604532-a3b7ae66411d1a39dfac3f62f482ba4e.mp3" },
     },
 
     // Last updated by

@@ -5,6 +5,7 @@ import { eventsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import Loading from "../components/common/Loading";
+import AttendeesModal from "@/components/event/AttendeesModal";
 import ErrorMessage from "../components/common/ErrorMessage";
 import LocationDisplay from "../components/map/LocationDisplay";
 import { toast } from "sonner";
@@ -20,7 +21,8 @@ import {
   ExternalLink,
   Info,
   Loader2,
-  ShoppingCart
+  ShoppingCart,
+  Mail
 } from "lucide-react";
 
 import { formatPrice } from "@/lib/formatters";
@@ -80,15 +82,22 @@ const EventDetailPage = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [showAttendees, setShowAttendees] = useState(false);
 
-  // Check if current user is attending (from local event state)
-  const isAttending = event?.attendees?.some(id => id === user?._id || id?._id === user?._id);
+  // Check if current user is attending (handle both populated and unpopulated `user` field)
+  const isAttending = event?.attendees?.some(a => {
+      const attendeeId = a.user?._id || a.user;
+      return attendeeId?.toString() === user?._id?.toString();
+  });
   // Check if user is admin, superAdmin, or event owner
   const canManage = isAuthenticated && (user?.role === "admin" || user?.role === "superAdmin" || user?._id === event?.artist?._id);
 
   const handleBuyTicket = async () => {
       if (!isAuthenticated) {
-          toast.error("Please login to purchase tickets");
-          navigate("/login");
+          toast("Wanna join?", {
+            action: {
+              label: "Log in here",
+              onClick: () => navigate("/login"),
+            },
+          });
           return;
       }
       setIsJoining(true); // Reuse state for loading
@@ -103,7 +112,14 @@ const EventDetailPage = () => {
   };
 
   const handleJoin = async () => {
-    if (!isAuthenticated) return toast.error("Please login to join this event");
+    if (!isAuthenticated) {
+        return toast("Wanna join?", {
+            action: {
+              label: "Log in here",
+              onClick: () => navigate("/login"),
+            },
+        });
+    }
     
     setIsJoining(true);
     try {
@@ -204,8 +220,99 @@ const EventDetailPage = () => {
                 <Separator />
            </div>
 
+            {/* LEFT COLUMN - PART 2 (Date & Location) */}
+            <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+                {/* Date & Time */}
+                <section>
+                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <Calendar className="h-5 w-5" /> Date & Time
+                    </h2>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card className="bg-muted/30 border-0 shadow-sm">
+                            <CardContent className="p-4 flex items-center gap-4">
+                                <div className="p-2 rounded-full bg-muted text-foreground">
+                                    <Calendar className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Start</p>
+                                    <p className="font-semibold">{formatDate(event.startDateTime)}</p>
+                                    <p className="text-sm">{formatTime(event.startDateTime)}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="bg-muted/30 border-0 shadow-sm">
+                            <CardContent className="p-4 flex items-center gap-4">
+                                <div className="p-2 rounded-full bg-muted text-foreground">
+                                    <CheckCircle2 className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">End</p>
+                                    <p className="font-semibold">{formatDate(event.endDateTime)}</p>
+                                    <p className="text-sm">{formatTime(event.endDateTime)}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </section>
+
+                <Separator />
+
+                {/* Location */}
+                <section>
+                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <MapPin className="h-5 w-5" /> Location
+                    </h2>
+                    {event.location?.isOnline ? (
+                        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900">
+                            <CardContent className="p-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+                                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300">
+                                    <AlertCircle className="h-8 w-8" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1">Online Event</h3>
+                                    <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">Join from anywhere in the world.</p>
+                                    {event.location.onlineUrl && (
+                                        <Button asChild size="sm" variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+                                            <a href={event.location.onlineUrl} target="_blank" rel="noopener noreferrer">
+                                                Join Online <ExternalLink className="ml-2 h-4 w-4" />
+                                            </a>
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Card className="overflow-hidden bg-muted/30 border-0 shadow-sm">
+                            <CardContent className="p-0">
+                                <LocationDisplay
+                                   address={{
+                                     venue: event.location?.venue,
+                                     street: event.location?.street,
+                                     streetNum: event.location?.streetNum,
+                                     zipCode: event.location?.zipCode,
+                                     city: event.location?.city,
+                                     country: event.location?.country,
+                                   }}
+                                   coordinates={
+                                     event.location?.coordinates?.coordinates?.length === 2
+                                       ? {
+                                           lat: event.location.coordinates.coordinates[1],
+                                           lng: event.location.coordinates.coordinates[0],
+                                         }
+                                       : null
+                                   }
+                                   showMap={true}
+                                   height="350px"
+                                   layout="horizontal"
+                                 />
+                            </CardContent>
+                        </Card>
+                    )}
+                </section>
+            </div>
+
            {/* SIDEBAR (Registration & Manage) */}
-           {/* Mobile: 2nd position. Desktop: Right column spanning 2 rows */}
+           {/* Mobile: 3rd position. Desktop: Right column spanning 2 rows */}
            <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2 space-y-6">
                 <div className="sticky top-24 space-y-6">
                     {/* Registration Card */}
@@ -238,23 +345,23 @@ const EventDetailPage = () => {
                                </div>
                            )}
 
-                           <div className="pt-2">
-                                {!isAuthenticated ? (
+                            <div className="pt-2">
+                                {isAttending ? (
                                     <div className="space-y-3">
-                                        <p className="text-sm text-center text-muted-foreground">Please login to register.</p>
-                                        <Button asChild className="w-full">
-                                            <Link to="/login">Login to Join</Link>
-                                        </Button>
-                                    </div>
-                                ) : isAttending ? (
-                                    <div className="space-y-3">
-                                         <div className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-md flex items-center justify-center gap-2 font-medium border border-green-200 dark:border-green-900">
-                                             <CheckCircle2 className="h-5 w-5" /> You are registered
-                                         </div>
+                                         {event.attendees?.find(a => a.user?._id === user?._id || a.user === user?._id)?.status === "notConfirmed" ? (
+                                             <div className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 p-3 rounded-md flex items-center justify-center gap-2 font-medium border border-yellow-200 dark:border-yellow-900">
+                                                 <Mail className="h-5 w-5" /> Pending Confirmation
+                                             </div>
+                                         ) : (
+                                             <div className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-md flex items-center justify-center gap-2 font-medium border border-green-200 dark:border-green-900">
+                                                 <CheckCircle2 className="h-5 w-5" /> You are registered
+                                             </div>
+                                         )}
+                                         
                                          <AlertDialog>
                                              <AlertDialogTrigger asChild>
                                                  <Button variant="outline" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10" disabled={isJoining || isPast}>
-                                                     Cancel Registration
+                                                     Cancel Request
                                                  </Button>
                                              </AlertDialogTrigger>
                                              <AlertDialogContent>
@@ -342,97 +449,6 @@ const EventDetailPage = () => {
                    )}
                 </div>
            </div>
-
-           {/* LEFT COLUMN - PART 2 (Date & Location) */}
-           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
-               {/* Date & Time */}
-               <section>
-                   <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                       <Calendar className="h-5 w-5" /> Date & Time
-                   </h2>
-                   <div className="grid gap-4 md:grid-cols-2">
-                       <Card className="bg-muted/30 border-0 shadow-sm">
-                           <CardContent className="p-4 flex items-center gap-4">
-                               <div className="p-2 rounded-full bg-muted text-foreground">
-                                   <Calendar className="h-6 w-6" />
-                               </div>
-                               <div>
-                                   <p className="text-sm font-medium text-muted-foreground">Start</p>
-                                   <p className="font-semibold">{formatDate(event.startDateTime)}</p>
-                                   <p className="text-sm">{formatTime(event.startDateTime)}</p>
-                               </div>
-                           </CardContent>
-                       </Card>
-                       <Card className="bg-muted/30 border-0 shadow-sm">
-                           <CardContent className="p-4 flex items-center gap-4">
-                               <div className="p-2 rounded-full bg-muted text-foreground">
-                                   <CheckCircle2 className="h-6 w-6" />
-                               </div>
-                               <div>
-                                   <p className="text-sm font-medium text-muted-foreground">End</p>
-                                   <p className="font-semibold">{formatDate(event.endDateTime)}</p>
-                                   <p className="text-sm">{formatTime(event.endDateTime)}</p>
-                               </div>
-                           </CardContent>
-                       </Card>
-                   </div>
-               </section>
-
-               <Separator />
-
-               {/* Location */}
-               <section>
-                   <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                       <MapPin className="h-5 w-5" /> Location
-                   </h2>
-                   {event.location?.isOnline ? (
-                       <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900">
-                           <CardContent className="p-6 flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                               <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300">
-                                   <AlertCircle className="h-8 w-8" />
-                               </div>
-                               <div className="flex-1">
-                                   <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1">Online Event</h3>
-                                   <p className="text-blue-700 dark:text-blue-300 text-sm mb-3">Join from anywhere in the world.</p>
-                                   {event.location.onlineUrl && (
-                                       <Button asChild size="sm" variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
-                                           <a href={event.location.onlineUrl} target="_blank" rel="noopener noreferrer">
-                                               Join Online <ExternalLink className="ml-2 h-4 w-4" />
-                                           </a>
-                                       </Button>
-                                   )}
-                               </div>
-                           </CardContent>
-                       </Card>
-                   ) : (
-                       <Card className="overflow-hidden bg-muted/30 border-0 shadow-sm">
-                           <CardContent className="p-0">
-                               <LocationDisplay
-                                  address={{
-                                    venue: event.location?.venue,
-                                    street: event.location?.street,
-                                    streetNum: event.location?.streetNum,
-                                    zipCode: event.location?.zipCode,
-                                    city: event.location?.city,
-                                    country: event.location?.country,
-                                  }}
-                                  coordinates={
-                                    event.location?.coordinates?.coordinates?.length === 2
-                                      ? {
-                                          lat: event.location.coordinates.coordinates[1],
-                                          lng: event.location.coordinates.coordinates[0],
-                                        }
-                                      : null
-                                  }
-                                  showMap={true}
-                                  height="350px"
-                                  layout="horizontal"
-                                />
-                           </CardContent>
-                       </Card>
-                   )}
-               </section>
-           </div>
        </div>
 
        {/* Mobile Sticky Action Bar */}
@@ -443,13 +459,17 @@ const EventDetailPage = () => {
                <p className="text-lg font-bold">{event.price === 0 ? "Free" : formatPrice(event.price)}</p>
              </div>
              <div className="flex-1">
-               {!isAuthenticated ? (
-                 <Button asChild className="w-full">
-                   <Link to="/login">Login to Join</Link>
-                 </Button>
-               ) : isAttending ? (
-                 <Button variant="outline" className="w-full text-green-600" disabled>
-                   <CheckCircle2 className="mr-2 h-4 w-4" /> Registered
+               {isAttending ? (
+                 <Button variant="outline" className={`w-full ${event.attendees?.find(a => a.user?._id === user?._id || a.user === user?._id)?.status === "notConfirmed" ? "text-yellow-600" : "text-green-600"}`} disabled>
+                    {event.attendees?.find(a => a.user?._id === user?._id || a.user === user?._id)?.status === "notConfirmed" ? (
+                        <>
+                            <Mail className="mr-2 h-4 w-4" /> Pending
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Registered
+                        </>
+                    )}
                  </Button>
                ) : event.price > 0 ? (
                  <Button onClick={handleBuyTicket} className="w-full" disabled={isJoining}>

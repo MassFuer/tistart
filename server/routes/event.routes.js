@@ -286,8 +286,8 @@ router.post(
       } = req.body;
 
       // Determine artist ID
-      let artistId = req.user._id;
-      if (req.user.role === "admin" && req.body.artist) {
+      let artistId = req.payload._id;
+      if (isAdminRole(req.payload.role) && req.body.artist) {
         artistId = req.body.artist;
       }
 
@@ -344,7 +344,7 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     }
 
     // Check if user is the owner OR admin/superAdmin
-    if (!isAdminRole(req.user.role) && event.artist.toString() !== req.user._id.toString()) {
+    if (!isAdminRole(req.payload.role) && event.artist.toString() !== req.payload._id.toString()) {
       return res.status(403).json({ error: "You can only update your own events." });
     }
 
@@ -402,6 +402,8 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
 
     res.status(200).json({ data: event });
   } catch (error) {
+    console.error("Error updating event:", error);
+    console.error(error.stack);
     next(error);
   }
 });
@@ -416,7 +418,7 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
     }
 
     // Check if user is the owner OR admin/superAdmin
-    if (!isAdminRole(req.user.role) && event.artist.toString() !== req.user._id.toString()) {
+    if (!isAdminRole(req.payload.role) && event.artist.toString() !== req.payload._id.toString()) {
       return res.status(403).json({ error: "You can only delete your own events." });
     }
 
@@ -450,7 +452,7 @@ router.post(
       }
 
       // Check if user is the owner OR admin/superAdmin
-      if (!isAdminRole(req.user.role) && event.artist.toString() !== req.user._id.toString()) {
+      if (!isAdminRole(req.payload.role) && event.artist.toString() !== req.payload._id.toString()) {
         return res.status(403).json({ error: "You can only upload images to your own events." });
       }
 
@@ -495,7 +497,7 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user already joined
-    const isAttending = event.attendees?.some((a) => a.user.toString() === userId.toString());
+    const isAttending = event.attendees?.some((a) => a.user?.toString() === userId.toString());
 
     if (isAttending) {
       return res.status(400).json({ error: "You have already joined this event." });
@@ -516,6 +518,8 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     // Generate confirmation token
     const confirmationToken = crypto.randomBytes(32).toString("hex");
 
+    console.log("Adding user to attendees:", userId);
+    
     const updatedEvent = await Event.findOneAndUpdate(
       query,
       { $addToSet: { attendees: { user: userId, status: "notConfirmed", confirmationToken } } },
@@ -523,6 +527,7 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     ).populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
 
     if (!updatedEvent) {
+      console.log("Failed to update event. Checking reasons...");
       // Check why it failed
       const currentEvent = await Event.findById(req.params.id);
       if (
@@ -531,15 +536,18 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
       ) {
         return res.status(400).json({ error: "Event is full." });
       }
-       if (currentEvent.attendees.some(a => a.user.toString() === userId.toString())) {
+       if (currentEvent.attendees.some(a => a.user?.toString() === userId.toString())) {
              return res.status(400).json({ error: "You have already joined this event." });
        }
       return res.status(400).json({ error: "Could not join event. Please try again." });
     }
 
+    console.log("Event updated successfully, sending email...");
+
     // Send confirmation email (non-blocking)
     const user = await User.findById(userId).select("email firstName").lean();
     if (user?.email) {
+      console.log("Sending email to:", user.email);
       const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
       sendEventAttendanceEmail(user.email, user.firstName, {
         eventTitle: updatedEvent.title,
@@ -547,11 +555,14 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
         eventLocation: updatedEvent.location?.venue || updatedEvent.location?.city || "",
         confirmationLink: `${clientUrl}/events/${updatedEvent._id}/confirm-attendance/${confirmationToken}`,
       }).catch(err => console.error("Attendance email failed:", err));
+    } else {
+        console.warn("User has no email, skipping confirmation email");
     }
 
     res.status(200).json({ message: "Successfully registered. Check your email to confirm attendance.", data: updatedEvent });
   } catch (error) {
     console.error("Error joining event:", error);
+    console.error(error.stack);
     next(error);
   }
 });
@@ -571,14 +582,14 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user is in attendees (robust comparison)
-    const isAttending = event.attendees.some((a) => a.user.toString() === req.payload._id.toString());
+    const isAttending = event.attendees.some((a) => a?.user?.toString() === req.payload._id.toString());
 
     if (!isAttending) {
       return res.status(400).json({ error: "You are not registered for this event." });
     }
 
     // Remove user
-    event.attendees = event.attendees.filter((a) => a.user.toString() !== req.payload._id.toString());
+    event.attendees = event.attendees.filter((a) => a?.user?.toString() !== req.payload._id.toString());
     await event.save();
 
     // Populate artist before sending response
@@ -587,6 +598,7 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
     res.status(200).json({ message: "Successfully left event.", data: event });
   } catch (error) {
     console.error("Error leaving event:", error);
+    console.error(error.stack);
     next(error);
   }
 });
@@ -646,7 +658,10 @@ router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
       .slice(skip, skip + Number(limit));
 
     // Populate user details for the page
-    const userIds = paginatedIds.map(a => a.user);
+    const userIds = paginatedIds
+      .map(a => a.user)
+      .filter(id => id); // Filter out null/undefined IDs
+
     const users = await User.find({ _id: { $in: userIds } })
       .select("firstName lastName userName email profilePicture")
       .lean();
@@ -655,7 +670,7 @@ router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
     users.forEach(u => { userMap[u._id.toString()] = u; });
 
     const attendees = paginatedIds.map(a => ({
-      user: userMap[a.user.toString()] || null,
+      user: userMap[a.user?.toString()] || null,
       status: a.status,
       registeredAt: a.registeredAt,
       confirmedAt: a.confirmedAt,

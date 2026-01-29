@@ -228,9 +228,9 @@ eventSchema.index({ isPublic: 1 });
 eventSchema.index({ "location.coordinates": "2dsphere" }); // Geospatial index
 
 // Flag new document for post-save hook
-eventSchema.pre("save", function (next) {
+// Flag new document for post-save hook
+eventSchema.pre("save", async function () {
   this.wasNew = this.isNew;
-  next();
 });
 
 eventSchema.post("save", async function (doc) {

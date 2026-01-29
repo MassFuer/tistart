@@ -48,9 +48,9 @@ const VideoHero = ({ compact = false }) => {
   };
 
   // Ensure fallback
-  const videoSource = heroConfig.videoUrl || "https://cdn.fuer.fr/platform/hero/1769675533651-8a01626e4d5d0aec493b89bf00c594f0.mp4"; 
+  const videoSource = heroConfig.videoUrl; 
   const heroText = heroConfig.text || "VIDEO ARTWORKS by NEMESIS ART";
-  const backgroundSoundUrl = heroConfig.backgroundSoundUrl || "https://cdn.fuer.fr/platform/hero/1769675604532-a3b7ae66411d1a39dfac3f62f482ba4e.mp3";
+  const backgroundSoundUrl = heroConfig.backgroundSoundUrl;
 
   return (
     <div className={`relative w-full bg-black ${compact ? "h-full" : "h-[150vh]"}`}>

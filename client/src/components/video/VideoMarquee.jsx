@@ -56,7 +56,7 @@ const VideoMarquee = () => {
         style={{ overflow: 'hidden' }}
       >
         <div 
-            className="flex gap-6 px-6 animate-marquee group-hover/marquee:[animation-play-state:paused]"
+            className="flex gap-6 px-6 animate-marquee group-hover/marquee:[animation-play-state:paused] active:[animation-play-state:paused]"
             style={{ width: "max-content" }}
         >
             {marqueeVideos.map((video, index) => (
@@ -118,7 +118,7 @@ const VideoMarquee = () => {
             100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-            animation: marquee 40s linear infinite;
+            animation: marquee 150s linear infinite;
         }
       `}</style>
     </div>

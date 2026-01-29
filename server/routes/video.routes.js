@@ -2,7 +2,7 @@ const router = require("express").Router();
 const Artwork = require("../models/Artwork.model");
 const VideoPurchase = require("../models/VideoPurchase.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
-const { attachUser } = require("../middleware/role.middleware");
+const { attachUser, isAdminRole } = require("../middleware/role.middleware");
 const { getSignedVideoUrl, getKeyFromUrl } = require("../utils/r2");
 const { purchaseLimiter } = require("../middleware/rateLimit.middleware");
 
@@ -90,7 +90,7 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
     // Check if user is the artist
     const isOwner = artwork.artist.toString() === req.user._id.toString();
     // Check if user is admin
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'superAdmin';
+    const isAdmin = isAdminRole(req.user.role);
 
     // Check if user has purchased
     const purchase = await VideoPurchase.findOne({

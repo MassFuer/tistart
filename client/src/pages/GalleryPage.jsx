@@ -144,8 +144,8 @@ const GalleryPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4 -mx-4 px-4 mb-8 border-b">
+      {/* Static Header - No overlap */}
+      <div className="bg-background py-4 mb-8 border-b">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                   <h1 className="text-3xl font-bold tracking-tight">Gallery</h1>
@@ -243,7 +243,7 @@ const GalleryPage = () => {
                    </div>
                ) : (
                    <>
-                       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                            {artworks.map(artwork => (
                                <ArtworkCard key={artwork._id} artwork={artwork} />
                            ))}

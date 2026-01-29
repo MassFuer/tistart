@@ -52,10 +52,10 @@ const EventCard = ({ event, showActions = false, onDelete }) => {
       </Link>
 
       <CardHeader className="p-4 pb-2">
-        <div className="flex justify-between items-start">
-             <div className="flex items-center text-xs text-muted-foreground mb-1">
+        <div className="flex justify-between items-center mb-1">
+             <div className="flex items-center text-xs text-muted-foreground">
                 <Calendar className="mr-1 h-3 w-3" />
-                <span>{formatDate(event.startDateTime)} • {formatTime(event.startDateTime)}</span>
+                <span>{formatDate(event.startDateTime)}</span>
              </div>
              <div className="font-bold text-lg text-foreground">
                 {event.price === 0 ? "Free" : formatPrice(event.price)}

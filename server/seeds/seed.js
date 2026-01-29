@@ -9,6 +9,10 @@ const Artwork = require("../models/Artwork.model");
 const Event = require("../models/Event.model");
 const Review = require("../models/Review.model");
 const PlatformStats = require("../models/PlatformStats.model");
+const Order = require("../models/Order.model");
+const VideoPurchase = require("../models/VideoPurchase.model");
+const Conversation = require("../models/Conversation.model");
+const Message = require("../models/Message.model");
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/nemesis";
 
@@ -54,9 +58,9 @@ const pickRandom = (arr, count = 1) => {
 };
 
 // Create users
-const createUsers = async (count = 50) => {
+const createUsers = async (count = 100) => {
   const users = [];
-  const hashedPassword = await bcryptjs.hash("Password123", 12);
+  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
 
   for (let i = 0; i < count; i++) {
     const firstName = faker.person.firstName();
@@ -113,8 +117,8 @@ const createArtists = async (count = 5) => {
           location: {
             type: "Point",
             coordinates: [
-              parseFloat(faker.location.longitude()),
-              parseFloat(faker.location.latitude()),
+              faker.location.longitude({ min: -10, max: 30 }),
+              faker.location.latitude({ min: 35, max: 60 }),
             ],
           },
         },
@@ -158,6 +162,10 @@ const createAdmin = async () => {
         address: {
             city: "Admin City",
             country: "Adminland",
+            location: {
+              type: "Point",
+              coordinates: [43.21529158236424, 5.34568060941165]
+            }
         }
     },
   });
@@ -184,6 +192,10 @@ const createSuperAdmin = async () => {
         address: {
             city: "Super City",
             country: "Superland",
+            location: {
+              type: "Point",
+              coordinates: [43.29437263880987, 5.368905861167409]
+            }
         }
     },
   });
@@ -273,14 +285,14 @@ const createSpecificArtist = async () => {
       },
       logo: faker.image.url(),
       socialMedia: {
-        instagram: "https://instagram.com/nemesis",
+        instagram: "https://instagram.com/massfuer",
       },
     },
   });
 };
 
 // Create artworks
-const createArtworks = async (artists, count = 150) => {
+const createArtworks = async (artists, count = 300) => {
   const artworks = [];
 
   for (let i = 0; i < count; i++) {
@@ -322,7 +334,7 @@ const createArtworks = async (artists, count = 150) => {
 };
 
 // Create events
-const createEvents = async (artists, users, count = 100) => {
+const createEvents = async (artists, users, count = 200) => {
   const events = [];
 
   for (let i = 0; i < count; i++) {
@@ -356,8 +368,8 @@ const createEvents = async (artists, users, count = 100) => {
       coordinates: {
         type: "Point",
         coordinates: [
-          parseFloat(faker.location.longitude()),
-          parseFloat(faker.location.latitude()),
+          faker.location.longitude({ min: -10, max: 30 }),
+          faker.location.latitude({ min: 35, max: 60 }),
         ],
       },
     };
@@ -381,8 +393,9 @@ const createEvents = async (artists, users, count = 100) => {
   return Event.insertMany(events);
 };
 
+
 // Create reviews
-const createReviews = async (users, artworks, count = 500) => {
+const createReviews = async (users, artworks, count = 750) => {
   const reviews = [];
   const usedPairs = new Set();
 
@@ -425,6 +438,10 @@ const seed = async () => {
       Event.deleteMany({}),
       Review.deleteMany({}),
       PlatformStats.deleteMany({}),
+      Order.deleteMany({}),
+      Conversation.deleteMany({}),
+      Message.deleteMany({}),
+      VideoPurchase.deleteMany({}),
     ]);
 
     // Create data
@@ -445,7 +462,7 @@ const seed = async () => {
     console.log(`   ✓ Pending Artist: ${pendingArtist.email}`);
 
     console.log("\n👥 Creating regular users...");
-    const users = await createUsers(50);
+    const users = await createUsers(100);
     users.push(testUser); // Include test user in users array for reviews/events
     console.log(`   ✓ Created ${users.length} users (including test user)`);
 
@@ -459,13 +476,13 @@ const seed = async () => {
     console.log(`   ✓ Artiste: ${specificArtist.email}`);
 
     console.log("\n🖼️  Creating artworks...");
-    const artworks = await createArtworks(artists, 150);
+    const artworks = await createArtworks(artists, 300);
     console.log(`   ✓ Created ${artworks.length} artworks`);
 
     console.log("\n📅 Creating events...");
     let events = [];
     try {
-      events = await createEvents(artists, users, 100);
+      events = await createEvents(artists, users, 200);
       console.log(`   ✓ Created ${events.length} events with attendees`);
     } catch (eventError) {
       console.error("   ❌ Error creating events:", eventError.message);
@@ -478,7 +495,7 @@ const seed = async () => {
 
     console.log("\n⭐ Creating reviews...");
     const allUsers = [...users, ...artists];
-    const reviews = await createReviews(allUsers, artworks, 500);
+    const reviews = await createReviews(allUsers, artworks, 750);
     console.log(`   ✓ Created ${reviews.length} reviews`);
 
     // Summary
