@@ -60,7 +60,7 @@ const pickRandom = (arr, count = 1) => {
 // Create users
 const createUsers = async (count = 100) => {
   const users = [];
-  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_PASSWORD || "Password1234567!!", 12);
 
   for (let i = 0; i < count; i++) {
     const firstName = faker.person.firstName();
@@ -85,7 +85,7 @@ const createUsers = async (count = 100) => {
 // Create artists (verified)
 const createArtists = async (count = 5) => {
   const artists = [];
-  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_PASSWORD || "Password1234567!!", 12);
 
   for (let i = 0; i < count; i++) {
     const firstName = faker.person.firstName();
@@ -143,7 +143,7 @@ const createArtists = async (count = 5) => {
 
 // Create admin user
 const createAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash("Admin1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_ADMIN_PASSWORD || "Admin1234567!!", 12);
 
   return User.create({
     firstName: "Admin",
@@ -173,7 +173,7 @@ const createAdmin = async () => {
 
 // Create superadmin user
 const createSuperAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash("SuperAdmin1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_SUPERADMIN_PASSWORD || "SuperAdmin1234567!!", 12);
 
   return User.create({
     firstName: "Super",
@@ -203,7 +203,7 @@ const createSuperAdmin = async () => {
 
 // Create test user account (for testing paywall, purchases, etc.)
 const createTestUser = async () => {
-  const hashedPassword = await bcryptjs.hash("Test1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_PASSWORD || "Test1234567!!", 12);
 
   return User.create({
     firstName: "Test",
@@ -221,7 +221,7 @@ const createTestUser = async () => {
 
 // Create pending artist account (for testing artist approval flow)
 const createPendingArtist = async () => {
-  const hashedPassword = await bcryptjs.hash("Test1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_PASSWORD || "Test1234567!!", 12);
 
   return User.create({
     firstName: "Pending",
@@ -253,7 +253,7 @@ const createPendingArtist = async () => {
 
 // Create specific artist
 const createSpecificArtist = async () => {
-  const hashedPassword = await bcryptjs.hash("Password1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(process.env.SEED_PASSWORD || "Password1234567!!", 12);
 
   return User.create({
     firstName: "Artist",
