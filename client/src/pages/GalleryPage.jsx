@@ -9,7 +9,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
 import { useListing } from "../hooks/useListing";
 import { toast } from "sonner";
-import { SlidersHorizontal, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 // Shadcn Components
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,6 @@ const GalleryPage = () => {
   const [artists, setArtists] = useState([]);
   const [materialsOptions, setMaterialsOptions] = useState([]);
   const [colorsOptions, setColorsOptions] = useState([]);
-  const [showFilters, setShowFilters] = useState(true);
   const [priceRange, setPriceRange] = useState([0, 10000]); // Local state for slider
 
   // Sync slider with filters
@@ -171,16 +170,7 @@ const GalleryPage = () => {
                       />
                   </FilterSheet>
 
-                  {/* Desktop Filter Toggle */}
-                  <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="hidden lg:flex" 
-                        onClick={() => setShowFilters(!showFilters)}
-                    >
-                      <SlidersHorizontal className="mr-2 h-4 w-4" /> 
-                      {showFilters ? "Hide Filters" : "Show Filters"}
-                  </Button>
+
                   
                   <div className="w-[180px]">
                       <Select value={sort} onValueChange={setSort}>
@@ -209,7 +199,7 @@ const GalleryPage = () => {
 
       <div className="flex flex-col lg:flex-row gap-8 relative items-start">
           {/* DESKTOP SIDEBAR */}
-          <FilterAside show={showFilters}>
+          <FilterAside>
                <ArtworkFilters
                     filters={filters}
                     updateFilter={updateFilter}
@@ -225,7 +215,7 @@ const GalleryPage = () => {
           </FilterAside>
 
           {/* MAIN GRID */}
-          <main className="flex-1 min-w-0">
+          <main className="w-full lg:flex-1 lg:min-w-0">
                {isLoading ? (
                   <Loading />
                ) : error ? (

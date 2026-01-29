@@ -83,7 +83,7 @@
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     overflow-x: hidden; /* avoid horizontal scrollbar on mobile */
