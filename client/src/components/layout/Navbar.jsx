@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useMessaging } from "../../context/MessagingContext";
+import { useTranslation } from "react-i18next"; // Import useTranslation
 import { toast } from "sonner";
 import logo from "../../assets/logo.jpg";
 import {
@@ -50,6 +51,7 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { unreadCount } = useMessaging();
+  const { t } = useTranslation();
   const [hidden, setHidden] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const navigate = useNavigate();
@@ -90,7 +92,7 @@ const Navbar = () => {
         }
         onClick={handleNavClick}
       >
-        Home
+        {t("nav.home") || "Home"}
       </NavLink>
       <NavLink 
         to="/gallery" 
@@ -99,7 +101,7 @@ const Navbar = () => {
         }
         onClick={handleNavClick}
       >
-        Gallery
+        {t("nav.gallery") || "Gallery"}
       </NavLink>
       <NavLink 
         to="/events" 
@@ -108,7 +110,7 @@ const Navbar = () => {
         }
         onClick={handleNavClick}
       >
-        Events
+        {t("nav.events") || "Events"}
       </NavLink>
 
       <NavLink 
@@ -128,7 +130,7 @@ const Navbar = () => {
         }
         onClick={handleNavClick}
       >
-        Plans
+        {t("nav.plans") || "Plans"}
       </NavLink>
     </>
   );
@@ -232,7 +234,7 @@ const Navbar = () => {
                     </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                    <Link to="/dashboard?tab=overview"><LayoutDashboard className="mr-2 h-4 w-4" /> {t("nav.dashboard") || "Dashboard"}</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link to="/dashboard?tab=activity"><Package className="mr-2 h-4 w-4" /> Orders</Link>

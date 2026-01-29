@@ -163,6 +163,13 @@ export const adminAPI = {
   updateUserRole: (id, role) => api.patch(`/api/users/${id}/role`, { role }),
 };
 
+// Translations API (Admin)
+export const translationsAPI = {
+    getAll: (language, namespace) => api.get(`/api/translations/${language}/${namespace}`),
+    update: (language, key, value, namespace) => api.post("/api/translations", { language, key, value, namespace }),
+    updateBatch: (language, data, namespace) => api.post("/api/translations/batch", { language, data, namespace }),
+};
+
 export const reviewsAPI = {
   getByArtwork: (artworkId) => api.get(`/api/artworks/${artworkId}/reviews`),
   create: (artworkId, reviewData) =>
