@@ -58,7 +58,7 @@ client/src/
     payment/        # Stripe checkout components
     review/         # ReviewSection
     ui/             # Shadcn/UI primitives (Button, Card, Dialog, Select, etc.)
-    video/          # VideoPlayer, VideoGallery, VideoHero
+    video/          # VideoPlayer, VideoGallery, VideoHero, VideoLibraryCard, VideoFilters
   context/
     AuthContext     # Authentication state, login/logout, user data
     CartContext     # Shopping cart state and operations
@@ -78,8 +78,8 @@ client/src/
     EventsPage      # Event listing with filters, map/calendar views
     EventDetailPage # Event detail with registration, attendees modal
     ConfirmAttendancePage # Email confirmation landing page
-    VideoPage       # Video catalog
-    VideoDetailPage # Video player with purchase gating
+    VideoLibraryPage # Dedicated video library with filters and categories
+    VideoDetailPage # Video player with purchase gating and immersive view
     DashboardPage   # User/Artist dashboard (tabs: overview, orders, artworks, events, analytics)
     CartPage        # Shopping cart
     CheckoutPage    # Stripe checkout
