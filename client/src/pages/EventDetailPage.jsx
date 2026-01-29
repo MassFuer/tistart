@@ -83,9 +83,9 @@ const EventDetailPage = () => {
   const [showAttendees, setShowAttendees] = useState(false);
 
   // Check if current user is attending (handle both populated and unpopulated `user` field)
-  const isAttending = event?.attendees?.some(a => {
+  const isAttending = user && event?.attendees?.some(a => {
       const attendeeId = a.user?._id || a.user;
-      return attendeeId?.toString() === user?._id?.toString();
+      return attendeeId && user._id && attendeeId.toString() === user._id.toString();
   });
   // Check if user is admin, superAdmin, or event owner
   const canManage = isAuthenticated && (user?.role === "admin" || user?.role === "superAdmin" || user?._id === event?.artist?._id);

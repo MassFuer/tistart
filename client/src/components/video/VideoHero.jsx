@@ -7,14 +7,14 @@ import { platformAPI } from "../../services/api";
 
 const VideoHero = ({ compact = false }) => {
   const audioRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   const [heroConfig, setHeroConfig] = useState({
       videoUrl: "",
       text: "",
-      textSize: "15vw",
+      textSize: "12vw",
       backgroundSoundUrl: ""
   });
 
@@ -73,8 +73,8 @@ const VideoHero = ({ compact = false }) => {
         {/* Text Overlay */}
         <div className="relative z-20 px-8 max-w-[90vw]">
              <h1 
-                className="font-black uppercase text-center leading-none tracking-tighter text-white drop-shadow-xl"
-                style={{ fontSize: heroConfig.textSize || "15vw" }}
+                className="font-black uppercase text-center leading-none tracking-tighter text-white/60 mix-blend-overlay drop-shadow-xl"
+                style={{ fontSize: heroConfig.textSize || "12vw" }}
              >
                  {heroText}
              </h1>
@@ -88,7 +88,7 @@ const VideoHero = ({ compact = false }) => {
 
           {/* Optional: Background Audio Player */}
            {backgroundSoundUrl && (
-             <audio ref={audioRef} src={backgroundSoundUrl} loop />
+             <audio ref={audioRef} src={backgroundSoundUrl} loop autoPlay />
            )}
 
           <Button

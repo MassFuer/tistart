@@ -36,8 +36,12 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      toast.error("Please login to buy artworks");
-      navigate("/login");
+      toast("Interested by this artwork?", {
+        action: {
+          label: "Log in here",
+          onClick: () => navigate("/login"),
+        },
+      });
       return;
     }
 
@@ -144,7 +148,7 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
     <Button
       onClick={handleAddToCart}
       disabled={isLoading}
-      className={`w-full ${className}`}
+      className={`w-full dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-800 dark:hover:text-gray-200 ${className}`}
     >
       {isLoading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

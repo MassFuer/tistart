@@ -126,7 +126,7 @@ const ThemeEditor = () => {
   // Video Hero State
   const [heroConfig, setHeroConfig] = useState({
       text: "VIDEO ARTWORKS",
-      textSize: "15vw",
+      textSize: "12vw",
       videoUrl: "",
       backgroundSoundUrl: ""
   });
@@ -471,9 +471,9 @@ const ThemeEditor = () => {
                         <Label htmlFor="hero-text-size">Text Size</Label>
                         <Input 
                             id="hero-text-size" 
-                            value={heroConfig.textSize || "15vw"} 
+                            value={heroConfig.textSize || "12vw"} 
                             onChange={(e) => setHeroConfig(prev => ({ ...prev, textSize: e.target.value }))}
-                            placeholder="e.g. 15vw"
+                            placeholder="e.g. 12vw"
                         />
                         <p className="text-[10px] text-muted-foreground">Use vw, rem, or px</p>
                     </div>

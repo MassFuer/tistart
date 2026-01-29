@@ -27,6 +27,7 @@ import FavoritesPage from "./pages/FavoritesPage";
 import ApplyArtistPage from "./pages/ApplyArtistPage";
 import PricingPage from "./pages/PricingPage";
 import VideoPage from "./pages/VideoPage";
+import VideoLibraryPage from "./pages/VideoLibraryPage";
 import VideoDetailPage from "./pages/VideoDetailPage";
 import ConfirmAttendancePage from "./pages/ConfirmAttendancePage";
 
@@ -82,6 +83,7 @@ function App() {
                   <Route path="/gallery" element={withEB(<GalleryPage />)} />
                   <Route path="/artworks/:id" element={withEB(<ArtworkDetailPage />)} />
                   <Route path="/videos" element={withEB(<VideoPage />)} />
+                  <Route path="/video-library" element={withEB(<VideoLibraryPage />)} />
                   <Route path="/videos/:id" element={withEB(<VideoDetailPage />)} />
                   <Route path="/events" element={withEB(<EventsPage />)} />
                   <Route path="/events/:id" element={withEB(<EventDetailPage />)} />

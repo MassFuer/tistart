@@ -24,8 +24,12 @@ const StartConversationButton = ({
 
   const handleClick = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to contact the artist");
-      navigate("/login");
+      toast("Interested by this artwork?", {
+        action: {
+          label: "Log in here",
+          onClick: () => navigate("/login"),
+        },
+      });
       return;
     }
 
@@ -55,16 +59,11 @@ const StartConversationButton = ({
       disabled={isLoading}
     >
       {isLoading ? (
-        <>
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          Starting...
-        </>
+        <Loader2 className={`h-4 w-4 animate-spin ${size !== "icon" ? "mr-2" : ""}`} />
       ) : (
-        <>
-          <MessageCircle className="h-4 w-4 mr-2" />
-          Contact Artist
-        </>
+        <MessageCircle className={`h-4 w-4 ${size !== "icon" ? "mr-2" : ""}`} />
       )}
+      {size !== "icon" && (isLoading ? "Starting..." : "Contact Artist")}
     </Button>
   );
 };

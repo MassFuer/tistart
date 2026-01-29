@@ -254,6 +254,13 @@ const ArtworkDetailPage = () => {
                          }}>
                              <Share2 className="h-5 w-5" />
                          </Button>
+                         <StartConversationButton
+                             artistId={artwork.artist?._id}
+                             artworkId={artwork._id}
+                             artworkTitle={artwork.title}
+                             variant="outline"
+                             size="icon"
+                         />
                          {(artwork.category === "video" || artwork.category === "music") && (
                              <Button variant="secondary" size="icon" title="Watch in Immersive Mode" onClick={() => navigate(`/videos/${id}`)}>
                                  <Clapperboard className="h-5 w-5" />
@@ -361,17 +368,10 @@ const ArtworkDetailPage = () => {
                         </Button>
                      </div>
                  ) : (
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <div className="w-full">
                         {artwork.isForSale && (
                              <AddToCartButton artwork={artwork}/>
                         )}
-                        <StartConversationButton
-                          artistId={artwork.artist?._id}
-                          artworkId={artwork._id}
-                          artworkTitle={artwork.title}
-                          variant="outline"
-                          className="w-full"
-                        />
                      </div>
                  )}
             </div>

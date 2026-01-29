@@ -238,7 +238,7 @@ const VideoDetailPage = () => {
                         {/* Synopsis */}
                         {videoData.video?.synopsis ? (
                             <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                                <h3 className="text-xs font-bold tracking-widest text-primary mb-4 uppercase">Synopsis</h3>
+                                <h3 className="text-xs font-bold tracking-widest text-secondary mb-4 uppercase">Synopsis</h3>
                                 <p className="text-gray-200 leading-relaxed italic opacity-90">{videoData.video.synopsis}</p>
                             </div>
                         ) : videoData.description && (
@@ -289,7 +289,7 @@ const VideoDetailPage = () => {
                                         {videoData.video?.quality && (
                                             <div>
                                                 <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quality</h4>
-                                                <Badge className="bg-primary/20 text-primary border-primary/20 hover:bg-primary/30">
+                                                <Badge className="bg-primary/20 text-secondary border-secondary/20 hover:bg-primary/30">
                                                     {videoData.video.quality}
                                                 </Badge>
                                             </div>
@@ -318,9 +318,9 @@ const VideoDetailPage = () => {
 
                 {/* Recommendations Section */}
                  <div className="mt-24">
-                    <h2 className="text-2xl font-bold mb-6">More from {videoData.artist?.firstName}</h2>
+                    <h2 className="text-2xl font-bold mb-6">More from {videoData.video?.artist?.firstName}</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Placeholder for recommendations - fetching unrelated videos for now */}
+                        {/* Future implementation */}
                         {[1, 2, 3, 4].map((item) => (
                              <div key={item} className="aspect-video bg-gray-900 rounded-lg animate-pulse opacity-50"></div>
                         ))}

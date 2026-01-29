@@ -36,6 +36,9 @@ router.get("/", async (req, res, next) => {
       materials,
       colors,
       isForSale,
+      director,
+      cast,
+      team,
       sort = "-createdAt",
       search,
     } = req.query;
@@ -63,6 +66,17 @@ router.get("/", async (req, res, next) => {
 
     if (colors) {
       filter.colors = colors;
+    }
+
+    // Video Filters
+    if (director) {
+      filter["video.director"] = director;
+    }
+    if (cast) {
+      filter["video.cast"] = cast;
+    }
+    if (team) {
+      filter["video.productionTeam.name"] = team;
     }
 
     if (isForSale !== undefined) {

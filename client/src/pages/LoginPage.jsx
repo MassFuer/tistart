@@ -111,7 +111,11 @@ const LoginPage = () => {
                 </button>
               </div>
             </div>
-            <Button className="w-full" type="submit" disabled={isSubmitting}>
+            <Button
+              className="w-full dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-500 dark:hover:text-gray-200"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>

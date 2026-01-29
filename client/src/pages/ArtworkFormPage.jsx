@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { artworksAPI } from "../services/api";
 import { useNavigation } from "../context/NavigationContext";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 const ArtworkFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { goBackWithScroll } = useNavigation();
   const isEditing = Boolean(id);
 
@@ -62,7 +63,7 @@ const ArtworkFormPage = () => {
     description: "",
     price: "",
     originalPrice: "",
-    category: "painting",
+    category: searchParams.get("category") || "painting",
     isForSale: true,
     materialsUsed: "",
     colors: "",
