@@ -99,7 +99,8 @@ router.post(
       await newUser.save();
 
       // Send verification email
-      let verificationLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/verify-email/${emailVerificationToken}`;
+      const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+      let verificationLink = `${baseUrl}/verify-email/${emailVerificationToken}`;
       
       // Append redirect intent if provided (e.g. for artist application)
       if (intent === 'apply_artist') {
