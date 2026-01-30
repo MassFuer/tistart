@@ -10,7 +10,7 @@ const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { attachUser, isAdminRole } = require("../middleware/role.middleware");
 
 const { sendVerificationEmail, sendWelcomeEmail, sendArtistApplicationEmail, sendPasswordResetEmail } = require("../utils/email");
-const { createMulterUpload, processAndUploadProfilePicture } = require("../utils/r2");
+const { uploadProfile, processAndUploadProfilePicture } = require("../utils/r2");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 const { authLimiter } = require("../middleware/rateLimit.middleware");
@@ -402,12 +402,11 @@ router.post("/reset-password", authLimiter, async (req, res, next) => {
 });
 
 // POST /auth/apply-artist - Submit artist registration
-const uploadProfilePic = createMulterUpload("profilePicture");
 router.post(
   "/apply-artist",
   isAuthenticated,
   attachUser,
-  uploadProfilePic,
+  uploadProfile.single("profilePicture"),
   processAndUploadProfilePicture,
   async (req, res, next) => {
   try {

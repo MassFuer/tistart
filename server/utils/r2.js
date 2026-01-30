@@ -728,6 +728,7 @@ module.exports = {
   // Processing middlewares
   processAndUploadArtwork,
   processAndUploadProfile,
+  processAndUploadProfilePicture,
   processAndUploadEvent,
   processAndUploadLogo,
   processAndUploadVideo,
