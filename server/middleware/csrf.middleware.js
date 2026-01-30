@@ -107,8 +107,10 @@ const validateCsrf = (req, res, next) => {
     trustedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, "").toLowerCase());
   }
 
-  const isTrustedOrigin = trustedOrigins.some(trusted => origin.startsWith(trusted)) || 
-                          origin.endsWith(".vercel.app");
+  const normalizedOrigin = origin.toLowerCase().replace(/\/$/, "");
+  const isTrustedOrigin = trustedOrigins.some(trusted => normalizedOrigin.startsWith(trusted.toLowerCase().replace(/\/$/, ""))) || 
+                          normalizedOrigin.endsWith(".vercel.app") ||
+                          normalizedOrigin.endsWith(".netlify.app");
 
   if (isProd && isTrustedOrigin && headerToken) {
     // If the match failed but we have a trusted origin and a header token,
