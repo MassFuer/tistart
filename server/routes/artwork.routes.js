@@ -305,6 +305,17 @@ router.post(
         artistId = req.body.artist;
       }
 
+      // Build clean video metadata
+      const videoData = {};
+      if (req.body.video) {
+        // Only include fields that have values (strips empty strings)
+        Object.keys(req.body.video).forEach(key => {
+          if (req.body.video[key] !== "" && req.body.video[key] !== undefined && req.body.video[key] !== null) {
+            videoData[key] = req.body.video[key];
+          }
+        });
+      }
+
       const artwork = await Artwork.create({
         title,
         description,
@@ -315,9 +326,9 @@ router.post(
         category,
         materialsUsed: materialsUsed || [],
         colors: colors || [],
-        dimensions: dimensions || {},
+        dimensions: (dimensions?.width || dimensions?.height) ? dimensions : {},
         totalInStock: totalInStock || 1,
-        video: req.body.video || {}, // Include video metadata
+        video: videoData,
       });
 
       res.status(201).json({ data: artwork });
@@ -363,12 +374,18 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     }
 
     // Explicitly handle video metadata fields
-    const videoFields = ["synopsis", "director", "coAuthor", "cast", "productionTeam", "isPaid"];
+    const videoFields = ["synopsis", "director", "coAuthor", "cast", "productionTeam", "isPaid", "quality"];
     // Check if req.body has a nested 'video' object
     if (req.body.video) {
         for (const vField of videoFields) {
-            if (req.body.video[vField] !== undefined) {
-                updateObj[`video.${vField}`] = req.body.video[vField];
+            const value = req.body.video[vField];
+            // Only update if not undefined AND (not an empty string for fields with enums/strict requirements)
+            if (value !== undefined) {
+                if (vField === "quality" && value === "") {
+                    // Skip empty quality to avoid enum validation error
+                    continue;
+                }
+                updateObj[`video.${vField}`] = value;
             }
         }
     }

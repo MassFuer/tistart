@@ -236,7 +236,13 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
     }, 2500);
   };
 
-  if (!videoUrl) {
+  // Return null only if completely missing video data
+  if (!video && artwork?.category !== 'video') {
+    return null;
+  }
+
+  // Safety check: if not paid and no URL, we can't play anything
+  if (!isPaid && !videoUrl && !video?.previewVideoUrl) {
     return null;
   }
 
@@ -393,7 +399,8 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
   }
 
   // PREVIEW OR PAYWALL (If no access)
-  const showPreview = (isPlayingPreview || !accessInfo?.requiresLogin) && video?.previewVideoUrl;
+  // Only show preview if the user explicitly clicked "Watch Preview"
+  const showPreview = isPlayingPreview && video?.previewVideoUrl;
 
   if (showPreview) {
       return (
