@@ -27,10 +27,13 @@ if (process.env.CLIENT_URL) {
 const setCsrfCookie = (req, res, next) => {
   if (!req.cookies?.[CSRF_COOKIE]) {
     const token = crypto.randomBytes(32).toString("hex");
+    const isProd = process.env.NODE_ENV === "production";
+    
     res.cookie(CSRF_COOKIE, token, {
-      httpOnly: false, // JS needs to read this
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      httpOnly: false, // JS needs to read this (or we return it in JSON)
+      secure: isProd,
+      // 'none' allows cross-domain cookies, 'lax' is better for dev
+      sameSite: isProd ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24h
       path: "/",
     });

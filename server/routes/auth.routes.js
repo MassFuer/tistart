@@ -192,7 +192,10 @@ router.post(
         storage: user.storage,
       };
 
-      res.status(200).json({ data: userResponse });
+      res.status(200).json({ 
+        data: userResponse,
+        csrfToken: req.cookies["csrf_token"]
+      });
     } catch (error) {
       next(error);
     }
@@ -227,7 +230,15 @@ router.get("/verify", isAuthenticated, attachUser, (req, res) => {
     storage: req.user.storage,
   };
 
-  res.status(200).json({ data: userResponse });
+  res.status(200).json({ 
+    data: userResponse,
+    csrfToken: req.cookies["csrf_token"] 
+  });
+});
+
+// GET /auth/csrf-token - Get current CSRF token
+router.get("/csrf-token", (req, res) => {
+  res.status(200).json({ csrfToken: req.cookies["csrf_token"] });
 });
 
 // POST /auth/verify-email - Verify email with token
