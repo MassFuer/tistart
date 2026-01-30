@@ -30,12 +30,16 @@ router.get("/:artworkId/access", isAuthenticated, attachUser, async (req, res, n
       });
     }
 
-    // Check if user is the artist (owner always has access)
-    if (artwork.artist.toString() === req.user._id.toString()) {
+    // Check if user is the artist or admin (platform owners always have access)
+    const isOwner = artwork.artist.toString() === req.user._id.toString();
+    const isAdmin = isAdminRole(req.user.role);
+
+    if (isOwner || isAdmin) {
       return res.json({
         data: {
           hasAccess: true,
-          isOwner: true,
+          isOwner,
+          isAdmin,
         },
       });
     }

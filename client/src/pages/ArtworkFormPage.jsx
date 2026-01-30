@@ -543,9 +543,13 @@ const ArtworkFormPage = () => {
                                             {selectedFullVideo ? selectedFullVideo.name : "No file selected"}
                                         </span>
                                     </div>
-                                    {selectedFullVideo && (
+                                    {(selectedFullVideo || formData.video.fullVideoUrl) && (
                                         <div className="mt-2 w-full max-w-sm rounded overflow-hidden bg-black aspect-video">
-                                            <video src={URL.createObjectURL(selectedFullVideo)} controls className="w-full h-full object-contain" />
+                                            <video 
+                                                src={selectedFullVideo ? URL.createObjectURL(selectedFullVideo) : formData.video.fullVideoUrl} 
+                                                controls 
+                                                className="w-full h-full object-contain" 
+                                            />
                                         </div>
                                     )}
                                     <div className="flex items-center gap-2">
@@ -580,9 +584,13 @@ const ArtworkFormPage = () => {
                                             {selectedPreviewVideo ? selectedPreviewVideo.name : "No file selected"}
                                         </span>
                                     </div>
-                                    {selectedPreviewVideo && (
+                                    {(selectedPreviewVideo || formData.video.previewVideoUrl) && (
                                         <div className="mt-2 w-full max-w-sm rounded overflow-hidden bg-black aspect-video">
-                                            <video src={URL.createObjectURL(selectedPreviewVideo)} controls className="w-full h-full object-contain" />
+                                            <video 
+                                                src={selectedPreviewVideo ? URL.createObjectURL(selectedPreviewVideo) : formData.video.previewVideoUrl} 
+                                                controls 
+                                                className="w-full h-full object-contain" 
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -613,9 +621,13 @@ const ArtworkFormPage = () => {
                                             {selectedAudio ? selectedAudio.name : "No file selected"}
                                         </span>
                                     </div>
-                                    {selectedAudio && (
+                                    {(selectedAudio || formData.video.backgroundAudioUrl) && (
                                         <div className="mt-2">
-                                             <audio src={URL.createObjectURL(selectedAudio)} controls className="w-full h-8" />
+                                             <audio 
+                                                src={selectedAudio ? URL.createObjectURL(selectedAudio) : formData.video.backgroundAudioUrl} 
+                                                controls 
+                                                className="w-full h-8" 
+                                            />
                                         </div>
                                     )}
                                 </div>

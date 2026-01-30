@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { optionalAuth } = require("../middleware/optionalAuth.middleware");
+const { sanitizeArtwork } = require("../utils/videoAccess");
 
 const mongoose = require("mongoose");
 const Artwork = require("../models/Artwork.model");
@@ -23,8 +25,8 @@ const {
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 
-// GET /api/artworks - Get all artworks (public)
-router.get("/", async (req, res, next) => {
+// GET /api/artworks - Get all artworks (public, but auth-aware for paywall)
+router.get("/", optionalAuth, async (req, res, next) => {
   try {
     const {
       page = 1,
@@ -146,8 +148,14 @@ router.get("/", async (req, res, next) => {
       Artwork.countDocuments(filter),
     ]);
 
+    // Sanitize artworks to protect paid video content
+    const user = req.user || req.payload; // From optionalAuth
+    const sanitizedArtworks = await Promise.all(
+      artworks.map(art => sanitizeArtwork(art, user))
+    );
+
     res.status(200).json({
-      data: artworks,
+      data: sanitizedArtworks,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -242,8 +250,8 @@ router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, 
   }
 });
 
-// GET /api/artworks/:id - Get single artwork (public)
-router.get("/:id", async (req, res, next) => {
+// GET /api/artworks/:id - Get single artwork (public, but auth-aware for paywall)
+router.get("/:id", optionalAuth, async (req, res, next) => {
   try {
     const artwork = await Artwork.findById(req.params.id).populate(
       "artist",
@@ -254,7 +262,10 @@ router.get("/:id", async (req, res, next) => {
       return res.status(404).json({ error: "Artwork not found." });
     }
 
-    res.status(200).json({ data: artwork });
+    const user = req.user || req.payload;
+    const sanitizedArtwork = await sanitizeArtwork(artwork.toObject(), user);
+
+    res.status(200).json({ data: sanitizedArtwork });
   } catch (error) {
     next(error);
   }
@@ -614,8 +625,8 @@ router.post(
   }
 );
 
-// GET /api/artworks/artist/:artistId - Get artworks by artist (public)
-router.get("/artist/:artistId", async (req, res, next) => {
+// GET /api/artworks/artist/:artistId - Get artworks by artist (public, auth-aware)
+router.get("/artist/:artistId", optionalAuth, async (req, res, next) => {
   try {
     const { page = 1, limit = 12 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -628,8 +639,14 @@ router.get("/artist/:artistId", async (req, res, next) => {
       Artwork.countDocuments({ artist: req.params.artistId }),
     ]);
 
+    // Sanitize artworks
+    const user = req.user || req.payload;
+    const sanitizedArtworks = await Promise.all(
+      artworks.map(art => sanitizeArtwork(art, user))
+    );
+
     res.status(200).json({
-      data: artworks,
+      data: sanitizedArtworks,
       pagination: {
         page: Number(page),
         limit: Number(limit),

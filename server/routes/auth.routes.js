@@ -204,13 +204,12 @@ router.post(
 
 // POST /auth/logout - Logout user
 router.post("/logout", (req, res) => {
-  res.clearCookie("authToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-  });
+  res.clearCookie("authToken", getCookieOptions());
 
-  res.status(200).json({ message: "Logged out successfully." });
+  res.status(200).json({ 
+    message: "Logged out successfully.",
+    csrfToken: req.cookies["csrf_token"] // Return current CSRF token for future requests
+  });
 });
 
 // GET /auth/verify - Verify JWT and return user data
@@ -238,7 +237,11 @@ router.get("/verify", isAuthenticated, attachUser, (req, res) => {
 
 // GET /auth/csrf-token - Get current CSRF token
 router.get("/csrf-token", (req, res) => {
-  res.status(200).json({ csrfToken: req.cookies["csrf_token"] });
+  const token = req.cookies["csrf_token"];
+  if (!token) {
+    console.warn("CSRF cookie missing in /csrf-token request");
+  }
+  res.status(200).json({ csrfToken: token });
 });
 
 // POST /auth/verify-email - Verify email with token
@@ -257,7 +260,14 @@ router.post("/verify-email", async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired verification token." });
+      // Check if user exists but token is expired or mismatched
+      const anyUser = await User.findOne({ emailVerificationToken: token });
+      if (anyUser) {
+          console.error(`Verification Failed for ${anyUser.email}: Token expired at ${anyUser.emailVerificationTokenExpires}`);
+          return res.status(400).json({ error: "Verification token has expired." });
+      }
+      console.error(`Verification Failed: No user found with token ${token?.slice(0, 10)}...`);
+      return res.status(400).json({ error: "Invalid verification token." });
     }
 
     // Mark email as verified

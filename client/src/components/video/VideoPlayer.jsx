@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPause: onPauseCallback }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   
@@ -67,7 +67,7 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
   // Normalize URL: Support both 'url' and 'fullVideoUrl'
   const videoUrl = video?.url || video?.fullVideoUrl;
 
-  const isOwner = user?._id === artwork?.artist?._id;
+  const isOwner = user?._id === (artwork?.artist?._id || artwork?.artist);
   const isPaid = video?.isPaid;
 
   useEffect(() => {
@@ -80,9 +80,10 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
 
   const checkAccess = async () => {
 
-    const isAdmin = user?.role === 'admin' || user?.role === 'superAdmin';
+    // isAdmin is now coming from useAuth() hook for the logged in user
+    const hasAdminAccess = isAdmin;
 
-    if (isOwner || isAdmin) {
+    if (isOwner || hasAdminAccess) {
       setAccessInfo({ hasAccess: true, isOwner: true });
       await fetchStreamUrl();
       setIsLoading(false);
@@ -391,8 +392,10 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
     );
   }
 
-  // If preview is playing, render the player with preview URL content
-  if (isPlayingPreview && video?.previewVideoUrl) {
+  // PREVIEW OR PAYWALL (If no access)
+  const showPreview = (isPlayingPreview || !accessInfo?.requiresLogin) && video?.previewVideoUrl;
+
+  if (showPreview) {
       return (
           <div className="w-full space-y-2">
             <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-sm border">
@@ -400,19 +403,48 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
                     src={video.previewVideoUrl}
                     className="w-full h-full object-contain"
                     controls
-                    autoPlay
+                    autoPlay={isPlayingPreview}
                     onEnded={() => setIsPlayingPreview(false)}
                 />
+                
+                {/* Preview Overlay Label */}
+                <div className="absolute top-4 left-4 z-20">
+                    <Badge className="bg-primary/90 text-white border-0 py-1 px-3 shadow-lg">
+                        <Clapperboard className="mr-2 h-3.5 w-3.5" />
+                        PREVIEW MODE
+                    </Badge>
+                </div>
+
                 <button 
                     onClick={() => setIsPlayingPreview(false)}
-                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors"
+                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 backdrop-blur-sm transition-colors z-20"
                 >
                     <Minimize className="h-5 w-5" />
                 </button>
-                <div className="absolute bottom-4 right-4">
-                     <Button size="sm" onClick={() => setIsPlayingPreview(false)}>
-                        Unlock Full Video
-                     </Button>
+
+                <div className="absolute bottom-12 right-4 z-20">
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button size="sm" className="shadow-xl font-bold bg-amber-500 hover:bg-amber-600 text-black border-0">
+                                <Lock className="mr-2 h-3.5 w-3.5" />
+                                Unlock Full Movie
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="z-[100]">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Unlock Full Access</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    You are watching a short preview. To watch the full version of <strong>{artwork.title}</strong>, you can add it to your library for <strong>{Number(artwork.price).toFixed(2)} €</strong>.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Keep Watching Preview</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleBuyClick} disabled={isPurchasing}>
+                                    {isPurchasing ? "Processing..." : "Continue to Checkout"}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
           </div>
@@ -425,10 +457,10 @@ const VideoPlayer = ({ artwork, onPurchaseComplete, onPlay: onPlayCallback, onPa
       <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden group">
         {/* Background Preview */}
         <div 
-            className="absolute inset-0 bg-cover bg-center blur-sm opacity-50 scale-105"
+            className="absolute inset-0 bg-cover bg-center opacity-80 scale-100"
             style={{ backgroundImage: `url(${video.thumbnailUrl || artwork.images?.[0]})` }}
         />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/40" />
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white z-10">
