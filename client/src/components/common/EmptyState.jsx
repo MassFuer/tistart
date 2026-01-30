@@ -1,26 +1,32 @@
-import { SearchX } from "lucide-react";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { FolderOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const EmptyState = ({
-  message = "No items found",
-  description,
-  icon,
-  action,
-  children,
+  title = "No items found",
+  description = "We couldn't find what you were looking for.",
+  actionLabel,
+  actionLink,
+  icon: Icon = FolderOpen,
 }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[300px] w-full p-8 text-center border-2 border-dashed rounded-lg bg-muted/10">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-6">
-        {icon || <SearchX className="h-10 w-10 text-muted-foreground" />}
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-full mb-4">
+        <Icon className="w-8 h-8 text-gray-500 dark:text-gray-400" />
       </div>
-      <p className="text-lg font-medium text-foreground mb-2">{message}</p>
-      {description && (
-        <p className="text-sm text-muted-foreground mb-6 max-w-sm">{description}</p>
-      )}
-      {(children || action) && (
-        <div className="flex gap-4 items-center">
-            {action}
-            {children}
-        </div>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        {title}
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400 max-w-md mb-6">
+        {description}
+      </p>
+      {actionLabel && actionLink && (
+        <Button onClick={() => navigate(actionLink)}>
+          {actionLabel}
+        </Button>
       )}
     </div>
   );

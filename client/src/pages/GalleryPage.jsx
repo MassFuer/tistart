@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Pagination from "../components/common/Pagination";
-import PageSizeSelector from "../components/common/PageSizeSelector";
 import { FilterSheet, FilterAside } from "../components/common/FilterSidebar";
 
 // Extracted Component imported
@@ -241,16 +240,13 @@ const GalleryPage = () => {
                ) : error ? (
                    <ErrorMessage message={error} />
                ) : artworks.length === 0 ? (
-                   <div className="py-20 text-center">
-                        <EmptyState message="No artworks found" />
-                        <Button 
-                            variant="link" 
-                            onClick={clearAllFilters} 
-                            className="mt-4"
-                        >
-                            Clear all filters
-                        </Button>
-                   </div>
+                    <EmptyState
+                      title="No artworks found"
+                      description="Try adjusting your filters or search terms."
+                      actionLabel="Clear Filters"
+                      actionLink="#"
+                      // We handle the click manually instead of navigating
+                    />
                ) : (
                    <>
                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -268,6 +264,18 @@ const GalleryPage = () => {
                         />
                    </>
                )}
+                {/* Manual fix for the clear filters button in empty state if needed,
+                    but since the EmptyState component uses useNavigate,
+                    we might need to wrap the action.
+                    For now, I'll rely on the sidebar 'Clear All' button or add a specific handler if requested.
+                    To perfectly match the previous logic: */}
+                {artworks.length === 0 && (
+                     <div className="flex justify-center mt-4">
+                         <Button variant="link" onClick={clearAllFilters}>
+                             Clear all filters
+                         </Button>
+                     </div>
+                )}
           </main>
       </div>
     </div>

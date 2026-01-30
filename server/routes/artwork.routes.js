@@ -1,16 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const mongoose = require("mongoose");
 const Artwork = require("../models/Artwork.model");
-const Order = require("../models/Order.model");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isVerifiedArtist, isAdminRole } = require("../middleware/role.middleware");
 const {
   uploadArtwork,
-  uploadVideo,
   processAndUploadArtwork,
-  processAndUploadVideo,
   streamAndUploadVideo,
   checkStorageQuota,
   updateUserStorage,
@@ -22,139 +18,14 @@ const {
 } = require("../utils/r2");
 const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
+const { queryArtworks, getArtistStats } = require("../services/artwork.service");
+const AppError = require("../utils/AppError");
 
 // GET /api/artworks - Get all artworks (public)
 router.get("/", async (req, res, next) => {
   try {
-    const {
-      page = 1,
-      limit = 12,
-      category,
-      minPrice,
-      maxPrice,
-      artist,
-      materials,
-      colors,
-      isForSale,
-      director,
-      cast,
-      team,
-      sort = "-createdAt",
-      search,
-    } = req.query;
-
-    // Build filter object
-    const filter = {};
-
-    if (category) {
-      filter.category = category;
-    }
-
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
-
-    if (artist) {
-      filter.artist = artist;
-    }
-
-    if (materials) {
-      filter.materialsUsed = materials;
-    }
-
-    if (colors) {
-      filter.colors = colors;
-    }
-
-    // Video Filters
-    if (director) {
-      filter["video.director"] = director;
-    }
-    if (cast) {
-      filter["video.cast"] = cast;
-    }
-    if (team) {
-      filter["video.productionTeam.name"] = team;
-    }
-
-    if (isForSale !== undefined) {
-      filter.isForSale = isForSale === "true";
-    }
-
-    if (search) {
-      // Optimized search using N-grams (handles substring matching efficiently)
-      const searchTokens = search
-        .toLowerCase()
-        .trim()
-        .split(/[\s\-_.,;?!]+/);
-      const validTokens = searchTokens.filter((t) => t.length > 0);
-
-      if (validTokens.length > 0) {
-        // If query contains very short tokens (<3 chars), fallback to regex
-        // because we only index 3-grams and above for performance.
-        const hasSmallTokens = validTokens.some((t) => t.length < 3);
-
-        if (hasSmallTokens) {
-          const searchRegex = new RegExp(search, "i");
-          // Use the pre-computed search string which includes title, desc, and artist
-          filter.searchString = { $regex: searchRegex };
-        } else {
-          // Use n-gram index for fast substring search
-          // $all ensures that for "blue sky", we find docs with "blue" AND "sky"
-          filter.searchKeywords = { $all: validTokens };
-        }
-      }
-    }
-
-    // Calculate pagination
-    const skip = (Number(page) - 1) * Number(limit);
-
-    // Map sort parameters to database fields
-    // Support: revenue, sales, rating, price, title, createdAt
-    let sortField = sort;
-    let sortDirection = 1;
-
-    // Handle negative prefix for descending order
-    if (sort.startsWith('-')) {
-      sortDirection = -1;
-      sortField = sort.substring(1);
-    }
-
-    // Map frontend sort keys to actual database fields
-    const sortMapping = {
-      'revenue': 'stats.totalRevenue',
-      'sales': 'stats.totalSold',
-      'rating': 'averageRating',
-      'price': 'price',
-      'title': 'title',
-      'createdAt': 'createdAt',
-      'stock': 'stock'
-    };
-
-    const dbSortField = sortMapping[sortField] || sortField;
-    const sortObj = { [dbSortField]: sortDirection };
-
-    // Execute query
-    const [artworks, total] = await Promise.all([
-      Artwork.find(filter)
-        .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
-        .sort(sortObj)
-        .skip(skip)
-        .limit(Number(limit)).lean(),
-      Artwork.countDocuments(filter),
-    ]);
-
-    res.status(200).json({
-      data: artworks,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
+    const result = await queryArtworks(req.query);
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
@@ -164,79 +35,8 @@ router.get("/", async (req, res, next) => {
 router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
   try {
     const artistId = req.user._id;
-
-    // 1. Aggregate Orders to get Sales & Revenue per Artwork
-    const orderStats = await Order.aggregate([
-      {
-        $match: {
-          "items.artist": artistId,
-          status: { $in: ["paid", "shipped", "delivered"] }, // Only count completed sales
-        },
-      },
-      { $unwind: "$items" },
-      {
-        $match: {
-          "items.artist": artistId,
-          "items.itemType": "artwork", // Filter only artworks
-        },
-      },
-      {
-        $group: {
-          _id: "$items.artwork",
-          totalSold: { $sum: "$items.quantity" },
-          totalRevenue: { $sum: "$items.artistEarnings" }, // Use pre-calculated earnings
-        },
-      },
-    ]);
-
-    // Create a map for easy lookup
-    const statsMap = {};
-    let totalArtistRevenue = 0;
-    let totalItemsSold = 0;
-
-    orderStats.forEach((stat) => {
-      if (stat._id) {
-          statsMap[stat._id.toString()] = {
-            sold: stat.totalSold,
-            revenue: stat.totalRevenue,
-          };
-          totalArtistRevenue += stat.totalRevenue;
-          totalItemsSold += stat.totalSold;
-      }
-    });
-
-    // 2. Fetch all artworks by this artist
-    const artworks = await Artwork.find({ artist: artistId }).sort("-createdAt");
-
-    // 3. Merge stats
-    const artworksWithStats = artworks.map((artwork) => {
-      const stat = statsMap[artwork._id.toString()] || { sold: 0, revenue: 0 };
-      return {
-        ...artwork.toObject(),
-        stats: {
-          totalSold: stat.sold,
-          totalRevenue: stat.revenue,
-        },
-      };
-    });
-
-    // 4. Calculate Overall KPIs
-    const totalArtworks = artworks.length;
-    const totalReviews = artworks.reduce((acc, curr) => acc + (curr.numOfReviews || 0), 0);
-    // Weighted average rating
-    const totalRatingSum = artworks.reduce((acc, curr) => acc + ((curr.averageRating || 0) * (curr.numOfReviews || 0)), 0);
-    const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
-
-    res.status(200).json({
-      data: artworksWithStats,
-      kpis: {
-        totalRevenue: totalArtistRevenue,
-        totalSold: totalItemsSold,
-        totalArtworks,
-        totalReviews,
-        avgRating: Number(avgRating),
-      },
-    });
+    const stats = await getArtistStats(artistId);
+    res.status(200).json(stats);
   } catch (error) {
     next(error);
   }
@@ -251,7 +51,7 @@ router.get("/:id", async (req, res, next) => {
     );
 
     if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
+      return next(new AppError("Artwork not found.", 404));
     }
 
     res.status(200).json({ data: artwork });
@@ -286,9 +86,7 @@ router.post(
         totalInStock,
       } = req.body;
 
-      // Determine artist ID:
-      // If admin and artist ID provided in body, use that.
-      // Otherwise default to current user ID.
+      // Determine artist ID
       let artistId = req.payload._id;
       if (isAdminRole(req.payload.role) && req.body.artist) {
         artistId = req.body.artist;
@@ -306,7 +104,7 @@ router.post(
         colors: colors || [],
         dimensions: dimensions || {},
         totalInStock: totalInStock || 1,
-        video: req.body.video || {}, // Include video metadata
+        video: req.body.video || {},
       });
 
       res.status(201).json({ data: artwork });
@@ -322,12 +120,11 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     const artwork = await Artwork.findById(req.params.id);
 
     if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
+      return next(new AppError("Artwork not found.", 404));
     }
 
-    // Check if user is the owner OR admin
     if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
-      return res.status(403).json({ error: "You can only update your own artworks." });
+      return next(new AppError("You can only update your own artworks.", 403));
     }
 
     const allowedFields = [
@@ -351,9 +148,8 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
       }
     }
 
-    // Explicitly handle video metadata fields
+    // Video metadata
     const videoFields = ["synopsis", "director", "coAuthor", "cast", "productionTeam", "isPaid"];
-    // Check if req.body has a nested 'video' object
     if (req.body.video) {
         for (const vField of videoFields) {
             if (req.body.video[vField] !== undefined) {
@@ -361,16 +157,13 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
             }
         }
     }
-    // Also check flat fields if sent that way (e.g. video.synopsis)
-    // pass
 
-    // Handle image deletions - find images that were removed
+    // Handle image deletions
     if (req.body.images !== undefined) {
       const oldImages = artwork.images || [];
       const newImages = req.body.images || [];
       const removedImages = oldImages.filter((img) => !newImages.includes(img));
 
-      // Delete removed images from R2
       const artistId = artwork.artist.toString();
       const BATCH_SIZE = 5;
       for (let i = 0; i < removedImages.length; i += BATCH_SIZE) {
@@ -379,15 +172,11 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
       }
     }
 
-    // Handle video settings separately to avoid overwriting the video URL
-    // Only update isPaid if videoIsPaid is provided
     if (req.body.videoIsPaid !== undefined && artwork.video?.url) {
       updateObj["video.isPaid"] = req.body.videoIsPaid;
     }
 
-    // Handle video removal (user clicked remove on existing video)
     if (req.body.removeVideo === true && artwork.video?.url) {
-      // Delete video files from storage
       const artistId = artwork.artist.toString();
       await deleteFile(artwork.video.url, artistId);
       if (artwork.video.thumbnailUrl) {
@@ -396,7 +185,6 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
       if (artwork.video.previewUrl) {
         await deleteFile(artwork.video.previewUrl, artistId);
       }
-      // Remove video from artwork
       updateObj.video = null;
     }
 
@@ -417,15 +205,13 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
     const artwork = await Artwork.findById(req.params.id);
 
     if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
+      return next(new AppError("Artwork not found.", 404));
     }
 
-    // Check if user is the owner OR admin/superAdmin
     if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
-      return res.status(403).json({ error: "You can only delete your own artworks." });
+      return next(new AppError("You can only delete your own artworks.", 403));
     }
 
-    // Delete associated files from R2 and update storage
     const artistId = artwork.artist.toString();
     const BATCH_SIZE = 5;
     for (let i = 0; i < artwork.images.length; i += BATCH_SIZE) {
@@ -433,7 +219,6 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
       await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
     }
 
-    // Delete video files if any
     if (artwork.video?.url) {
       await deleteFile(artwork.video.url, artistId);
     }
@@ -465,26 +250,21 @@ router.post(
       const artwork = await Artwork.findById(req.params.id);
 
       if (!artwork) {
-        return res.status(404).json({ error: "Artwork not found." });
+        return next(new AppError("Artwork not found.", 404));
       }
 
-      // Check if user is the owner OR admin/superAdmin
       if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
-        return res.status(403).json({ error: "You can only upload images to your own artworks." });
+        return next(new AppError("You can only upload images to your own artworks.", 403));
       }
 
       if (!req.uploadedFiles || req.uploadedFiles.length === 0) {
-        return res.status(400).json({ error: "No images provided." });
+        return next(new AppError("No images provided.", 400));
       }
 
-      // Get URLs from uploaded files
       const imageUrls = req.uploadedFiles.map((file) => file.url);
-
-      // Add to existing images
       artwork.images.push(...imageUrls);
       await artwork.save();
 
-      // Update storage tracking for the artist
       const artistId = artwork.artist.toString();
       for (const file of req.uploadedFiles) {
         await updateUserStorage(artistId, file.size, file.type);
@@ -508,21 +288,19 @@ router.post(
       const artwork = await Artwork.findById(req.params.id);
 
       if (!artwork) {
-        return res.status(404).json({ error: "Artwork not found." });
+        return next(new AppError("Artwork not found.", 404));
       }
 
-      // Check if user is the owner OR admin
       if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
-        return res.status(403).json({ error: "You can only upload videos to your own artworks." });
+        return next(new AppError("You can only upload videos to your own artworks.", 403));
       }
 
       if (!req.uploadedVideo) {
-        return res.status(400).json({ error: "No video provided." });
+        return next(new AppError("No video provided.", 400));
       }
 
-      // Determine which field to update based on upload field name
       const fieldMap = {
-          "video": "fullVideoUrl", // legacy default
+          "video": "fullVideoUrl",
           "fullVideo": "fullVideoUrl",
           "previewVideo": "previewVideoUrl",
           "backgroundAudio": "backgroundAudioUrl",
@@ -531,18 +309,14 @@ router.post(
 
       const targetField = fieldMap[req.uploadedVideo.fieldName] || "fullVideoUrl";
       
-      // We use $set to avoid overwriting the entire video object
       const updatePayload = {
           [`video.${targetField}`]: req.uploadedVideo.url
       };
 
-      // Handle specific metadata side-effects
       if (targetField === "fullVideoUrl") {
           if (req.body.isPaid !== undefined) updatePayload["video.isPaid"] = req.body.isPaid === "true" || req.body.isPaid === true;
           updatePayload["video.fileSize"] = req.uploadedVideo.size;
-          // Duration usually comes from metadata extraction which we aren't doing backend-side yet
           if (req.body.duration) updatePayload["video.duration"] = Number(req.body.duration);
-          // Legacy url field update
           updatePayload["video.url"] = req.uploadedVideo.url; 
       }
 
@@ -552,13 +326,7 @@ router.post(
           { new: true }
       );
 
-      // Storage tracking is handled by streamAndUploadVideo middleware
-
       res.status(200).json({ data: updatedArtwork });
-
-      // Storage tracking is handled by streamAndUploadVideo middleware
-
-      res.status(200).json({ data: artwork });
     } catch (error) {
       next(error);
     }
@@ -576,29 +344,26 @@ router.post(
       const artwork = await Artwork.findById(req.params.id);
 
       if (!artwork) {
-        return res.status(404).json({ error: "Artwork not found." });
+        return next(new AppError("Artwork not found.", 404));
       }
 
       if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
-        return res.status(403).json({ error: "You can only update your own artworks." });
+        return next(new AppError("You can only update your own artworks.", 403));
       }
 
       if (!req.file) {
-        return res.status(400).json({ error: "No thumbnail provided." });
+        return next(new AppError("No thumbnail provided.", 400));
       }
 
-      // Delete old thumbnail if exists
       if (artwork.video?.thumbnailUrl) {
         await deleteFile(artwork.video.thumbnailUrl, artwork.artist.toString());
       }
 
-      // Process and upload thumbnail
       const processed = await processImage(req.file.buffer, IMAGE_TRANSFORMS.thumbnail);
       const folder = `videos/${artwork.artist}/thumbnails`;
       const key = generateFilename("thumbnail.webp", folder);
       const url = await uploadToR2(processed.buffer, key, "image/webp");
 
-      // Update artwork
       artwork.video = {
         ...artwork.video,
         thumbnailUrl: url,
