@@ -131,6 +131,16 @@
         }
       }
     },
+    "/csrf-token": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/verify-email": {
       "post": {
         "description": "",
@@ -274,6 +284,12 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "address": {
+                    "example": "any"
+                  },
+                  "socialMedia": {
+                    "example": "any"
+                  },
                   "companyName": {
                     "example": "any"
                   },
@@ -292,10 +308,7 @@
                   "vatNumber": {
                     "example": "any"
                   },
-                  "address": {
-                    "example": "any"
-                  },
-                  "socialMedia": {
+                  "siret": {
                     "example": "any"
                   }
                 }
@@ -583,6 +596,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "507": {
+            "description": "Insufficient Storage"
           }
         }
       }
@@ -710,6 +726,26 @@
         }
       }
     },
+    "/{id}/view": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/filters-meta": {
       "get": {
         "description": "",
@@ -795,6 +831,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "507": {
+            "description": "Insufficient Storage"
           }
         }
       }
@@ -959,6 +998,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "507": {
+            "description": "Insufficient Storage"
           }
         }
       }
@@ -978,6 +1020,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "507": {
+            "description": "Insufficient Storage"
           }
         }
       }
@@ -1193,6 +1238,46 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/storage/sync": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/files": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }

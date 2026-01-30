@@ -19,16 +19,18 @@ const getCookie = (name) => {
 // Request interceptor - attach CSRF token
 api.interceptors.request.use(
   (config) => {
-    // Try cookie first, then memory fallback
-    const csrfToken = getCookie("csrf_token") || memoryCsrfToken;
+    // Priority 1: Read directly from cookie (most reliable)
+    const cookieToken = getCookie("csrf_token");
+    
+    // Priority 2: Fallback to memory if cookie is restricted (though SameSite=None fixes this)
+    const csrfToken = cookieToken || memoryCsrfToken;
+    
     if (csrfToken) {
       config.headers["x-csrf-token"] = csrfToken;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
