@@ -24,3 +24,6 @@ ehthumbs.db
 
 # VS Code
 .vscode/*
+
+# Logs from Winston
+*.log
