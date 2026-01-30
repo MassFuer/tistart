@@ -4,13 +4,14 @@ const rateLimit = require("express-rate-limit");
 // Strict limit: 5 requests per 15 minutes per IP
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10,
+  max: 20,
   message: {
     error: "Too many attempts. Please try again in 5 minutes.",
   },
   standardHeaders: true, // Return rate limit info in headers
   legacyHeaders: false,
   skipSuccessfulRequests: false, // Count all requests
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 // Rate limiter for general API endpoints
@@ -23,6 +24,7 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 // Rate limiter for sensitive operations (password change, email change)
@@ -35,6 +37,7 @@ const sensitiveLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 // Rate limiter for cart operations (add, update, remove)
@@ -47,6 +50,7 @@ const cartLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 // Rate limiter for order creation (checkout)
@@ -60,6 +64,7 @@ const orderLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipFailedRequests: true, // Don't count failed checkout attempts
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 // Rate limiter for purchase operations (instant video purchase)
@@ -73,6 +78,7 @@ const purchaseLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipFailedRequests: true,
+  skip: () => process.env.NODE_ENV === "development",
 });
 
 module.exports = {

@@ -32,8 +32,8 @@ const HomePage = () => {
     const fetchFeatured = async () => {
       try {
         const [artworksRes, eventsRes] = await Promise.all([
-          artworksAPI.getAll({ limit: 6, sort: '-createdAt' }),
-          eventsAPI.getAll({ limit: 6, sort: '-createdAt' })
+          artworksAPI.getAll({ limit: 8, sort: '-createdAt' }),
+          eventsAPI.getAll({ limit: 8, sort: '-createdAt' })
         ]);
         setFeaturedArtworks(artworksRes.data.data);
         setFeaturedEvents(eventsRes.data.data || []);

@@ -25,14 +25,20 @@ if (process.env.CLIENT_URL) {
  * Middleware: set CSRF cookie if not present.
  */
 const setCsrfCookie = (req, res, next) => {
+  // Production detection (handles Render/Netlify)
+  const isProd = 
+    process.env.NODE_ENV === "production" || 
+    process.env.RENDER === "true" || 
+    !!process.env.RENDER_EXTERNAL_URL;
+
   // Use existing token if the browser sent one, otherwise create new
   const token = req.cookies?.[CSRF_COOKIE] || crypto.randomBytes(32).toString("hex");
 
   // Re-set the cookie to refresh its presence in the browser
   res.cookie(CSRF_COOKIE, token, {
     httpOnly: false, // JS needs to read this
-    secure: true, // Required for SameSite=None
-    sameSite: "none", // Critical for Netlify -> Render
+    secure: isProd, // Required for SameSite=None, but breaks localhost if true
+    sameSite: isProd ? "none" : "lax", // Critical for Netlify -> Render
     maxAge: 24 * 60 * 60 * 1000, // 24h
     path: "/",
   });
@@ -56,7 +62,8 @@ const validateCsrf = (req, res, next) => {
     "/auth/verify-email",
     "/auth/resend-verification-email",
     "/auth/forgot-password",
-    "/auth/reset-password"
+    "/auth/reset-password",
+    "/auth/logout" // Allow logout even if CSRF fails (fix "still connected")
   ];
   
   if (excludedPaths.some(path => req.path.includes(path))) {
@@ -77,21 +84,37 @@ const validateCsrf = (req, res, next) => {
   // - It's production
   // - The Origin is our trusted frontend (e.g., Netlify)
   // - The x-csrf-token header is present (Browsers don't allow cross-site custom headers without CORS approval)
-  const isProd = process.env.NODE_ENV === "production";
-  const origin = req.get("origin") || req.get("referer");
-  const isTrustedOrigin = origin && (
-    origin.startsWith("https://tistart.netlify.app") || 
-    origin.startsWith("https://www.fuer.fr") ||
-    origin.startsWith("https://massfuer.github.io")
-  );
+  const isProd = 
+    process.env.NODE_ENV === "production" || 
+    process.env.RENDER === "true" || 
+    !!process.env.RENDER_EXTERNAL_URL;
+  const origin = (req.get("origin") || req.get("referer") || "").toLowerCase();
+  
+  const trustedOrigins = [
+    "https://tistart.netlify.app",
+    "https://www.tistart.netlify.app",
+    "https://fuer.fr",
+    "https://www.fuer.fr",
+    "https://tistart-38lwv03lr-massfuers-projects.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000"
+  ];
+  
+  if (process.env.CLIENT_URL) {
+    trustedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, "").toLowerCase());
+  }
+
+  const isTrustedOrigin = trustedOrigins.some(trusted => origin.startsWith(trusted)) || 
+                          origin.endsWith(".vercel.app");
 
   if (isProd && isTrustedOrigin && headerToken) {
-    console.log(`CSRF: Trusting header-only CSRF for origin ${origin} (Cookie was missing)`);
+    // If the match failed but we have a trusted origin and a header token,
+    // we trust it (likely third-party cookie blocking in private tabs).
     return next();
   }
 
-  // Log details to your Render dashboard logs to see which is missing
-  console.error(`CSRF FAIL - Cookie: ${!!cookieToken}, Header: ${!!headerToken}, TrustedOrigin: ${!!isTrustedOrigin}`);
+  // Log details for debugging
+  console.error(`CSRF FAIL - CookieMismatch: ${cookieToken !== headerToken}, TrustedOrigin: ${!!isTrustedOrigin}`);
   return res.status(403).json({ error: "Invalid CSRF token" });
 };
 

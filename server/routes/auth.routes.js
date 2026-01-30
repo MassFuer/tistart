@@ -17,14 +17,27 @@ const { authLimiter } = require("../middleware/rateLimit.middleware");
 
 const saltRounds = 12;
 
+// Production detection (handles Render/Netlify)
+const isProduction = 
+  process.env.NODE_ENV === "production" || 
+  process.env.RENDER === "true" || 
+  !!process.env.RENDER_EXTERNAL_URL;
+
 // Cookie options
-const getCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  // Important: For Netlify (Frontend) + Render (Backend), we need 'none' to allow cross-site cookies
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-});
+const getCookieOptions = (forClear = false) => {
+  const options = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  };
+  
+  if (!forClear) {
+    options.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  }
+  
+  return options;
+};
 
 // POST /auth/signup - Create a new user
 router.post(
@@ -116,6 +129,7 @@ router.post(
       res.status(201).json({
         data: userResponse,
         message: "Registration successful. Please check your email to verify your address.",
+        csrfToken: req.cookies["csrf_token"]
       });
     } catch (error) {
       next(error);
@@ -204,11 +218,19 @@ router.post(
 
 // POST /auth/logout - Logout user
 router.post("/logout", (req, res) => {
-  res.clearCookie("authToken", getCookieOptions());
+  const options = getCookieOptions(true);
+  
+  // Clear with standard options
+  res.clearCookie("authToken", options);
+  
+  // Also clear with some common variations to be absolutely sure
+  res.clearCookie("authToken", { ...options, sameSite: "lax", secure: false });
+  res.clearCookie("authToken", { ...options, sameSite: "none", secure: true });
+  res.clearCookie("authToken", { path: "/" });
 
   res.status(200).json({ 
     message: "Logged out successfully.",
-    csrfToken: req.cookies["csrf_token"] // Return current CSRF token for future requests
+    csrfToken: req.cookies["csrf_token"]
   });
 });
 

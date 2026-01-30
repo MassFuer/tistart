@@ -12,11 +12,15 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://tistart.netlify.app",
+  "https://www.tistart.netlify.app",
+  "https://fuer.fr",
+  "https://www.fuer.fr",
+  "https://tistart-38lwv03lr-massfuers-projects.vercel.app",
 ];
 
 // Add production URL if set
 if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
+  allowedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, ""));
 }
 
 module.exports = (app) => {
