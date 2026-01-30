@@ -96,6 +96,8 @@ const validateCsrf = (req, res, next) => {
     "https://www.tistart.netlify.app",
     "https://fuer.fr",
     "https://www.fuer.fr",
+    "https://tistart.vercel.app",
+    "https://www.tistart.vercel.app",
     "https://tistart-38lwv03lr-massfuers-projects.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000"
