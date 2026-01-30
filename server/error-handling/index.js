@@ -1,13 +1,18 @@
+const AppError = require("../utils/AppError");
+const logger = require("../utils/logger");
+
 module.exports = (app) => {
   app.use((req, res, next) => {
     // this middleware runs whenever requested page is not available
-    res.status(404).json({ message: "This route does not exist" });
+    next(new AppError("This route does not exist", 404));
   });
 
   app.use((err, req, res, next) => {
-    // whenever you call next(err), this middleware will handle the error
-    // always logs the error
-    console.error("ERROR", req.method, req.path, err);
+    // Log error using Winston
+    logger.error(`${req.method} ${req.path} - ${err.message}`, {
+      stack: err.stack,
+      statusCode: err.statusCode || 500,
+    });
 
     // 1. Check if the response has already been sent
     if (res.headersSent) {
@@ -17,34 +22,41 @@ module.exports = (app) => {
     // 2. Handle 401 Unauthorized (e.g. invalid JWT from express-jwt)
     if (err.status === 401) {
       return res.status(401).json({
-        error: "Unauthorized",
+        status: "fail",
         message: "Invalid or missing authentication token.",
       });
     }
 
     // 3. Handle Mongoose Validation Errors
     if (err.name === "ValidationError") {
-      // Extract specific messages from the validation error
       const messages = Object.values(err.errors).map((val) => val.message);
       return res.status(400).json({
-        error: "Validation Error",
+        status: "fail",
         message: messages.join(". "),
       });
     }
 
-    // 4. Handle MongoDB Duplicate Key Errors (code 11000)
+    // 4. Handle MongoDB Duplicate Key Errors
     if (err.code === 11000) {
-      // Extract the field that caused the duplicate error
       const field = Object.keys(err.keyValue)[0];
       return res.status(400).json({
-        error: "Duplicate Record",
+        status: "fail",
         message: `A record with that ${field} already exists.`,
       });
     }
 
-    // 5. Default to 500 Internal Server Error
+    // 5. Handle Operational Errors (AppError)
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
+
+    // 6. Default to 500 Internal Server Error (Programming or Unknown Error)
     res.status(500).json({
-      message: "Internal server error. Check the server console",
+      status: "error",
+      message: "Internal server error.",
     });
   });
 };
