@@ -129,7 +129,7 @@ const PricingPage = () => {
               )}
 
               <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary dark:bg-slate-100/20 dark:text-slate-100 shadow-sm dark:border-slate-200">
                     <Icon className="h-6 w-6" />
                 </div>
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
