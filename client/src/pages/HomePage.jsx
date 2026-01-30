@@ -52,14 +52,15 @@ const HomePage = () => {
       {/* HERO SECTION */}
       <section className="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
         {/* Background Image */}
-        <div 
-            className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-            style={{ 
-                backgroundImage: 'url("https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg")' 
-            }}
-        >
-            <div className="absolute inset-0 bg-black/60" /> {/* Overlay */}
-        </div>
+        <img
+            src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg"
+            alt="Arrière-plan Cercle d'Art"
+            {...{ fetchpriority: "high" }} // Syntaxe React pour l'attribut récent fetchpriority
+            className="absolute inset-0 z-0 w-full h-full object-cover"
+          />
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 z-[1] bg-black/60" />
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto space-y-8">

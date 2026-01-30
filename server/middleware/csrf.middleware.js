@@ -15,6 +15,7 @@ const CSRF_HEADER = "x-csrf-token";
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://localhost:3000",
+  "https://tistart.netlify.app",
 ]);
 if (process.env.CLIENT_URL) {
   allowedOrigins.add(process.env.CLIENT_URL);
