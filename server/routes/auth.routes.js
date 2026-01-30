@@ -99,13 +99,15 @@ router.post(
       await newUser.save();
 
       // Send verification email
-      const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+      const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
       let verificationLink = `${baseUrl}/verify-email/${emailVerificationToken}`;
       
       // Append redirect intent if provided (e.g. for artist application)
       if (intent === 'apply_artist') {
           verificationLink += '?next=/apply-artist';
       }
+
+      console.log(`AUTH: Generated verification link: ${verificationLink} (normalized from ${process.env.CLIENT_URL})`);
 
       // Send verification email asynchronously (fire and forget)
       // This prevents the signup process from hanging if the email service is slow/down
@@ -393,7 +395,7 @@ router.post("/forgot-password", authLimiter, async (req, res, next) => {
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
-    const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
     const resetLink = `${baseUrl}/reset-password/${resetToken}`;
 
     try {
@@ -509,7 +511,7 @@ router.post(
         
         if (superAdmin) {
              // Direct link to user modal
-             const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+             const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
              const reviewLink = `${baseUrl}/admin/user/${req.user._id}`;
              const adminMsgContent = `New Artist Application submitted by ${req.user.firstName} ${req.user.lastName} (${companyName}).\nType: ${type}\nTagline: ${tagline || "N/A"}\n\nReview application: ${reviewLink}`;
              const autoReplyContent = `Hello ${req.user.firstName}, we have received your artist application. We will review it shortly and get back to you soon!`;
