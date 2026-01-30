@@ -7,6 +7,9 @@ const api = axios.create({
   withCredentials: true, // Send cookies with requests
 });
 
+// In-memory CSRF token storage as fallback
+let memoryCsrfToken = null;
+
 // Helper to read a cookie value
 const getCookie = (name) => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -16,7 +19,8 @@ const getCookie = (name) => {
 // Request interceptor - attach CSRF token
 api.interceptors.request.use(
   (config) => {
-    const csrfToken = getCookie("csrf_token");
+    // Try cookie first, then memory fallback
+    const csrfToken = getCookie("csrf_token") || memoryCsrfToken;
     if (csrfToken) {
       config.headers["x-csrf-token"] = csrfToken;
     }
@@ -30,42 +34,32 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    // If response contains a CSRF token (our custom addition), store it in memory
+    if (response.data?.csrfToken) {
+      memoryCsrfToken = response.data.csrfToken;
+    }
     return response;
   },
   (error) => {
     const status = error.response?.status;
     const currentPath = window.location.pathname;
 
-    // Skip redirect for auth verification calls (initial app load)
-    const isVerifyCall = error.config?.url === "/auth/verify";
-
-    // Handle 401 errors (unauthorized/session expired)
-    if (status === 401 && !isVerifyCall) {
-      // Only redirect if not already on login/signup pages
-      if (
-        !["/login", "/signup", "/verify-email", "/resend-email"].some((p) =>
-          currentPath.startsWith(p),
-        )
-      ) {
-        console.warn("Session expired - redirecting to login");
-        window.location.href = "/login";
-      }
-    }
-
     // Handle 403 errors (forbidden / CSRF)
     if (status === 403) {
       const msg = error.response?.data?.error;
       if (msg === "Invalid CSRF token") {
-        // CSRF cookie may have expired or is missing.
-        console.warn("CSRF token mismatch");
+        console.warn("CSRF token mismatch - cleaning memory token");
+        memoryCsrfToken = null;
         return Promise.reject(error);
       }
-      console.warn("Access denied:", msg);
     }
-
-    // Handle 429 errors (rate limited)
-    if (status === 429) {
-      console.warn("Rate limited:", error.response?.data?.error);
+    
+    const isVerifyCall = error.config?.url === "/auth/verify";
+    if (status === 401 && !isVerifyCall) {
+      if (!["/login", "/signup", "/verify-email", "/resend-email"].some((p) => currentPath.startsWith(p))) {
+        console.warn("Session expired - redirecting to login");
+        window.location.href = "/login";
+      }
     }
 
     return Promise.reject(error);

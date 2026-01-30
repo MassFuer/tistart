@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from "react";
-import { authAPI } from "../services/api";
+import { authAPI, default as api } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -10,20 +10,27 @@ export const AuthProvider = ({ children }) => {
 
   // Verify token on app load
   useEffect(() => {
-    const verifyUser = async () => {
+    const initializeAuth = async () => {
       try {
+        // Initial verify call will also capture CSRF token via interceptor
         const response = await authAPI.verify();
         setUser(response.data.data);
         setIsAuthenticated(true);
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
+        // If verify fails (not logged in), fetch a fresh CSRF token for signup/login
+        try {
+          await api.get("/auth/csrf-token");
+        } catch (csrfError) {
+          console.error("Failed to fetch initial CSRF token:", csrfError);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    verifyUser();
+    initializeAuth();
   }, []);
 
   const login = async (credentials) => {
