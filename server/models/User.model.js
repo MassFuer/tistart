@@ -138,7 +138,16 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required."],
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    githubId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     profilePicture: {
       type: String, // Cloudinary URL

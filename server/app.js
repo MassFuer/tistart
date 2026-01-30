@@ -25,6 +25,27 @@ app.use("/api/payments/webhook", stripeWebhook);
 // ℹ️ This function is getting exported from the config folder. It runs most pieces of middleware
 require("./config")(app);
 
+// Passport & Session configuration
+const session = require("express-session");
+const passport = require("passport");
+require("./config/passport");
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || process.env.TOKEN_SECRET || "super secret key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 30 * 60 * 1000, // 30 minutes
+    },
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Rate limiting for API routes
 const { apiLimiter } = require("./middleware/rateLimit.middleware");
 app.use("/api", apiLimiter);

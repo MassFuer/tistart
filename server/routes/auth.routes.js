@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 
 const User = require("../models/User.model");
 const Conversation = require("../models/Conversation.model");
@@ -600,5 +601,68 @@ router.patch("/update-artist-info", isAuthenticated, attachUser, async (req, res
     next(error);
   }
 });
+
+// Google OAuth
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+router.get("/google/callback", (req, res, next) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  passport.authenticate("google", (err, user, info) => {
+    if (err) {
+      console.error("Google Auth Error:", err);
+      return res.redirect(`${clientUrl}/login?error=auth_failed`);
+    }
+    if (!user) {
+      return res.redirect(`${clientUrl}/login?error=auth_failed`);
+    }
+    issueTokenAndRedirect(user, res);
+  })(req, res, next);
+});
+
+// GitHub OAuth
+router.get(
+  "/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
+
+router.get("/github/callback", (req, res, next) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  passport.authenticate("github", (err, user, info) => {
+    if (err) {
+      console.error("GitHub Auth Error:", err);
+      return res.redirect(`${clientUrl}/login?error=auth_failed`);
+    }
+    if (!user) {
+      return res.redirect(`${clientUrl}/login?error=auth_failed`);
+    }
+    issueTokenAndRedirect(user, res);
+  })(req, res, next);
+});
+
+// Helper to issue token and redirect
+const issueTokenAndRedirect = (user, res) => {
+  const payload = {
+    _id: user._id,
+    email: user.email,
+    userName: user.userName,
+    role: user.role,
+    artistStatus: user.artistStatus,
+  };
+
+  const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
+    algorithm: "HS256",
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
+
+  // Set HTTP-only cookie
+  res.cookie("authToken", authToken, getCookieOptions());
+
+  // Redirect to client
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  res.redirect(clientUrl);
+};
 
 module.exports = router;

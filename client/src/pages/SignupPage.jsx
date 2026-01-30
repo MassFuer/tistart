@@ -342,10 +342,10 @@ const SignupPage = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-             <Button variant="outline" type="button">
+             <Button variant="outline" type="button" onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:5005"}/auth/google`}>
                <FaGoogle className="mr-2 h-4 w-4" /> Google
             </Button>
-            <Button variant="outline" type="button">
+            <Button variant="outline" type="button" onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:5005"}/auth/github`}>
                <FaGithub className="mr-2 h-4 w-4" /> Github
             </Button>
             <Button variant="outline" type="button" disabled>
