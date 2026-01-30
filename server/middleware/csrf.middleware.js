@@ -16,6 +16,7 @@ const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://localhost:3000",
   "https://tistart.netlify.app",
+  "https://tistart-38lwv03lr-massfuers-projects.vercel.app",
 ]);
 if (process.env.CLIENT_URL) {
   allowedOrigins.add(process.env.CLIENT_URL);
