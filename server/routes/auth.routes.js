@@ -393,7 +393,8 @@ router.post("/forgot-password", authLimiter, async (req, res, next) => {
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await user.save();
 
-    const resetLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+    const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const resetLink = `${baseUrl}/reset-password/${resetToken}`;
 
     try {
       await sendPasswordResetEmail(user.email, user.firstName, resetLink);
@@ -508,7 +509,8 @@ router.post(
         
         if (superAdmin) {
              // Direct link to user modal
-             const reviewLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/admin/user/${req.user._id}`;
+             const baseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+             const reviewLink = `${baseUrl}/admin/user/${req.user._id}`;
              const adminMsgContent = `New Artist Application submitted by ${req.user.firstName} ${req.user.lastName} (${companyName}).\nType: ${type}\nTagline: ${tagline || "N/A"}\n\nReview application: ${reviewLink}`;
              const autoReplyContent = `Hello ${req.user.firstName}, we have received your artist application. We will review it shortly and get back to you soon!`;
              
