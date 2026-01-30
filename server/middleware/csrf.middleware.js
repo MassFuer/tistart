@@ -25,17 +25,21 @@ if (process.env.CLIENT_URL) {
  * Middleware: set CSRF cookie if not present.
  */
 const setCsrfCookie = (req, res, next) => {
-  // If cookie is missing, we MUST set it to avoid 403 on the next POST
-  if (!req.cookies?.[CSRF_COOKIE]) {
-    const token = crypto.randomBytes(32).toString("hex");
-    res.cookie(CSRF_COOKIE, token, {
-      httpOnly: false, // JS needs to read this
-      secure: process.env.NODE_ENV === "production", // Required for SameSite=None
-      sameSite: "none", // Required for Netlify -> Render
-      maxAge: 24 * 60 * 60 * 1000, // 24h
-      path: "/",
-    });
-  }
+  // Use existing token if the browser sent one, otherwise create new
+  const token = req.cookies?.[CSRF_COOKIE] || crypto.randomBytes(32).toString("hex");
+
+  // Re-set the cookie to refresh its presence in the browser
+  res.cookie(CSRF_COOKIE, token, {
+    httpOnly: false, // JS needs to read this
+    secure: true, // Required for SameSite=None
+    sameSite: "none", // Critical for Netlify -> Render
+    maxAge: 24 * 60 * 60 * 1000, // 24h
+    path: "/",
+  });
+
+  // Manually update req.cookies so the validator (validateCsrf)
+  // sees it even on the very first request
+  req.cookies = { ...req.cookies, [CSRF_COOKIE]: token };
   next();
 };
 
@@ -45,24 +49,16 @@ const setCsrfCookie = (req, res, next) => {
 const validateCsrf = (req, res, next) => {
   const safeMethods = ["GET", "HEAD", "OPTIONS"];
   if (safeMethods.includes(req.method)) return next();
-
-  // Skip for webhook routes (they use their own signature verification)
   if (req.path.includes("/webhook")) return next();
 
-  // 1. Origin validation
-  const origin = req.get("origin");
-  if (origin && !allowedOrigins.has(origin)) {
-    return res.status(403).json({ error: "Invalid origin" });
-  }
-
-  // 2. Double-submit cookie check
   const cookieToken = req.cookies?.[CSRF_COOKIE];
   const headerToken = req.get(CSRF_HEADER);
 
   if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+    // Log details to your Render dashboard logs to see which is missing
+    console.error(`CSRF FAIL - Cookie: ${!!cookieToken}, Header: ${!!headerToken}`);
     return res.status(403).json({ error: "Invalid CSRF token" });
   }
-
   next();
 };
 

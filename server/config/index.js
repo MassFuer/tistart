@@ -11,6 +11,7 @@ const { setCsrfCookie, validateCsrf } = require("../middleware/csrf.middleware")
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
+  "https://tistart.netlify.app",
 ];
 
 // Add production URL if set
@@ -23,7 +24,11 @@ module.exports = (app) => {
   app.set("trust proxy", 1);
 
   // Security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+  );
 
   // CORS configuration with credentials for cookies
   app.use(
@@ -44,18 +49,18 @@ module.exports = (app) => {
   // Note: express-mongo-sanitize@2.2.0 is incompatible with Express 5 (req.query is read-only)
   // Using custom sanitization for req.body instead
   const sanitizeObject = (obj) => {
-    if (obj && typeof obj === 'object') {
+    if (obj && typeof obj === "object") {
       for (const key in obj) {
-        if (key.startsWith('$') || key.includes('.')) {
+        if (key.startsWith("$") || key.includes(".")) {
           delete obj[key];
-        } else if (typeof obj[key] === 'object') {
+        } else if (typeof obj[key] === "object") {
           sanitizeObject(obj[key]);
         }
       }
     }
     return obj;
   };
-  
+
   app.use((req, res, next) => {
     if (req.body) sanitizeObject(req.body);
     next();

@@ -12,25 +12,31 @@ let memoryCsrfToken = null;
 
 // Helper to read a cookie value
 const getCookie = (name) => {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return null;
 };
 
 // Request interceptor - attach CSRF token
 api.interceptors.request.use(
   (config) => {
-    // Priority 1: Read directly from cookie (most reliable)
+    // 1. Try to get the token from the cookie
     const cookieToken = getCookie("csrf_token");
-    
-    // Priority 2: Fallback to memory if cookie is restricted (though SameSite=None fixes this)
+
+    // 2. Fallback to memory if cookie is inaccessible
     const csrfToken = cookieToken || memoryCsrfToken;
-    
+
     if (csrfToken) {
       config.headers["x-csrf-token"] = csrfToken;
     }
+
+    // Ensure withCredentials is set for every request to allow cross-site cookies
+    config.withCredentials = true;
+
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor
@@ -55,10 +61,14 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
     }
-    
+
     const isVerifyCall = error.config?.url === "/auth/verify";
     if (status === 401 && !isVerifyCall) {
-      if (!["/login", "/signup", "/verify-email", "/resend-email"].some((p) => currentPath.startsWith(p))) {
+      if (
+        !["/login", "/signup", "/verify-email", "/resend-email"].some((p) =>
+          currentPath.startsWith(p),
+        )
+      ) {
         console.warn("Session expired - redirecting to login");
         window.location.href = "/login";
       }
@@ -123,8 +133,10 @@ export const eventsAPI = {
     }),
   join: (id) => api.post(`/api/events/${id}/attend`),
   leave: (id) => api.delete(`/api/events/${id}/attend`),
-  getAttendees: (id, params) => api.get(`/api/events/${id}/attendees`, { params }),
-  confirmAttendance: (id, token) => api.post(`/api/events/${id}/confirm-attendance/${token}`),
+  getAttendees: (id, params) =>
+    api.get(`/api/events/${id}/attendees`, { params }),
+  confirmAttendance: (id, token) =>
+    api.post(`/api/events/${id}/confirm-attendance/${token}`),
 };
 
 // Users API
@@ -175,12 +187,14 @@ export const apiCart = {
   get: () => api.get("/api/cart"),
   // Support both old signature (id, qty) and new (object) for backward compat slightly, or just update callers
   add: (dataOrId, quantity) => {
-      if (typeof dataOrId === 'object') return api.post("/api/cart/add", dataOrId);
-      return api.post("/api/cart/add", { artworkId: dataOrId, quantity });
+    if (typeof dataOrId === "object")
+      return api.post("/api/cart/add", dataOrId);
+    return api.post("/api/cart/add", { artworkId: dataOrId, quantity });
   },
   update: (dataOrId, quantity) => {
-      if (typeof dataOrId === 'object') return api.patch("/api/cart/update", { ...dataOrId, quantity });
-      return api.patch("/api/cart/update", { artworkId: dataOrId, quantity });
+    if (typeof dataOrId === "object")
+      return api.patch("/api/cart/update", { ...dataOrId, quantity });
+    return api.patch("/api/cart/update", { artworkId: dataOrId, quantity });
   },
   remove: (itemId) => api.delete(`/api/cart/remove/${itemId}`),
   clear: () => api.delete("/api/cart/clear"),
@@ -223,7 +237,8 @@ export const platformAPI = {
   getStats: (period) => api.get("/api/platform/stats", { params: { period } }),
   // Storage (SuperAdmin)
   getStorageUsage: (params) => api.get("/api/platform/storage", { params }),
-  updateStorageQuota: (userId, data) => api.patch(`/api/platform/storage/${userId}`, data),
+  updateStorageQuota: (userId, data) =>
+    api.patch(`/api/platform/storage/${userId}`, data),
   getUserFiles: (userId) => api.get(`/api/platform/storage/${userId}/files`),
   // Maintenance mode (SuperAdmin only)
   toggleMaintenance: (data) => api.post("/api/platform/maintenance", data),
@@ -232,7 +247,8 @@ export const platformAPI = {
     api.post("/api/platform/assets", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-  listAssets: (folder) => api.get("/api/platform/assets", { params: { folder } }),
+  listAssets: (folder) =>
+    api.get("/api/platform/assets", { params: { folder } }),
 };
 
 // Payments API (Stripe)
@@ -268,9 +284,14 @@ export const messagingAPI = {
     api.patch(`/api/conversations/${conversationId}/read`),
   // Offers
   makeOffer: (conversationId, amount, artworkId) =>
-    api.post(`/api/conversations/${conversationId}/offer`, { amount, artworkId }),
+    api.post(`/api/conversations/${conversationId}/offer`, {
+      amount,
+      artworkId,
+    }),
   respondToOffer: (conversationId, offerId, status) =>
-    api.patch(`/api/conversations/${conversationId}/offer/${offerId}`, { status }),
+    api.patch(`/api/conversations/${conversationId}/offer/${offerId}`, {
+      status,
+    }),
   // Unread count
   getUnreadCount: () => api.get("/api/conversations/unread/count"),
 };
