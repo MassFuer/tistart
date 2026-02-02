@@ -18,12 +18,12 @@ Nemesis connects artists with collectors through a modern e-commerce platform, e
 - **Gallery & Search** -- N-gram search, category/medium/price filters, pagination with configurable page sizes
 - **Events** -- Calendar view, interactive maps, attendance with email confirmation flow, capacity tracking
 - **Messaging** -- Real-time internal chat (Socket.io) between collectors and artists with offer negotiation
-- **Video Library & Streaming** -- Dedicated video hub, secure streaming, access control, and immersive playback
-- **Artist Tools** -- Portfolio management, video content upload, sales analytics, revenue tracking
-- **Admin Dashboard** -- User management, platform statistics, artist application review
-- **SuperAdmin** -- Platform settings, VideoHero customization (assets/text), theme editor, and appearance configuration
+- **Video Library & Streaming** -- Dedicated video hub, secure streaming, access control, playback tracking (views/plays), and immersive players
+- **Artist Tools** -- Portfolio management, video content upload, sales analytics, revenue tracking, play/view statistics
+- **Admin Dashboard** -- User management, platform statistics, advanced analytics hub (top content), artist application review
+- **SuperAdmin** -- Platform settings, VideoHero customization (assets/text), theme editor, appearance configuration, granular artist analytics
 - **Security** -- JWT (HTTP-only cookies), CSRF protection (double-submit cookie), rate limiting, XSS/NoSQL sanitization, Helmet headers
-- **UI/UX Refinements** -- High-contrast dark mode designs and optimized sticky navigation
+- **UI/UX Refinements** -- High-contrast dark mode designs, optimized sticky navigation, and adaptive VideoHero scaling (container-query driven)
 - **Geolocation** -- Leaflet cluster maps, address geocoding, event location display
 
 ## Tech Stack

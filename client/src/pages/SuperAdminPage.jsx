@@ -4,8 +4,19 @@ import { toast } from "sonner";
 import Loading from "../components/common/Loading";
 import { Loader2 } from "lucide-react";
 import {
-  Settings, Database, Users, Wrench, Save, RefreshCw,
-  Search, AlertTriangle, Check, X, ChevronDown, ChevronUp, Palette
+  Settings,
+  Database,
+  Users,
+  Wrench,
+  Save,
+  RefreshCw,
+  Search,
+  AlertTriangle,
+  Check,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Palette,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +24,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -25,11 +43,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -100,7 +118,10 @@ const SuperAdminPage = () => {
 
   // Storage Reports State
   const [storageData, setStorageData] = useState([]);
-  const [storagePagination, setStoragePagination] = useState({ page: 1, pages: 1 });
+  const [storagePagination, setStoragePagination] = useState({
+    page: 1,
+    pages: 1,
+  });
 
   // User Management State
   const [users, setUsers] = useState([]);
@@ -147,7 +168,7 @@ const SuperAdminPage = () => {
     try {
       const response = await platformAPI.getStorageUsage({
         page: storagePagination.page,
-        limit: 10
+        limit: 10,
       });
       setStorageData(response.data.data);
       setStoragePagination(response.data.pagination);
@@ -161,7 +182,8 @@ const SuperAdminPage = () => {
       const params = {
         page: userPagination.page,
         limit: 15,
-        ...(userFilter.role && userFilter.role !== "all" && { role: userFilter.role }),
+        ...(userFilter.role &&
+          userFilter.role !== "all" && { role: userFilter.role }),
         ...(userFilter.search && { search: userFilter.search }),
       };
       const response = await adminAPI.getAllUsers(params);
@@ -173,11 +195,12 @@ const SuperAdminPage = () => {
   };
 
   const handleSettingsChange = (section, field, value) => {
-    setSettingsForm(prev => ({
+    setSettingsForm((prev) => ({
       ...prev,
-      [section]: typeof prev[section] === "object"
-        ? { ...prev[section], [field]: value }
-        : value,
+      [section]:
+        typeof prev[section] === "object"
+          ? { ...prev[section], [field]: value }
+          : value,
     }));
   };
 
@@ -201,11 +224,13 @@ const SuperAdminPage = () => {
         enabled: newState,
         message: settingsForm.maintenance.message,
       });
-      setSettingsForm(prev => ({
+      setSettingsForm((prev) => ({
         ...prev,
         maintenance: { ...prev.maintenance, enabled: newState },
       }));
-      toast.success(newState ? "Maintenance mode enabled" : "Maintenance mode disabled");
+      toast.success(
+        newState ? "Maintenance mode enabled" : "Maintenance mode disabled",
+      );
     } catch (error) {
       toast.error("Failed to toggle maintenance mode");
     }
@@ -223,7 +248,7 @@ const SuperAdminPage = () => {
 
   const handleUpdateUserTier = async (userId, tier) => {
     try {
-      await platformAPI.updateUserStorage(userId, { subscriptionTier: tier });
+      await platformAPI.updateStorageQuota(userId, { subscriptionTier: tier });
       toast.success("Subscription tier updated");
       fetchStorageData();
     } catch (error) {
@@ -273,648 +298,904 @@ const SuperAdminPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">SuperAdmin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage platform settings, storage, and user roles</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          SuperAdmin Dashboard
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Manage platform settings, storage, and user roles
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-5">
-          <TabsTrigger value="settings" className="flex items-center gap-2"><Settings className="h-4 w-4"/> Settings</TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2"><Palette className="h-4 w-4"/> Appearance</TabsTrigger>
-          <TabsTrigger value="storage" className="flex items-center gap-2"><Database className="h-4 w-4"/> Storage</TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2"><Users className="h-4 w-4"/> Users</TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2"><Wrench className="h-4 w-4"/> Maintenance</TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" /> Settings
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" /> Appearance
+          </TabsTrigger>
+          <TabsTrigger value="storage" className="flex items-center gap-2">
+            <Database className="h-4 w-4" /> Storage
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="h-4 w-4" /> Users
+          </TabsTrigger>
+          <TabsTrigger value="maintenance" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" /> Maintenance
+          </TabsTrigger>
         </TabsList>
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Commission Settings */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Commission Rate</CardTitle>
-                        <CardDescription>Percentage taken from each order</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                             <Label>Platform Commission (%)</Label>
-                             <Input 
-                                type="number" 
-                                min="0" 
-                                max="100" 
-                                value={settingsForm.platformCommission}
-                                onChange={(e) => handleSettingsChange("platformCommission", null, Number(e.target.value))}
-                             />
-                        </div>
-                    </CardContent>
-                </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Commission Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Commission Rate</CardTitle>
+                <CardDescription>
+                  Percentage taken from each order
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label>Platform Commission (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={settingsForm.platformCommission}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "platformCommission",
+                        null,
+                        Number(e.target.value),
+                      )
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                {/* Storage Settings */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Storage Limits</CardTitle>
-                        <CardDescription>Default limits for new users</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <div className="space-y-2">
-                             <Label>Default Storage Quota (GB)</Label>
-                             <Input 
-                                type="number"
-                                min="1"
-                                value={Math.round(settingsForm.storage.defaultQuotaBytes / (1024 * 1024 * 1024))}
-                                onChange={(e) => handleSettingsChange("storage", "defaultQuotaBytes", Number(e.target.value) * 1024 * 1024 * 1024)}
-                             />
-                         </div>
-                         <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label>Max Image MB</Label>
-                                <Input 
-                                    type="number"
-                                    min="1"
-                                    value={settingsForm.storage.maxImageSizeMB}
-                                    onChange={(e) => handleSettingsChange("storage", "maxImageSizeMB", Number(e.target.value))}
-                                />
-                             </div>
-                             <div className="space-y-2">
-                                <Label>Max Video MB</Label>
-                                <Input 
-                                    type="number"
-                                    min="1"
-                                    value={settingsForm.storage.maxVideoSizeMB}
-                                    onChange={(e) => handleSettingsChange("storage", "maxVideoSizeMB", Number(e.target.value))}
-                                />
-                             </div>
-                         </div>
-                    </CardContent>
-                </Card>
-            
-                 {/* Feature Toggles */}
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Feature Toggles</CardTitle>
-                        <CardDescription>Enable or disable platform features</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         {Object.entries(settingsForm.features).map(([key, value]) => (
-                            <div key={key} className="flex items-center justify-between">
-                                <Label className="capitalize">{key.replace(/([A-Z])/g, " $1").replace(/enabled/i, "").trim()}</Label>
-                                <Switch 
-                                    checked={value}
-                                    onCheckedChange={(checked) => handleSettingsChange("features", key, checked)}
-                                />
-                            </div>
-                         ))}
-                    </CardContent>
-                 </Card>
+            {/* Storage Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Storage Limits</CardTitle>
+                <CardDescription>Default limits for new users</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Default Storage Quota (GB)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={Math.round(
+                      settingsForm.storage.defaultQuotaBytes /
+                        (1024 * 1024 * 1024),
+                    )}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "storage",
+                        "defaultQuotaBytes",
+                        Number(e.target.value) * 1024 * 1024 * 1024,
+                      )
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Max Image MB</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={settingsForm.storage.maxImageSizeMB}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "storage",
+                          "maxImageSizeMB",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Max Video MB</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={settingsForm.storage.maxVideoSizeMB}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "storage",
+                          "maxVideoSizeMB",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                 {/* Rate Limits */}
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Rate Limits</CardTitle>
-                        <CardDescription>Security and API usage limits</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                  <Label>Auth Attempts</Label>
-                                  <Input 
-                                    type="number" min="1"
-                                    value={settingsForm.rateLimits.authMaxAttempts}
-                                    onChange={(e) => handleSettingsChange("rateLimits", "authMaxAttempts", Number(e.target.value))}
-                                  />
-                             </div>
-                             <div className="space-y-2">
-                                  <Label>Auth Window (min)</Label>
-                                  <Input 
-                                    type="number" min="1"
-                                    value={settingsForm.rateLimits.authWindowMinutes}
-                                    onChange={(e) => handleSettingsChange("rateLimits", "authWindowMinutes", Number(e.target.value))}
-                                  />
-                             </div>
-                             <div className="col-span-2 space-y-2">
-                                  <Label>API Max Requests (per window)</Label>
-                                  <Input 
-                                    type="number" min="1"
-                                    value={settingsForm.rateLimits.apiMaxRequests}
-                                    onChange={(e) => handleSettingsChange("rateLimits", "apiMaxRequests", Number(e.target.value))}
-                                  />
-                             </div>
-                         </div>
-                    </CardContent>
-                 </Card>
+            {/* Feature Toggles */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Feature Toggles</CardTitle>
+                <CardDescription>
+                  Enable or disable platform features
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(settingsForm.features).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <Label className="capitalize">
+                      {key
+                        .replace(/([A-Z])/g, " $1")
+                        .replace(/enabled/i, "")
+                        .trim()}
+                    </Label>
+                    <Switch
+                      checked={value}
+                      onCheckedChange={(checked) =>
+                        handleSettingsChange("features", key, checked)
+                      }
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-                 {/* Email Settings */}
-                 <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Email Settings</CardTitle>
-                        <CardDescription>Configuration for outgoing emails</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid md:grid-cols-3 gap-6">
-                         <div className="space-y-2">
-                             <Label>Sender Name</Label>
-                             <Input 
-                                value={settingsForm.email.fromName}
-                                onChange={(e) => handleSettingsChange("email", "fromName", e.target.value)}
-                             />
-                         </div>
-                         <div className="space-y-2">
-                             <Label>Sender Email</Label>
-                             <Input 
-                                value={settingsForm.email.fromEmail}
-                                onChange={(e) => handleSettingsChange("email", "fromEmail", e.target.value)}
-                             />
-                         </div>
-                         <div className="space-y-2">
-                             <Label>Support Email</Label>
-                             <Input 
-                                value={settingsForm.email.supportEmail}
-                                onChange={(e) => handleSettingsChange("email", "supportEmail", e.target.value)}
-                             />
-                         </div>
-                    </CardContent>
-                 </Card>
+            {/* Rate Limits */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Rate Limits</CardTitle>
+                <CardDescription>Security and API usage limits</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Auth Attempts</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={settingsForm.rateLimits.authMaxAttempts}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "rateLimits",
+                          "authMaxAttempts",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Auth Window (min)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={settingsForm.rateLimits.authWindowMinutes}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "rateLimits",
+                          "authWindowMinutes",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-2">
+                    <Label>API Max Requests (per window)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={settingsForm.rateLimits.apiMaxRequests}
+                      onChange={(e) =>
+                        handleSettingsChange(
+                          "rateLimits",
+                          "apiMaxRequests",
+                          Number(e.target.value),
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                 {/* Hero Configuration */}
-                 <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Hero Configuration</CardTitle>
-                        <CardDescription>Customize the homepage hero section</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                         <div className="space-y-2">
-                             <Label>Hero Text (Comma separated for rotation)</Label>
-                             <Input 
-                                value={settingsForm.hero?.text || ""}
-                                onChange={(e) => handleSettingsChange("hero", "text", e.target.value)}
-                                placeholder="VIDEO ARTWORKS by NEMESIS ART"
-                             />
-                         </div>
+            {/* Email Settings */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Email Settings</CardTitle>
+                <CardDescription>
+                  Configuration for outgoing emails
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label>Sender Name</Label>
+                  <Input
+                    value={settingsForm.email.fromName}
+                    onChange={(e) =>
+                      handleSettingsChange("email", "fromName", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sender Email</Label>
+                  <Input
+                    value={settingsForm.email.fromEmail}
+                    onChange={(e) =>
+                      handleSettingsChange("email", "fromEmail", e.target.value)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Support Email</Label>
+                  <Input
+                    value={settingsForm.email.supportEmail}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "email",
+                        "supportEmail",
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                         <div className="grid md:grid-cols-3 gap-6">
-                             {/* Desktop Video */}
-                             <div className="space-y-2">
-                                 <Label>Desktop Video URL</Label>
-                                 <div className="flex gap-2">
-                                     <Input 
-                                        value={settingsForm.hero?.videoUrl || ""}
-                                        onChange={(e) => handleSettingsChange("hero", "videoUrl", e.target.value)}
-                                        placeholder="https://..."
-                                     />
-                                     <div className="relative">
-                                         <input
-                                             type="file"
-                                             id="upload-video"
-                                             className="hidden"
-                                             accept="video/*"
-                                             onChange={(e) => handleAssetUpload(e, "videoUrl")}
-                                             disabled={assetUploading === "videoUrl"}
-                                         />
-                                         <Button 
-                                            variant="outline" 
-                                            size="icon" 
-                                            onClick={() => document.getElementById("upload-video").click()}
-                                            disabled={assetUploading === "videoUrl"}
-                                         >
-                                             {assetUploading === "videoUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
-                                         </Button>
-                                     </div>
-                                 </div>
-                                 {settingsForm.hero?.videoUrl && (
-                                     <video src={settingsForm.hero.videoUrl} className="w-full h-32 object-cover rounded-md bg-black" />
-                                 )}
-                             </div>
+            {/* Hero Configuration */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Hero Configuration</CardTitle>
+                <CardDescription>
+                  Customize the homepage hero section
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Hero Text (Comma separated for rotation)</Label>
+                  <Input
+                    value={settingsForm.hero?.text || ""}
+                    onChange={(e) =>
+                      handleSettingsChange("hero", "text", e.target.value)
+                    }
+                    placeholder="VIDEO ARTWORKS by NEMESIS ART"
+                  />
+                </div>
 
-                             {/* Mobile Video */}
-                             <div className="space-y-2">
-                                 <Label>Mobile Video URL (Optional)</Label>
-                                 <div className="flex gap-2">
-                                     <Input 
-                                        value={settingsForm.hero?.mobileVideoUrl || ""}
-                                        onChange={(e) => handleSettingsChange("hero", "mobileVideoUrl", e.target.value)}
-                                        placeholder="https://..."
-                                     />
-                                     <div className="relative">
-                                         <input
-                                             type="file"
-                                             id="upload-mobile"
-                                             className="hidden"
-                                             accept="video/*"
-                                             onChange={(e) => handleAssetUpload(e, "mobileVideoUrl")}
-                                             disabled={assetUploading === "mobileVideoUrl"}
-                                         />
-                                         <Button 
-                                            variant="outline" 
-                                            size="icon" 
-                                            onClick={() => document.getElementById("upload-mobile").click()}
-                                            disabled={assetUploading === "mobileVideoUrl"}
-                                         >
-                                             {assetUploading === "mobileVideoUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
-                                         </Button>
-                                     </div>
-                                 </div>
-                                 {settingsForm.hero?.mobileVideoUrl && (
-                                     <video src={settingsForm.hero.mobileVideoUrl} className="w-full h-32 object-cover rounded-md bg-black" />
-                                 )}
-                             </div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {/* Desktop Video */}
+                  <div className="space-y-2">
+                    <Label>Desktop Video URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={settingsForm.hero?.videoUrl || ""}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "hero",
+                            "videoUrl",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="https://..."
+                      />
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="upload-video"
+                          className="hidden"
+                          accept="video/*"
+                          onChange={(e) => handleAssetUpload(e, "videoUrl")}
+                          disabled={assetUploading === "videoUrl"}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            document.getElementById("upload-video").click()
+                          }
+                          disabled={assetUploading === "videoUrl"}
+                        >
+                          {assetUploading === "videoUrl" ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Settings className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    {settingsForm.hero?.videoUrl && (
+                      <video
+                        src={settingsForm.hero.videoUrl}
+                        className="w-full h-32 object-cover rounded-md bg-black"
+                      />
+                    )}
+                  </div>
 
-                             {/* Background Audio */}
-                             <div className="space-y-2">
-                                 <Label>Background Audio URL</Label>
-                                 <div className="flex gap-2">
-                                     <Input 
-                                        value={settingsForm.hero?.backgroundSoundUrl || ""}
-                                        onChange={(e) => handleSettingsChange("hero", "backgroundSoundUrl", e.target.value)}
-                                        placeholder="https://..."
-                                     />
-                                      <div className="relative">
-                                         <input
-                                             type="file"
-                                             id="upload-audio"
-                                             className="hidden"
-                                             accept="audio/*"
-                                             onChange={(e) => handleAssetUpload(e, "backgroundSoundUrl")}
-                                             disabled={assetUploading === "backgroundSoundUrl"}
-                                         />
-                                         <Button 
-                                            variant="outline" 
-                                            size="icon" 
-                                            onClick={() => document.getElementById("upload-audio").click()}
-                                            disabled={assetUploading === "backgroundSoundUrl"}
-                                         >
-                                             {assetUploading === "backgroundSoundUrl" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
-                                         </Button>
-                                     </div>
-                                 </div>
-                                 {settingsForm.hero?.backgroundSoundUrl && (
-                                     <audio src={settingsForm.hero.backgroundSoundUrl} controls className="w-full h-8 mt-2" />
-                                 )}
-                             </div>
-                         </div>
-                    </CardContent>
-                 </Card>
-            </div>
+                  {/* Mobile Video */}
+                  <div className="space-y-2">
+                    <Label>Mobile Video URL (Optional)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={settingsForm.hero?.mobileVideoUrl || ""}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "hero",
+                            "mobileVideoUrl",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="https://..."
+                      />
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="upload-mobile"
+                          className="hidden"
+                          accept="video/*"
+                          onChange={(e) =>
+                            handleAssetUpload(e, "mobileVideoUrl")
+                          }
+                          disabled={assetUploading === "mobileVideoUrl"}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            document.getElementById("upload-mobile").click()
+                          }
+                          disabled={assetUploading === "mobileVideoUrl"}
+                        >
+                          {assetUploading === "mobileVideoUrl" ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Settings className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    {settingsForm.hero?.mobileVideoUrl && (
+                      <video
+                        src={settingsForm.hero.mobileVideoUrl}
+                        className="w-full h-32 object-cover rounded-md bg-black"
+                      />
+                    )}
+                  </div>
 
-            <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
-                  <Button variant="outline" onClick={fetchSettings}>
-                      <RefreshCw className="mr-2 h-4 w-4" /> Reset
-                  </Button>
-                  <Button onClick={handleSaveSettings} disabled={saving}>
-                      <Save className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
-                  </Button>
-            </div>
+                  {/* Background Audio */}
+                  <div className="space-y-2">
+                    <Label>Background Audio URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={settingsForm.hero?.backgroundSoundUrl || ""}
+                        onChange={(e) =>
+                          handleSettingsChange(
+                            "hero",
+                            "backgroundSoundUrl",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="https://..."
+                      />
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="upload-audio"
+                          className="hidden"
+                          accept="audio/*"
+                          onChange={(e) =>
+                            handleAssetUpload(e, "backgroundSoundUrl")
+                          }
+                          disabled={assetUploading === "backgroundSoundUrl"}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            document.getElementById("upload-audio").click()
+                          }
+                          disabled={assetUploading === "backgroundSoundUrl"}
+                        >
+                          {assetUploading === "backgroundSoundUrl" ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Settings className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    {settingsForm.hero?.backgroundSoundUrl && (
+                      <audio
+                        src={settingsForm.hero.backgroundSoundUrl}
+                        controls
+                        className="w-full h-8 mt-2"
+                      />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
+            <Button variant="outline" onClick={fetchSettings}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Reset
+            </Button>
+            <Button onClick={handleSaveSettings} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />{" "}
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Appearance Tab */}
         <TabsContent value="appearance" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Currency & Pagination */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Display Defaults</CardTitle>
+                <CardDescription>
+                  Currency and pagination settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Default Currency</Label>
+                  <Select
+                    value={settingsForm.display?.defaultCurrency || "EUR"}
+                    onValueChange={(val) =>
+                      handleSettingsChange("display", "defaultCurrency", val)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="JPY">JPY</SelectItem>
+                      <SelectItem value="CHF">CHF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Default Page Size</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={settingsForm.display?.defaultPageSize || 12}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "display",
+                        "defaultPageSize",
+                        Number(e.target.value),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Page Size Options (comma separated)</Label>
+                  <Input
+                    value={(
+                      settingsForm.display?.pageSizeOptions || [8, 12, 24, 48]
+                    ).join(", ")}
+                    onChange={(e) =>
+                      handleSettingsChange(
+                        "display",
+                        "pageSizeOptions",
+                        e.target.value
+                          .split(",")
+                          .map((v) => Number(v.trim()))
+                          .filter((n) => n > 0),
+                      )
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                {/* Currency & Pagination */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Display Defaults</CardTitle>
-                        <CardDescription>Currency and pagination settings</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Default Currency</Label>
-                            <Select
-                                value={settingsForm.display?.defaultCurrency || "EUR"}
-                                onValueChange={(val) => handleSettingsChange("display", "defaultCurrency", val)}
-                            >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="EUR">EUR</SelectItem>
-                                    <SelectItem value="USD">USD</SelectItem>
-                                    <SelectItem value="GBP">GBP</SelectItem>
-                                    <SelectItem value="JPY">JPY</SelectItem>
-                                    <SelectItem value="CHF">CHF</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Default Page Size</Label>
-                            <Input
-                                type="number" min="1" max="100"
-                                value={settingsForm.display?.defaultPageSize || 12}
-                                onChange={(e) => handleSettingsChange("display", "defaultPageSize", Number(e.target.value))}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Page Size Options (comma separated)</Label>
-                            <Input
-                                value={(settingsForm.display?.pageSizeOptions || [8, 12, 24, 48]).join(", ")}
-                                onChange={(e) => handleSettingsChange("display", "pageSizeOptions",
-                                    e.target.value.split(",").map(v => Number(v.trim())).filter(n => n > 0)
-                                )}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Calendar Colors */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Calendar Event Colors</CardTitle>
+                <CardDescription>
+                  Colors for event categories on the calendar
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(settingsForm.display?.calendarColors || {}).map(
+                  ([key, value]) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={value}
+                        onChange={(e) =>
+                          setSettingsForm((prev) => ({
+                            ...prev,
+                            display: {
+                              ...prev.display,
+                              calendarColors: {
+                                ...prev.display.calendarColors,
+                                [key]: e.target.value,
+                              },
+                            },
+                          }))
+                        }
+                        className="w-8 h-8 rounded border cursor-pointer"
+                      />
+                      <Label className="capitalize flex-1">{key}</Label>
+                      <Input
+                        value={value}
+                        onChange={(e) =>
+                          setSettingsForm((prev) => ({
+                            ...prev,
+                            display: {
+                              ...prev.display,
+                              calendarColors: {
+                                ...prev.display.calendarColors,
+                                [key]: e.target.value,
+                              },
+                            },
+                          }))
+                        }
+                        className="w-28"
+                      />
+                    </div>
+                  ),
+                )}
+              </CardContent>
+            </Card>
 
-                {/* Calendar Colors */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Calendar Event Colors</CardTitle>
-                        <CardDescription>Colors for event categories on the calendar</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {Object.entries(settingsForm.display?.calendarColors || {}).map(([key, value]) => (
-                            <div key={key} className="flex items-center gap-3">
-                                <input
-                                    type="color"
-                                    value={value}
-                                    onChange={(e) => setSettingsForm(prev => ({
-                                        ...prev,
-                                        display: {
-                                            ...prev.display,
-                                            calendarColors: { ...prev.display.calendarColors, [key]: e.target.value }
-                                        }
-                                    }))}
-                                    className="w-8 h-8 rounded border cursor-pointer"
-                                />
-                                <Label className="capitalize flex-1">{key}</Label>
-                                <Input
-                                    value={value}
-                                    onChange={(e) => setSettingsForm(prev => ({
-                                        ...prev,
-                                        display: {
-                                            ...prev.display,
-                                            calendarColors: { ...prev.display.calendarColors, [key]: e.target.value }
-                                        }
-                                    }))}
-                                    className="w-28"
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+            {/* Artist Status Colors */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Artist Status Colors</CardTitle>
+                <CardDescription>
+                  Badge colors for artist verification statuses
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(
+                  settingsForm.display?.artistStatusColors || {},
+                ).map(([key, value]) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={value}
+                      onChange={(e) =>
+                        setSettingsForm((prev) => ({
+                          ...prev,
+                          display: {
+                            ...prev.display,
+                            artistStatusColors: {
+                              ...prev.display.artistStatusColors,
+                              [key]: e.target.value,
+                            },
+                          },
+                        }))
+                      }
+                      className="w-8 h-8 rounded border cursor-pointer"
+                    />
+                    <Label className="capitalize flex-1">
+                      {key.replace(/([A-Z])/g, " $1")}
+                    </Label>
+                    <Input
+                      value={value}
+                      onChange={(e) =>
+                        setSettingsForm((prev) => ({
+                          ...prev,
+                          display: {
+                            ...prev.display,
+                            artistStatusColors: {
+                              ...prev.display.artistStatusColors,
+                              [key]: e.target.value,
+                            },
+                          },
+                        }))
+                      }
+                      className="w-28"
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
 
-                {/* Artist Status Colors */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Artist Status Colors</CardTitle>
-                        <CardDescription>Badge colors for artist verification statuses</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {Object.entries(settingsForm.display?.artistStatusColors || {}).map(([key, value]) => (
-                            <div key={key} className="flex items-center gap-3">
-                                <input
-                                    type="color"
-                                    value={value}
-                                    onChange={(e) => setSettingsForm(prev => ({
-                                        ...prev,
-                                        display: {
-                                            ...prev.display,
-                                            artistStatusColors: { ...prev.display.artistStatusColors, [key]: e.target.value }
-                                        }
-                                    }))}
-                                    className="w-8 h-8 rounded border cursor-pointer"
-                                />
-                                <Label className="capitalize flex-1">{key.replace(/([A-Z])/g, " $1")}</Label>
-                                <Input
-                                    value={value}
-                                    onChange={(e) => setSettingsForm(prev => ({
-                                        ...prev,
-                                        display: {
-                                            ...prev.display,
-                                            artistStatusColors: { ...prev.display.artistStatusColors, [key]: e.target.value }
-                                        }
-                                    }))}
-                                    className="w-28"
-                                />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
-                <Button variant="outline" onClick={fetchSettings}>
-                    <RefreshCw className="mr-2 h-4 w-4" /> Reset
-                </Button>
-                <Button onClick={handleSaveSettings} disabled={saving}>
-                    <Save className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
-                </Button>
-            </div>
+          <div className="flex justify-end gap-4 py-4 sticky bottom-0 bg-background/80 backdrop-blur-sm p-4 border-t">
+            <Button variant="outline" onClick={fetchSettings}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Reset
+            </Button>
+            <Button onClick={handleSaveSettings} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />{" "}
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Storage Tab */}
         <TabsContent value="storage" className="space-y-6">
-             <div className="flex justify-between items-center">
-                  <div>
-                      <h2 className="text-xl font-semibold">Artist Storage Usage</h2>
-                      <p className="text-muted-foreground">Manage storage quotas and tiers</p>
-                  </div>
-             </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">Artist Storage Usage</h2>
+              <p className="text-muted-foreground">
+                Manage storage quotas and tiers
+              </p>
+            </div>
+          </div>
 
-             <div className="border rounded-md">
-                 <Table>
-                     <TableHeader>
-                         <TableRow>
-                             <TableHead>Artist</TableHead>
-                             <TableHead>Tier</TableHead>
-                             <TableHead>Used / Quota</TableHead>
-                             <TableHead className="w-[200px]">Usage</TableHead>
-                             <TableHead>Actions</TableHead>
-                         </TableRow>
-                     </TableHeader>
-                     <TableBody>
-                         {storageData.map((artist) => {
-                             const used = artist.storage?.totalBytes || 0;
-                             const quota = artist.storage?.quotaBytes || settings?.storage?.defaultQuotaBytes || 5368709120;
-                             const percentage = getStoragePercentage(used, quota);
-                             
-                             return (
-                                 <TableRow key={artist._id}>
-                                     <TableCell>
-                                         <div className="flex flex-col">
-                                             <span className="font-medium">{artist.firstName} {artist.lastName}</span>
-                                             <span className="text-xs text-muted-foreground">{artist.email}</span>
-                                         </div>
-                                     </TableCell>
-                                     <TableCell>
-                                         <Badge variant="outline" className="uppercase text-xs">{artist.subscriptionTier || "free"}</Badge>
-                                     </TableCell>
-                                     <TableCell className="text-sm">
-                                         {formatBytes(used)} / {formatBytes(quota)}
-                                     </TableCell>
-                                     <TableCell>
-                                         <div className="flex items-center gap-2">
-                                             <Progress value={percentage} className={`h-2 ${percentage > 90 ? "bg-red-200" : ""}`} />
-                                             <span className="text-xs w-8 text-right">{percentage.toFixed(0)}%</span>
-                                         </div>
-                                     </TableCell>
-                                     <TableCell>
-                                          <Select 
-                                            value={artist.subscriptionTier || "free"}
-                                            onValueChange={(val) => handleUpdateUserTier(artist._id, val)}
-                                          >
-                                              <SelectTrigger className="w-[120px] h-8">
-                                                  <SelectValue />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                  <SelectItem value="free">Free</SelectItem>
-                                                  <SelectItem value="pro">Pro</SelectItem>
-                                                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                                              </SelectContent>
-                                          </Select>
-                                     </TableCell>
-                                 </TableRow>
-                             );
-                         })}
-                     </TableBody>
-                 </Table>
-             </div>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Artist</TableHead>
+                  <TableHead>Tier</TableHead>
+                  <TableHead>Used / Quota</TableHead>
+                  <TableHead className="w-[200px]">Usage</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {storageData.map((artist) => {
+                  const used = artist.storage?.totalBytes || 0;
+                  const quota =
+                    artist.storage?.quotaBytes ||
+                    settings?.storage?.defaultQuotaBytes ||
+                    5368709120;
+                  const percentage = getStoragePercentage(used, quota);
 
-             <Pagination
-                currentPage={storagePagination.page}
-                totalPages={storagePagination.pages}
-                onPageChange={(page) => setStoragePagination(p => ({ ...p, page }))}
-             />
+                  return (
+                    <TableRow key={artist._id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {artist.firstName} {artist.lastName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {artist.email}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="uppercase text-xs">
+                          {artist.subscriptionTier || "free"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatBytes(used)} / {formatBytes(quota)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Progress
+                            value={percentage}
+                            className={`h-2 ${percentage > 90 ? "bg-red-200" : ""}`}
+                          />
+                          <span className="text-xs w-8 text-right">
+                            {percentage.toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={artist.subscriptionTier || "free"}
+                          onValueChange={(val) =>
+                            handleUpdateUserTier(artist._id, val)
+                          }
+                        >
+                          <SelectTrigger className="w-[120px] h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="enterprise">
+                              Enterprise
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          <Pagination
+            currentPage={storagePagination.page}
+            totalPages={storagePagination.pages}
+            onPageChange={(page) =>
+              setStoragePagination((p) => ({ ...p, page }))
+            }
+          />
         </TabsContent>
 
         {/* Users Tab */}
         <TabsContent value="users" className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-                 <div>
-                     <h2 className="text-xl font-semibold">User Management</h2>
-                     <p className="text-muted-foreground">View and manage all platform users</p>
-                 </div>
-                 <div className="flex gap-4">
-                      <Select 
-                        value={userFilter.role}
-                        onValueChange={(val) => setUserFilter({ ...userFilter, role: val })}
-                      >
-                          <SelectTrigger className="w-[150px]">
-                               <SelectValue placeholder="All Roles" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="all">All Roles</SelectItem>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="artist">Artist</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                              <SelectItem value="superAdmin">SuperAdmin</SelectItem>
-                          </SelectContent>
-                      </Select>
-                      
-                      <div className="relative">
-                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                           <Input 
-                                className="pl-9 w-[200px] md:w-[300px]" 
-                                placeholder="Search users..." 
-                                value={userFilter.search}
-                                onChange={(e) => setUserFilter({ ...userFilter, search: e.target.value })}
-                           />
-                      </div>
-                 </div>
+          <div className="flex flex-col md:flex-row justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">User Management</h2>
+              <p className="text-muted-foreground">
+                View and manage all platform users
+              </p>
             </div>
+            <div className="flex gap-4">
+              <Select
+                value={userFilter.role}
+                onValueChange={(val) =>
+                  setUserFilter({ ...userFilter, role: val })
+                }
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="artist">Artist</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="superAdmin">SuperAdmin</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <div className="border rounded-md">
-                 <Table>
-                     <TableHeader>
-                         <TableRow>
-                             <TableHead>User</TableHead>
-                             <TableHead>Role</TableHead>
-                             <TableHead>Artist Status</TableHead>
-                             <TableHead>Actions</TableHead>
-                         </TableRow>
-                     </TableHeader>
-                     <TableBody>
-                         {users.map((user) => (
-                             <TableRow key={user._id}>
-                                 <TableCell>
-                                     <div className="flex items-center gap-3">
-                                         <Avatar>
-                                             <AvatarImage src={user.profilePicture} />
-                                             <AvatarFallback>{user.firstName?.[0]}</AvatarFallback>
-                                         </Avatar>
-                                         <div className="flex flex-col">
-                                             <span className="font-medium">{user.firstName} {user.lastName}</span>
-                                             <span className="text-xs text-muted-foreground">{user.email}</span>
-                                         </div>
-                                     </div>
-                                 </TableCell>
-                                 <TableCell>
-                                     <Badge variant={user.role === "admin" || user.role === "superAdmin" ? "default" : "secondary"}>
-                                         {user.role}
-                                     </Badge>
-                                 </TableCell>
-                                 <TableCell>
-                                     {user.role === "artist" && (
-                                         <Badge variant={user.artistStatus === "verified" ? "success" : "outline"} className="capitalize">
-                                             {user.artistStatus}
-                                         </Badge>
-                                     )}
-                                 </TableCell>
-                                 <TableCell>
-                                     <Select 
-                                        value={user.role}
-                                        onValueChange={(val) => handleUpdateUserRole(user._id, val)}
-                                      >
-                                          <SelectTrigger className="w-[130px] h-8">
-                                              <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                              <SelectItem value="user">User</SelectItem>
-                                              <SelectItem value="artist">Artist</SelectItem>
-                                              <SelectItem value="admin">Admin</SelectItem>
-                                              <SelectItem value="superAdmin">SuperAdmin</SelectItem>
-                                          </SelectContent>
-                                      </Select>
-                                 </TableCell>
-                             </TableRow>
-                         ))}
-                     </TableBody>
-                 </Table>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-9 w-[200px] md:w-[300px]"
+                  placeholder="Search users..."
+                  value={userFilter.search}
+                  onChange={(e) =>
+                    setUserFilter({ ...userFilter, search: e.target.value })
+                  }
+                />
+              </div>
             </div>
-             
-             <Pagination
-                currentPage={userPagination.page}
-                totalPages={userPagination.pages}
-                onPageChange={(page) => setUserPagination(p => ({ ...p, page }))}
-             />
+          </div>
+
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Artist Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user._id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.profilePicture} />
+                          <AvatarFallback>{user.firstName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {user.firstName} {user.lastName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {user.email}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          user.role === "admin" || user.role === "superAdmin"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.role === "artist" && (
+                        <Badge
+                          variant={
+                            user.artistStatus === "verified"
+                              ? "success"
+                              : "outline"
+                          }
+                          className="capitalize"
+                        >
+                          {user.artistStatus}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.role}
+                        onValueChange={(val) =>
+                          handleUpdateUserRole(user._id, val)
+                        }
+                      >
+                        <SelectTrigger className="w-[130px] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="artist">Artist</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="superAdmin">SuperAdmin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <Pagination
+            currentPage={userPagination.page}
+            totalPages={userPagination.pages}
+            onPageChange={(page) => setUserPagination((p) => ({ ...p, page }))}
+          />
         </TabsContent>
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="space-y-6">
-             <Card className="border-destructive/20 bg-destructive/5">
-                 <CardHeader>
-                     <CardTitle className="flex items-center gap-2 text-destructive">
-                         <AlertTriangle className="h-5 w-5" /> Maintenance Mode
-                     </CardTitle>
-                     <CardDescription>
-                         Enable this to lock out non-admin users for system updates.
-                     </CardDescription>
-                 </CardHeader>
-                 <CardContent className="space-y-6">
-                     <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
-                          <div className="flex items-center gap-2">
-                               <div className={`h-3 w-3 rounded-full ${settingsForm.maintenance.enabled ? "bg-red-500 animate-pulse" : "bg-green-500"}`} />
-                               <span className="font-semibold">{settingsForm.maintenance.enabled ? "Maintenance Active" : "System Operational"}</span>
-                          </div>
-                          <Switch 
-                                checked={settingsForm.maintenance.enabled}
-                                onCheckedChange={handleToggleMaintenance}
-                          />
-                     </div>
+          <Card className="border-destructive/20 bg-destructive/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" /> Maintenance Mode
+              </CardTitle>
+              <CardDescription>
+                Enable this to lock out non-admin users for system updates.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-3 w-3 rounded-full ${settingsForm.maintenance.enabled ? "bg-red-500 animate-pulse" : "bg-green-500"}`}
+                  />
+                  <span className="font-semibold">
+                    {settingsForm.maintenance.enabled
+                      ? "Maintenance Active"
+                      : "System Operational"}
+                  </span>
+                </div>
+                <Switch
+                  checked={settingsForm.maintenance.enabled}
+                  onCheckedChange={handleToggleMaintenance}
+                />
+              </div>
 
-                     <div className="space-y-2">
-                         <Label>Maintenance Message</Label>
-                         <Textarea 
-                            value={settingsForm.maintenance.message}
-                            onChange={(e) => handleSettingsChange("maintenance", "message", e.target.value)}
-                            placeholder="We are currently undergoing maintenance..."
-                            rows={3}
-                         />
-                     </div>
-                     
-                     <div className="flex justify-end">
-                         <Button onClick={handleSaveSettings} disabled={saving}>Save Message</Button>
-                     </div>
-                 </CardContent>
-             </Card>
+              <div className="space-y-2">
+                <Label>Maintenance Message</Label>
+                <Textarea
+                  value={settingsForm.maintenance.message}
+                  onChange={(e) =>
+                    handleSettingsChange(
+                      "maintenance",
+                      "message",
+                      e.target.value,
+                    )
+                  }
+                  placeholder="We are currently undergoing maintenance..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={handleSaveSettings} disabled={saving}>
+                  Save Message
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );

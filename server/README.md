@@ -90,28 +90,28 @@ server/
 
 ### Models
 
-| Model | Description |
-|-------|-------------|
-| `User` | Users with roles (user, artist, admin, superAdmin), artist info, favorites, storage quota |
-| `Artwork` | Art pieces with images, pricing, categories, n-gram search fields |
-| `Event` | Events with location (GeoJSON), calendar, attendees with email confirmation |
-| `Order` | Orders with items, Stripe payment tracking, status workflow |
-| `Review` | Artwork reviews with ratings |
-| `Conversation` | Messaging threads between users with offer negotiation history |
-| `Message` | Individual messages within conversations |
-| `PlatformSettings` | Singleton config for theme, hero, display preferences, SEO |
-| `PlatformStats` | Cached platform-wide statistics |
-| `VideoPurchase` | Pay-per-view video purchase records |
+| Model              | Description                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `User`             | Users with roles (user, artist, admin, superAdmin), artist info, favorites, storage quota |
+| `Artwork`          | Art pieces with images, pricing, categories, n-gram search fields                         |
+| `Event`            | Events with location (GeoJSON), calendar, attendees with email confirmation               |
+| `Order`            | Orders with items, Stripe payment tracking, status workflow                               |
+| `Review`           | Artwork reviews with ratings                                                              |
+| `Conversation`     | Messaging threads between users with offer negotiation history                            |
+| `Message`          | Individual messages within conversations                                                  |
+| `PlatformSettings` | Singleton config for theme, hero, display preferences, SEO                                |
+| `PlatformStats`    | Cached platform-wide statistics                                                           |
+| `VideoPurchase`    | Pay-per-view video purchase records                                                       |
 
 ### Middleware
 
-| Middleware | Purpose |
-|------------|---------|
-| `jwt.middleware` | JWT token verification from HTTP-only cookies |
-| `role.middleware` | Role-based access control (isArtist, isAdmin, isSuperAdmin, isOwnerOrAdmin) |
-| `csrf.middleware` | Double-submit cookie CSRF protection with Origin validation |
-| `rateLimit.middleware` | Rate limiters (auth, API, sensitive ops, cart, orders, purchases) |
-| `validation.middleware` | express-validator input validation |
+| Middleware              | Purpose                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `jwt.middleware`        | JWT token verification from HTTP-only cookies                               |
+| `role.middleware`       | Role-based access control (isArtist, isAdmin, isSuperAdmin, isOwnerOrAdmin) |
+| `csrf.middleware`       | Double-submit cookie CSRF protection with Origin validation                 |
+| `rateLimit.middleware`  | Rate limiters (auth, API, sensitive ops, cart, orders, purchases)           |
+| `validation.middleware` | express-validator input validation                                          |
 
 ### Security
 
@@ -124,21 +124,21 @@ server/
 
 ## API Endpoints
 
-| Resource | Base Path | Key Operations |
-|----------|-----------|----------------|
-| **Auth** | `/auth` | Signup, login, logout, email verification, password reset, artist application |
-| **Artworks** | `/api/artworks` | CRUD, image upload, search, artist stats, favorites |
-| **Events** | `/api/events` | CRUD, calendar, attendance (with email confirmation), filters, map data |
-| **Orders** | `/api/orders` | Checkout, user history, artist sales, admin overview |
-| **Users** | `/api/users` | Profile, favorites, artist directory, admin user management |
-| **Cart** | `/api/cart` | Add/update/remove items, persistent cart |
-| **Videos** | `/api/videos` | CRUD, secure streaming, purchases |
-| **Payments** | `/api/payments` | Stripe payment intents |
-| **Webhooks** | `/api/payments/webhook` | Stripe webhook handler (raw body) |
-| **Platform** | `/api/platform` | Settings, stats, storage management, public config |
-| **Reviews** | `/api` | Artwork reviews CRUD |
-| **Conversations** | `/api/conversations` | Messaging threads, offers |
-| **Geocode** | `/api/geocode` | Forward/reverse geocoding |
+| Resource          | Base Path               | Key Operations                                                                |
+| ----------------- | ----------------------- | ----------------------------------------------------------------------------- |
+| **Auth**          | `/auth`                 | Signup, login, logout, email verification, password reset, artist application |
+| **Artworks**      | `/api/artworks`         | CRUD, image upload, search, analytics (views/plays), favorites                |
+| **Events**        | `/api/events`           | CRUD, calendar, attendance (with email confirmation), filters, map data       |
+| **Orders**        | `/api/orders`           | Checkout, user history, artist sales, admin overview                          |
+| **Users**         | `/api/users`            | Profile, favorites, artist directory, admin user management                   |
+| **Cart**          | `/api/cart`             | Add/update/remove items, persistent cart                                      |
+| **Videos**        | `/api/videos`           | CRUD, secure streaming, purchases                                             |
+| **Payments**      | `/api/payments`         | Stripe payment intents                                                        |
+| **Webhooks**      | `/api/payments/webhook` | Stripe webhook handler (raw body)                                             |
+| **Platform**      | `/api/platform`         | Settings, global analytics (views/plays), storage management, public config   |
+| **Reviews**       | `/api`                  | Artwork reviews CRUD                                                          |
+| **Conversations** | `/api/conversations`    | Messaging threads, offers                                                     |
+| **Geocode**       | `/api/geocode`          | Forward/reverse geocoding                                                     |
 
 API documentation available at `/api-docs` (Swagger UI) after running `npm run swagger`.
 

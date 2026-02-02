@@ -81,31 +81,35 @@ const artworkSchema = new Schema(
       subtitlesUrl: { type: String },
       // Background Audio (MP3/AAC for ambience)
       backgroundAudioUrl: { type: String },
-      
+
       // Metadata
-      quality: { 
-        type: String, 
+      quality: {
+        type: String,
         enum: ["8K", "4K", "2K", "1080p", "720p", "High Quality", "Other", "480p", "360p"],
       },
       synopsis: { type: String, maxlength: 2000 },
       director: { type: String },
       coAuthor: { type: String },
       cast: [{ type: String }],
-      productionTeam: [{
-        role: { type: String },
-        name: { type: String },
-        link: { type: String } // Optional portfolio link
-      }],
-      featuredArtists: [{
-        type: Schema.Types.ObjectId,
-        ref: "User"
-      }],
+      productionTeam: [
+        {
+          role: { type: String },
+          name: { type: String },
+          link: { type: String }, // Optional portfolio link
+        },
+      ],
+      featuredArtists: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
 
       // Legacy/Compat fields
       thumbnailUrl: { type: String },
       duration: { type: Number }, // in seconds
       fileSize: { type: Number },
-      
+
       // Access Control
       isPaid: { type: Boolean, default: false },
     },
@@ -136,9 +140,13 @@ const artworkSchema = new Schema(
     },
     // Analytics
     views: {
-        type: Number,
-        default: 0
-    }
+      type: Number,
+      default: 0,
+    },
+    plays: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -147,32 +155,37 @@ const artworkSchema = new Schema(
 
 // Pre-save hook to populate searchKeywords and searchString
 artworkSchema.pre("save", async function () {
-  if (this.isModified("title") || this.isModified("description") || this.isModified("artist") || this.isNew) {
+  if (
+    this.isModified("title") ||
+    this.isModified("description") ||
+    this.isModified("artist") ||
+    this.isNew
+  ) {
     const title = this.title || "";
     const desc = this.description || "";
-    
+
     // N-Grams
     const titleGrams = generateNGrams(title);
     // Removed description from search
-    
+
     let artistGrams = [];
     let artistName = "";
-    
+
     try {
       // Need to fetch artist to get name. Use mongoose.model to avoid circular dependency
-      const User = model("User"); 
+      const User = model("User");
       const artist = await User.findById(this.artist);
       if (artist) {
         const firstName = artist.firstName || "";
         const lastName = artist.lastName || "";
         const companyName = artist.artistInfo?.companyName || "";
-        
+
         artistName = `${firstName} ${lastName} ${companyName}`.trim();
-        
+
         const firstNameGrams = generateNGrams(firstName);
         const lastNameGrams = generateNGrams(lastName);
         const companyGrams = generateNGrams(companyName);
-        
+
         artistGrams = [...firstNameGrams, ...lastNameGrams, ...companyGrams];
       }
     } catch (err) {
@@ -180,7 +193,7 @@ artworkSchema.pre("save", async function () {
     }
 
     this.searchKeywords = [...new Set([...titleGrams, ...artistGrams])];
-    
+
     // Normalized search string for regex fallback
     this.searchString = `${title} ${artistName}`.toLowerCase();
   }

@@ -179,8 +179,7 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
         ]),
       ]);
 
-      const avgRating =
-        ratingAgg.length > 0 ? Math.round(ratingAgg[0].avgRating * 10) / 10 : 0;
+      const avgRating = ratingAgg.length > 0 ? Math.round(ratingAgg[0].avgRating * 10) / 10 : 0;
       const reviewCount = ratingAgg.length > 0 ? ratingAgg[0].count : 0;
 
       userStats = {
@@ -219,7 +218,7 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
         { $match: { status: { $in: ["paid", "shipped", "delivered"] }, "items.artist": user._id } },
         { $unwind: "$items" },
         { $match: { "items.artist": user._id } },
-        { $group: { _id: null, total: { $sum: "$items.artistEarnings" } } }
+        { $group: { _id: null, total: { $sum: "$items.artistEarnings" } } },
       ]);
       stats.revenue = revenueAgg.length > 0 ? Math.round(revenueAgg[0].total * 100) / 100 : 0;
     }
@@ -227,17 +226,17 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
     // User Stats
     stats.orders = userStats.orders;
     stats.favorites = req.user.favorites.length;
-    
+
     // Always calculate attending count via query as hooks don't track attendees array changes
     stats.attending = await mongoose.model("Event").countDocuments({ "attendees.user": user._id });
-    
+
     // Storage & Plan Stats
     if (stats.isArtist) {
-        // Assuming req.user is attached and has storage field populated
-        const storage = req.user.storage || {};
-        stats.storageUsage = storage.totalBytes || 0;
-        stats.storageQuota = storage.quotaBytes || 5 * 1024 * 1024 * 1024; // 5GB default
-        stats.plan = req.user.subscriptionTier || 'free';
+      // Assuming req.user is attached and has storage field populated
+      const storage = req.user.storage || {};
+      stats.storageUsage = storage.totalBytes || 0;
+      stats.storageQuota = storage.quotaBytes || 5 * 1024 * 1024 * 1024; // 5GB default
+      stats.plan = req.user.subscriptionTier || "free";
     }
 
     res.status(200).json({ data: stats });
@@ -363,7 +362,9 @@ router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
       password,
       role,
       artistStatus,
+      galleristStatus,
       isEmailVerified,
+      artistInfo,
     } = req.body;
 
     // Basic validation
@@ -373,10 +374,7 @@ router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [
-        { email: email.toLowerCase() },
-        { userName: userName.toLowerCase() },
-      ],
+      $or: [{ email: email.toLowerCase() }, { userName: userName.toLowerCase() }],
     });
 
     if (existingUser) {
@@ -387,13 +385,8 @@ router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
     }
 
     // Role verification: only superAdmin can create admins/superAdmins
-    if (
-      (role === "admin" || role === "superAdmin") &&
-      req.user.role !== "superAdmin"
-    ) {
-      return res
-        .status(403)
-        .json({ error: "Only superAdmins can create admin accounts." });
+    if ((role === "admin" || role === "superAdmin") && req.user.role !== "superAdmin") {
+      return res.status(403).json({ error: "Only superAdmins can create admin accounts." });
     }
 
     // Hash password
@@ -408,7 +401,9 @@ router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
       password: hashedPassword,
       role: role || "user",
       artistStatus: artistStatus || "none",
+      galleristStatus: galleristStatus || "none",
       isEmailVerified: isEmailVerified || false,
+      artistInfo: artistInfo || {},
     });
 
     const userResponse = newUser.toObject();
@@ -429,17 +424,70 @@ router.get("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    // Append storage counts for artists and admins
-    if (["artist", "admin", "superAdmin"].includes(user.role)) {
-        const [videoCount, totalArtworks] = await Promise.all([
-             Artwork.countDocuments({ artist: user._id, category: "video" }),
-             Artwork.countDocuments({ artist: user._id })
+    // Append storage and artist stats for artists and admins
+    if (["artist", "gallerist", "admin", "superAdmin"].includes(user.role)) {
+      const [videoCount, totalArtworks, statsAgg] = await Promise.all([
+        Artwork.countDocuments({ artist: user._id, category: "video" }),
+        Artwork.countDocuments({ artist: user._id }),
+        Artwork.aggregate([
+          { $match: { artist: new mongoose.Types.ObjectId(user._id) } },
+          {
+            $group: {
+              _id: null,
+              totalViews: { $sum: "$views" },
+              totalPlays: { $sum: "$plays" },
+            },
+          },
+        ]),
+      ]);
+
+      user.storage = user.storage || {};
+      user.storage.videoCount = videoCount;
+      user.storage.imageCount = totalArtworks - videoCount;
+      user.storage.artworkCount = totalArtworks;
+
+      // Add artistStats for UI display
+      user.artistStats = user.artistStats || {};
+      if (statsAgg.length > 0) {
+        user.artistStats.totalViews = statsAgg[0].totalViews || 0;
+        user.artistStats.totalPlays = statsAgg[0].totalPlays || 0;
+      } else {
+        user.artistStats.totalViews = 0;
+        user.artistStats.totalPlays = 0;
+      }
+
+      // Also fetch other stats like revenue if verified
+      if (user.artistStatus === "verified" || user.galleristStatus === "verified") {
+        const [revenueAgg, ordersCount, salesCount] = await Promise.all([
+          Order.aggregate([
+            {
+              $match: {
+                status: { $in: ["paid", "shipped", "delivered"] },
+                "items.artist": user._id,
+              },
+            },
+            { $unwind: "$items" },
+            { $match: { "items.artist": user._id } },
+            { $group: { _id: null, total: { $sum: "$items.artistEarnings" } } },
+          ]),
+          Order.countDocuments({ "items.artist": user._id }),
+          Order.aggregate([
+            {
+              $match: {
+                status: { $in: ["paid", "shipped", "delivered"] },
+                "items.artist": user._id,
+              },
+            },
+            { $unwind: "$items" },
+            { $match: { "items.artist": user._id } },
+            { $group: { _id: null, total: { $sum: "$items.quantity" } } },
+          ]),
         ]);
-        
-        user.storage = user.storage || {};
-        user.storage.videoCount = videoCount;
-        user.storage.imageCount = totalArtworks - videoCount;
-        user.storage.artworkCount = totalArtworks;
+
+        user.artistStats.totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
+        user.artistStats.totalSales = salesCount.length > 0 ? salesCount[0].total : 0;
+        user.artistStats.totalArtworks = totalArtworks;
+      }
     }
 
     res.status(200).json({ data: user });
@@ -485,7 +533,9 @@ router.patch("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
       "email",
       "role",
       "artistStatus",
+      "galleristStatus",
       "artistInfo",
+      "profilePicture",
     ];
 
     const updateObj = {};
@@ -676,7 +726,7 @@ router.patch("/:id/role", isAuthenticated, isAdmin, async (req, res, next) => {
       return res.status(400).json({ error: "Role is required." });
     }
 
-    const validRoles = ["user", "artist", "admin", "superAdmin"];
+    const validRoles = ["user", "artist", "gallerist", "admin", "superAdmin"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
@@ -716,8 +766,8 @@ router.get("/artist/:id", async (req, res, next) => {
       _id: req.params.id,
       $or: [
         { role: "artist", artistStatus: "verified" },
-        { role: { $in: ["admin", "superAdmin"] } }
-      ]
+        { role: { $in: ["admin", "superAdmin"] } },
+      ],
     }).select("firstName lastName userName profilePicture artistInfo createdAt role");
 
     if (!user) {
@@ -777,122 +827,134 @@ router.get("/artists/all", async (req, res, next) => {
 // POST /api/users/storage/sync - Recalculate storage for current user or specific user (admin)
 router.post("/storage/sync", isAuthenticated, attachUser, async (req, res, next) => {
   try {
-     const { userId } = req.body; // Optional userId for admins
-     const { listFolderContent } = require("../utils/r2");
-     const User = require("../models/User.model");
+    const { userId } = req.body; // Optional userId for admins
+    const { listFolderContent } = require("../utils/r2");
+    const User = require("../models/User.model");
 
-     let targetUserId = req.user._id.toString();
-     let isTargetSuperAdmin = req.user.role === "superAdmin";
+    let targetUserId = req.user._id.toString();
+    let isTargetSuperAdmin = req.user.role === "superAdmin";
 
-     // If admin wants to sync another user
-     if (userId && (req.user.role === "admin" || req.user.role === "superAdmin")) {
-         targetUserId = userId;
-         const targetUser = await User.findById(userId);
-         if (!targetUser) return res.status(404).json({ error: "User not found" });
-         isTargetSuperAdmin = targetUser.role === "superAdmin";
-     }
+    // If admin wants to sync another user
+    if (userId && (req.user.role === "admin" || req.user.role === "superAdmin")) {
+      targetUserId = userId;
+      const targetUser = await User.findById(userId);
+      if (!targetUser) return res.status(404).json({ error: "User not found" });
+      isTargetSuperAdmin = targetUser.role === "superAdmin";
+    }
 
-     // Folders to check
-     const folders = [
-         `artworks/${targetUserId}`,
-         `videos/${targetUserId}`,
-         `events/${targetUserId}`,
-         `profiles/${targetUserId}`,
-         `logos/${targetUserId}`
-     ];
-     
-     if (isTargetSuperAdmin) {
-         folders.push("platform/hero");
-     }
+    // Folders to check
+    const folders = [
+      `artworks/${targetUserId}`,
+      `videos/${targetUserId}`,
+      `events/${targetUserId}`,
+      `profiles/${targetUserId}`,
+      `logos/${targetUserId}`,
+    ];
 
-     console.log(`[STORAGE SYNC] Syncing user ${targetUserId}, Is SuperAdmin: ${isTargetSuperAdmin}`);
-     console.log(`[STORAGE SYNC] Checking folders:`, folders);
-     
-     // Fetch all parallely
-     try {
-        const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
-        
-        let totalBytes = 0;
-        let imageBytes = 0;
-        let videoBytes = 0;
-        let fileCount = 0;
+    if (isTargetSuperAdmin) {
+      folders.push("platform/hero");
+    }
 
-        const flatFiles = results.flat();
-        console.log(`[STORAGE SYNC] Found ${flatFiles.length} files`);
+    console.log(
+      `[STORAGE SYNC] Syncing user ${targetUserId}, Is SuperAdmin: ${isTargetSuperAdmin}`
+    );
+    console.log(`[STORAGE SYNC] Checking folders:`, folders);
 
-        flatFiles.forEach(file => {
-             totalBytes += file.size;
-             fileCount++;
-             if (file.key.includes("/videos/") || file.key.endsWith(".mp4") || file.key.endsWith(".mov")) {
-                 videoBytes += file.size;
-             } else {
-                 imageBytes += file.size;
-             }
-        });
-        
-        console.log(`[STORAGE SYNC] Calculated Total: ${totalBytes} bytes (${(totalBytes/1024/1024).toFixed(2)} MB)`);
+    // Fetch all parallely
+    try {
+      const results = await Promise.all(folders.map((folder) => listFolderContent(folder)));
 
-        // Update User
-        const updatedUser = await User.findByIdAndUpdate(targetUserId, {
-            "storage.totalBytes": totalBytes,
-            "storage.imageBytes": imageBytes,
-            "storage.videoBytes": videoBytes,
-            "storage.fileCount": fileCount
-        }, { new: true });
+      let totalBytes = 0;
+      let imageBytes = 0;
+      let videoBytes = 0;
+      let fileCount = 0;
 
-        res.status(200).json({ 
-            data: updatedUser,
-            debug: {
-                targetUserId,
-                foldersChecked: folders,
-                filesFound: flatFiles.length,
-                totalBytesCalculated: totalBytes,
-                sampleFiles: flatFiles.slice(0, 3).map(f => ({ key: f.key, size: f.size }))
-            }
-        });
-     } catch (err) {
-        console.error("[STORAGE SYNC] Error:", err);
-        throw err;
-     }
+      const flatFiles = results.flat();
+      console.log(`[STORAGE SYNC] Found ${flatFiles.length} files`);
+
+      flatFiles.forEach((file) => {
+        totalBytes += file.size;
+        fileCount++;
+        if (
+          file.key.includes("/videos/") ||
+          file.key.endsWith(".mp4") ||
+          file.key.endsWith(".mov")
+        ) {
+          videoBytes += file.size;
+        } else {
+          imageBytes += file.size;
+        }
+      });
+
+      console.log(
+        `[STORAGE SYNC] Calculated Total: ${totalBytes} bytes (${(totalBytes / 1024 / 1024).toFixed(2)} MB)`
+      );
+
+      // Update User
+      const updatedUser = await User.findByIdAndUpdate(
+        targetUserId,
+        {
+          "storage.totalBytes": totalBytes,
+          "storage.imageBytes": imageBytes,
+          "storage.videoBytes": videoBytes,
+          "storage.fileCount": fileCount,
+        },
+        { new: true }
+      );
+
+      res.status(200).json({
+        data: updatedUser,
+        debug: {
+          targetUserId,
+          foldersChecked: folders,
+          filesFound: flatFiles.length,
+          totalBytesCalculated: totalBytes,
+          sampleFiles: flatFiles.slice(0, 3).map((f) => ({ key: f.key, size: f.size })),
+        },
+      });
+    } catch (err) {
+      console.error("[STORAGE SYNC] Error:", err);
+      throw err;
+    }
   } catch (error) {
-     next(error);
+    next(error);
   }
 });
 
 // GET /api/users/storage/files - Get current user's files
 router.get("/storage/files", isAuthenticated, attachUser, async (req, res, next) => {
   try {
-     const { listFolderContent } = require("../utils/r2");
-     const userId = req.user._id.toString();
-     
-     // Folders to check
-     const folders = [
-         `artworks/${userId}`,
-         `videos/${userId}`,
-         `events/${userId}`,
-         `profiles/${userId}`,
-         `logos/${userId}`
-     ];
-     
-     // Fetch all parallely
-     const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
-     
-     // Flatten and categorize
-     const files = results.flat().map(file => {
-          // Add type based on key
-          let type = "other";
-          if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
-          else if (file.key.startsWith(`videos/${userId}`)) type = "video";
-          else if (file.key.startsWith(`events/${userId}`)) type = "event";
-          else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
-          else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
-          
-          return { ...file, type };
-     });
-     
-     res.status(200).json({ data: files });
+    const { listFolderContent } = require("../utils/r2");
+    const userId = req.user._id.toString();
+
+    // Folders to check
+    const folders = [
+      `artworks/${userId}`,
+      `videos/${userId}`,
+      `events/${userId}`,
+      `profiles/${userId}`,
+      `logos/${userId}`,
+    ];
+
+    // Fetch all parallely
+    const results = await Promise.all(folders.map((folder) => listFolderContent(folder)));
+
+    // Flatten and categorize
+    const files = results.flat().map((file) => {
+      // Add type based on key
+      let type = "other";
+      if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
+      else if (file.key.startsWith(`videos/${userId}`)) type = "video";
+      else if (file.key.startsWith(`events/${userId}`)) type = "event";
+      else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
+      else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
+
+      return { ...file, type };
+    });
+
+    res.status(200).json({ data: files });
   } catch (error) {
-     next(error);
+    next(error);
   }
 });
 

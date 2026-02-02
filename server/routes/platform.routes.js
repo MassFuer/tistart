@@ -7,17 +7,12 @@ const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
 const Event = require("../models/Event.model");
 const Order = require("../models/Order.model");
+const mongoose = require("mongoose");
 const { isAuthenticated } = require("../middleware/jwt.middleware");
 const { isSuperAdmin, isAdmin } = require("../middleware/role.middleware");
 const Busboy = require("busboy");
 const { Upload } = require("@aws-sdk/lib-storage");
-const { 
-  r2Client, 
-  BUCKET_NAME, 
-  PUBLIC_URL, 
-  generateFilename, 
-  getFileInfo 
-} = require("../utils/r2");
+const { r2Client, BUCKET_NAME, PUBLIC_URL, generateFilename, getFileInfo } = require("../utils/r2");
 
 // ==================== PLATFORM SETTINGS (SuperAdmin Only) ====================
 
@@ -39,13 +34,13 @@ router.get("/config", async (req, res, next) => {
     const publicConfig = {
       theme: settings.theme,
       maintenance: {
-          enabled: settings.maintenance.enabled,
-          message: settings.maintenance.message
+        enabled: settings.maintenance.enabled,
+        message: settings.maintenance.message,
       },
       features: settings.features,
       geolocation: settings.geolocation,
       hero: settings.hero,
-      display: settings.display
+      display: settings.display,
     };
     res.status(200).json({ data: publicConfig });
   } catch (error) {
@@ -119,7 +114,7 @@ router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => 
         return {
           url: publicUrl,
           key: key,
-          mimeType: mimeType
+          mimeType: mimeType,
         };
       });
     });
@@ -131,11 +126,11 @@ router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => 
 
       try {
         const uploadedAsset = await uploadPromise;
-        
+
         // Get size
         const fileInfo = await getFileInfo(uploadedAsset.key);
         if (fileInfo) {
-            uploadedAsset.size = fileInfo.size;
+          uploadedAsset.size = fileInfo.size;
         }
 
         res.status(200).json({ data: uploadedAsset });
@@ -157,7 +152,7 @@ router.get("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
     const { folder = "platform/hero" } = req.query; // Default to hero folder
     // Security check: only allow listing platform subfolders
     if (!folder.startsWith("platform/")) {
-       return res.status(403).json({ error: "Access denied. Can only list platform assets." });
+      return res.status(403).json({ error: "Access denied. Can only list platform assets." });
     }
 
     const { listFolderContent } = require("../utils/r2");
@@ -166,7 +161,7 @@ router.get("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}); 
+});
 
 // ==================== PLATFORM STATISTICS (Admin & SuperAdmin) ====================
 
@@ -451,28 +446,29 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
 
     // Top Viewed Videos
     const topViewedVideos = await Artwork.aggregate([
-      { $match: { category: "video", views: { $gt: 0 } } },
-      { $sort: { views: -1 } },
+      { $match: { category: "video", $or: [{ views: { $gt: 0 } }, { plays: { $gt: 0 } }] } },
+      { $sort: { views: -1, plays: -1 } },
       { $limit: 10 },
       {
-         $lookup: {
-            from: "users",
-            localField: "artist",
-            foreignField: "_id",
-            as: "artistData"
-         }
+        $lookup: {
+          from: "users",
+          localField: "artist",
+          foreignField: "_id",
+          as: "artistData",
+        },
       },
       { $unwind: "$artistData" },
       {
-         $project: {
-             _id: 1,
-             title: 1,
-             views: 1,
-             duration: "$video.duration",
-             artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
-             companyName: "$artistData.artistInfo.companyName"
-         }
-      }
+        $project: {
+          _id: 1,
+          title: 1,
+          views: 1,
+          plays: 1,
+          duration: "$video.duration",
+          artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
+          companyName: "$artistData.artistInfo.companyName",
+        },
+      },
     ]);
 
     // Top Viewed Artworks (Non-Video)
@@ -481,23 +477,34 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
       { $sort: { views: -1 } },
       { $limit: 10 },
       {
-         $lookup: {
-            from: "users",
-            localField: "artist",
-            foreignField: "_id",
-            as: "artistData"
-         }
+        $lookup: {
+          from: "users",
+          localField: "artist",
+          foreignField: "_id",
+          as: "artistData",
+        },
       },
       { $unwind: "$artistData" },
-       {
-         $project: {
-             _id: 1,
-             title: 1,
-             views: 1,
-             category: 1,
-             artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] }
-         }
-      }
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          views: 1,
+          category: 1,
+          artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
+        },
+      },
+    ]);
+
+    // Global totals for views and plays
+    const globalAnalytics = await Artwork.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalViews: { $sum: "$views" },
+          totalPlays: { $sum: "$plays" },
+        },
+      },
     ]);
 
     res.status(200).json({
@@ -550,6 +557,10 @@ router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
         topArtworks,
         topViewedVideos,
         topViewedOther,
+        analytics: {
+          totalViews: globalAnalytics[0]?.totalViews || 0,
+          totalPlays: globalAnalytics[0]?.totalPlays || 0,
+        },
         storage: storageStats[0] || {
           totalStorageUsed: 0,
           totalImageBytes: 0,
@@ -576,11 +587,11 @@ router.get("/storage", isAuthenticated, isSuperAdmin, async (req, res, next) => 
 
     let sortObj = {};
     if (sort) {
-        sortObj[sort] = sortDir;
+      sortObj[sort] = sortDir;
     } else {
-        sortObj["storage.totalBytes"] = -1;
+      sortObj["storage.totalBytes"] = -1;
     }
-    
+
     // Ensure stable sort
     sortObj["_id"] = 1;
 
@@ -592,55 +603,71 @@ router.get("/storage", isAuthenticated, isSuperAdmin, async (req, res, next) => 
           let: { artistId: "$_id" },
           pipeline: [
             { $match: { $expr: { $eq: ["$artist", "$$artistId"] } } },
-            { $group: { 
-                _id: "$category", 
-                count: { $sum: 1 } 
-              } 
-            }
+            {
+              $group: {
+                _id: "$category",
+                count: { $sum: 1 },
+              },
+            },
           ],
-          as: "artworkCounts"
-        }
+          as: "artworkCounts",
+        },
       },
       {
         $addFields: {
-           videoCount: {
-               $let: {
-                   vars: { videoObj: { $arrayElemAt: [{ $filter: { input: "$artworkCounts", as: "c", cond: { $eq: ["$$c._id", "video"] } } }, 0] } },
-                   in: { $ifNull: ["$$videoObj.count", 0] }
-               }
-           },
-           imageCount: {
-                $reduce: {
-                    input: { 
-                        $filter: { 
-                            input: "$artworkCounts", 
-                            as: "c", 
-                            cond: { $ne: ["$$c._id", "video"] } 
-                        } 
+          videoCount: {
+            $let: {
+              vars: {
+                videoObj: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$artworkCounts",
+                        as: "c",
+                        cond: { $eq: ["$$c._id", "video"] },
+                      },
                     },
-                    initialValue: 0,
-                    in: { $add: ["$$value", "$$this.count"] }
-                }
-           }
-        }
+                    0,
+                  ],
+                },
+              },
+              in: { $ifNull: ["$$videoObj.count", 0] },
+            },
+          },
+          imageCount: {
+            $reduce: {
+              input: {
+                $filter: {
+                  input: "$artworkCounts",
+                  as: "c",
+                  cond: { $ne: ["$$c._id", "video"] },
+                },
+              },
+              initialValue: 0,
+              in: { $add: ["$$value", "$$this.count"] },
+            },
+          },
+        },
       },
-      { $project: {
-          firstName: 1, 
-          lastName: 1, 
-          userName: 1, 
-          email: 1, 
-          "artistInfo.companyName": 1, 
-          storage: 1, 
+      {
+        $project: {
+          firstName: 1,
+          lastName: 1,
+          userName: 1,
+          email: 1,
+          "artistInfo.companyName": 1,
+          storage: 1,
           role: 1,
           subscriptionTier: 1,
           profilePicture: 1,
           videoCount: 1,
           imageCount: 1,
-          updatedAt: 1
-      }},
+          updatedAt: 1,
+        },
+      },
       { $sort: sortObj },
       { $skip: skip },
-      { $limit: Number(limit) }
+      { $limit: Number(limit) },
     ];
 
     const [artists, total] = await Promise.all([
@@ -711,37 +738,37 @@ router.patch("/storage/:userId", isAuthenticated, isSuperAdmin, async (req, res,
 // GET /api/platform/storage/:userId/files - List all files for a user (SuperAdmin Only)
 router.get("/storage/:userId/files", isAuthenticated, isSuperAdmin, async (req, res, next) => {
   try {
-     const { userId } = req.params;
-     const { listFolderContent } = require("../utils/r2");
-     
-     // Folders to check
-     const folders = [
-         `artworks/${userId}`,
-         `videos/${userId}`,
-         `events/${userId}`,
-         `profiles/${userId}`,
-         `logos/${userId}`
-     ];
-     
-     // Fetch all parallely
-     const results = await Promise.all(folders.map(folder => listFolderContent(folder)));
-     
-     // Flatten and categorize
-     const files = results.flat().map(file => {
-          // Add type based on key
-          let type = "other";
-          if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
-          else if (file.key.startsWith(`videos/${userId}`)) type = "video";
-          else if (file.key.startsWith(`events/${userId}`)) type = "event";
-          else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
-          else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
-          
-          return { ...file, type };
-     });
-     
-     res.status(200).json({ data: files });
+    const { userId } = req.params;
+    const { listFolderContent } = require("../utils/r2");
+
+    // Folders to check
+    const folders = [
+      `artworks/${userId}`,
+      `videos/${userId}`,
+      `events/${userId}`,
+      `profiles/${userId}`,
+      `logos/${userId}`,
+    ];
+
+    // Fetch all parallely
+    const results = await Promise.all(folders.map((folder) => listFolderContent(folder)));
+
+    // Flatten and categorize
+    const files = results.flat().map((file) => {
+      // Add type based on key
+      let type = "other";
+      if (file.key.startsWith(`artworks/${userId}`)) type = "artwork";
+      else if (file.key.startsWith(`videos/${userId}`)) type = "video";
+      else if (file.key.startsWith(`events/${userId}`)) type = "event";
+      else if (file.key.startsWith(`profiles/${userId}`)) type = "profile";
+      else if (file.key.startsWith(`logos/${userId}`)) type = "logo";
+
+      return { ...file, type };
+    });
+
+    res.status(200).json({ data: files });
   } catch (error) {
-     next(error);
+    next(error);
   }
 });
 

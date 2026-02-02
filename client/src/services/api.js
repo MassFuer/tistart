@@ -116,6 +116,7 @@ export const artworksAPI = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   incrementView: (id) => api.post(`/api/artworks/${id}/view`),
+  incrementPlay: (id) => api.post(`/api/artworks/${id}/play`),
 };
 
 // Events API

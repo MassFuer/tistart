@@ -1,30 +1,23 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import {
-  adminAPI,
-  ordersAPI,
-  platformAPI,
-  messagingAPI,
-} from "../services/api";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { adminAPI, platformAPI, ordersAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import UserDetailModal from "../components/admin/UserDetailModal";
 import CreateUserModal from "../components/admin/CreateUserModal";
 import OrderDetailModal from "../components/admin/OrderDetailModal";
-import ThemeEditor from "../components/admin/ThemeEditor";
+import AdminSystemTab from "../components/admin/AdminSystemTab";
+import AdminAppearanceTab from "../components/admin/AdminAppearanceTab";
+import AdminStorageTab from "../components/admin/AdminStorageTab";
 import { toast } from "sonner";
 import { useListing } from "../hooks/useListing";
 import Pagination from "../components/common/Pagination";
 import Loading from "../components/common/Loading";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, ArrowRight } from "lucide-react";
 
 // UI Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,40 +37,22 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import {
-  Search,
   DollarSign,
   Users,
   Package,
   Palette,
   HardDrive,
+  Settings,
+  LayoutDashboard,
+  BarChart3,
+  Search,
   Filter,
+  Film,
   Eye,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  MessageCircle,
-  Plus,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Layers,
-  ChevronRight,
-  ChevronDown,
-  Maximize2,
-  Minimize2,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { useTableGrouping } from "../hooks/useTableGrouping";
-import TableGroupingControls from "../components/common/TableGroupingControls";
 
 const AdminPage = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Stats State
@@ -95,67 +70,69 @@ const AdminPage = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const isSuperAdmin = currentUser?.role === "superAdmin";
-  const artistStatuses = [
-    "none",
-    "pending",
-    "incomplete",
-    "verified",
-    "suspended",
-  ];
-  const roles = isSuperAdmin
-    ? ["user", "artist", "admin", "superAdmin"]
-    : ["user", "artist", "admin"];
-
   // Update active tab when URL changes
   useEffect(() => {
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [tabParam]);
+  }, [tabParam, activeTab]);
 
-  // Auto-open user detail modal if userId is in URL
+  // Check for pending applications on mount
+  useEffect(() => {
+    adminAPI
+      .getAllUsers({ artistStatus: "pending", limit: 1 })
+      .then((res) => setPendingCount(res.data.pagination?.total || 0))
+      .catch((err) => console.error("Failed to check pending apps", err));
+  }, []);
+
+  // Auto-open modals based on URL params
   useEffect(() => {
     const userIdParam = searchParams.get("userId");
-    if (userIdParam && activeTab === "users") {
+    if (userIdParam) {
       setSelectedUserId(userIdParam);
-      // Remove userId from URL after opening modal
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.delete("userId");
-        return newParams;
-      });
+      // Remove from URL to avoid re-opening
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("userId");
+          return next;
+        },
+        { replace: true },
+      );
     }
-  }, [searchParams, activeTab]);
 
-  // Check for pending applications
-  useEffect(() => {
-    // We check this periodically or when users tab is active to show the alert
-    if (activeTab === "users" || activeTab === "stats") {
-      adminAPI
-        .getAllUsers({ artistStatus: "pending", limit: 1 })
-        .then((res) => setPendingCount(res.data.pagination?.total || 0))
-        .catch((err) => console.error("Failed to check pending apps", err));
+    const orderIdParam = searchParams.get("orderId");
+    if (orderIdParam) {
+      setSelectedOrderId(orderIdParam);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("orderId");
+          return next;
+        },
+        { replace: true },
+      );
     }
-  }, [activeTab, stats]); // Re-check when stats refresh or tab changes
+  }, [searchParams]);
 
-  // Update URL when active tab changes
-  const handleTabChange = (val) => {
-    // Save current scroll position
-    const scrollY = window.scrollY;
-
+  const handleTabChange = (val, filterUpdates = null) => {
     setActiveTab(val);
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set("tab", val);
+      if (filterUpdates) {
+        // If we are switching with specific filters, we might want to pass them
+        // But useListing handles its own state.
+        // We'll rely on updateUserFilter being called after.
+      }
       return newParams;
     });
 
-    // Restore scroll position after URL update
-    // Use requestAnimationFrame to ensure DOM has updated
-    requestAnimationFrame(() => {
-      window.scrollTo(0, scrollY);
-    });
+    if (filterUpdates && val === "users") {
+      Object.entries(filterUpdates).forEach(([k, v]) => {
+        updateUserFilter(k, v);
+      });
+    }
   };
 
   // --- STATS LOGIC ---
@@ -193,200 +170,12 @@ const AdminPage = () => {
     updateFilter: updateUserFilter,
     setPage: setUsersPage,
     refresh: refreshUsers,
-    sort: userSort,
-    setSort: setUserSort,
   } = useListing({
     apiFetcher: fetchUsersWrapper,
     initialFilters: { artistStatus: "all", limit: 20, search: "" },
     initialSort: "-createdAt",
     enabled: activeTab === "users",
   });
-
-  const handleUserSort = (column) => {
-    if (userSort === column) {
-      setUserSort(`-${column}`);
-    } else if (userSort === `-${column}`) {
-      setUserSort(column);
-    } else {
-      setUserSort(`-${column}`); // Default to desc
-    }
-  };
-
-  const getSortIcon = (currentSort, column) => {
-    if (currentSort === column) return <ArrowUp className="ml-1 h-3 w-3" />;
-    if (currentSort === `-${column}`)
-      return <ArrowDown className="ml-1 h-3 w-3" />;
-    return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
-  };
-
-  const {
-    groupBy,
-    setGroupBy,
-    groupedData: groupedUsers,
-    expandedGroups,
-    toggleGroup,
-    expandAll,
-    collapseAll,
-  } = useTableGrouping(users);
-
-  const groupOptions = [
-    { label: "None", value: null },
-    { label: "Role", value: "role" },
-    { label: "Status", value: "artistStatus" },
-    { label: "Company", value: "artistInfo.companyName" },
-    { label: "City", value: "artistInfo.address.city" },
-    { label: "Country", value: "artistInfo.address.country" },
-  ];
-
-  const renderUserRow = (user) => (
-    <TableRow key={user._id} className="border-b-0 hover:bg-muted/30">
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-            {user.profilePicture ? (
-              <img
-                src={user.profilePicture}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-bold">
-                {user.firstName?.[0]}
-                {user.lastName?.[0]}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span
-                className="font-medium hover:underline cursor-pointer"
-                onClick={() => setSelectedUserId(user._id)}
-              >
-                {user.firstName} {user.lastName}
-              </span>
-              {["admin", "superAdmin"].includes(user.role) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 text-muted-foreground hover:text-primary"
-                  asChild
-                >
-                  <Link to={`/artist/${user._id}`} title="View Public Profile">
-                    <Eye className="h-3 w-3" />
-                  </Link>
-                </Button>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>
-        <Select
-          value={user.role}
-          onValueChange={(val) => handleRoleChange(user._id, val)}
-        >
-          <SelectTrigger className="w-[110px] h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {roles.map((role) => (
-              <SelectItem key={role} value={role}>
-                {role}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell>
-        <Badge
-          variant="outline"
-          className={getStatusColorClass(user.artistStatus)}
-        >
-          {user.artistStatus}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <span className="text-xs text-muted-foreground">
-          {formatBytes(user.storage?.totalBytes || 0)}
-        </span>
-      </TableCell>
-      <TableCell>
-        {user.artistInfo?.companyName || (
-          <span className="text-muted-foreground">-</span>
-        )}
-      </TableCell>
-      <TableCell>
-        {user.artistStatus === "pending" ? (
-          <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              className="h-8 w-8 bg-green-600 hover:bg-green-700 text-white border-0"
-              onClick={() => handleStatusChange(user._id, "verified")}
-              title="Approve"
-            >
-              <CheckCircle className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="destructive"
-              className="h-8 w-8"
-              onClick={() => handleStatusChange(user._id, "incomplete")}
-              title="Reject"
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              className="h-8 w-8 bg-amber-500 hover:bg-amber-600 text-white border-0"
-              onClick={() => handleContact(user._id)}
-              title="Request Info"
-            >
-              <AlertTriangle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : user.role === "artist" || user.artistStatus !== "none" ? (
-          <Select
-            value={user.artistStatus}
-            onValueChange={(val) => handleStatusChange(user._id, val)}
-          >
-            <SelectTrigger className="w-[120px] h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {artistStatuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-muted-foreground text-sm">-</span>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-
-  const handleStatusChange = async (userId, newStatus) => {
-    try {
-      await adminAPI.updateArtistStatus(userId, newStatus);
-      toast.success("Artist status updated");
-      refreshUsers();
-    } catch (error) {
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await adminAPI.updateUserRole(userId, newRole);
-      toast.success("User role updated");
-      refreshUsers();
-    } catch (error) {
-      toast.error("Failed to update role");
-    }
-  };
 
   // --- ORDERS LISTING ---
   const fetchOrdersWrapper = useCallback((params) => {
@@ -409,34 +198,6 @@ const AdminPage = () => {
     enabled: activeTab === "orders",
   });
 
-  // --- STORAGE LISTING (SuperAdmin) ---
-  const fetchStorageWrapper = useCallback((params) => {
-    return platformAPI.getStorageUsage(params);
-  }, []);
-
-  const {
-    data: storageUsers,
-    loading: storageLoading,
-    pagination: storagePagination,
-    filters: storageFilters,
-    updateFilter: updateStorageFilter,
-    setPage: setStoragePage,
-  } = useListing({
-    apiFetcher: fetchStorageWrapper,
-    initialFilters: { limit: 20, sort: "storage.totalBytes", order: "desc" },
-    enabled: activeTab === "storage" && isSuperAdmin,
-  });
-
-  const handleStorageSort = (column) => {
-    const currentSort = storageFilters.sort;
-    const currentOrder = storageFilters.order || "desc";
-    const newOrder =
-      currentSort === column && currentOrder === "desc" ? "asc" : "desc";
-
-    updateStorageFilter({ sort: column, order: newOrder });
-  };
-
-  // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -444,7 +205,6 @@ const AdminPage = () => {
     }).format(amount || 0);
   };
 
-  // Format bytes to human readable
   const formatBytes = (bytes) => {
     if (!bytes) return "0 B";
     const k = 1024;
@@ -453,33 +213,7 @@ const AdminPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getStatusBadgeVariant = (status) => {
-    const variants = {
-      none: "secondary",
-      pending: "warning", // You might need to add warning variant or use default/secondary with classes
-      incomplete: "secondary",
-      verified: "success", // Need success variant or use default
-      suspended: "destructive",
-      paid: "default",
-      shipped: "default",
-      delivered: "success",
-      cancelled: "destructive",
-    };
-    // Map to standard shadcn badge variants: default, secondary, destructive, outline
-    const mapToStandard = {
-      pending: "secondary", // fallback
-      verified: "default", // fallback
-      paid: "default",
-      shipped: "secondary",
-      delivered: "default",
-      success: "outline", // simplified
-      warning: "secondary",
-    };
-    return mapToStandard[status] || variants[status] || "outline";
-  };
-
   const getStatusColorClass = (status) => {
-    // Helper for custom colors if Shadcn badge variants aren't enough
     switch (status) {
       case "verified":
       case "delivered":
@@ -497,500 +231,335 @@ const AdminPage = () => {
     }
   };
 
-  const handleContact = async (userId) => {
-    try {
-      const res = await messagingAPI.createConversation({
-        participants: [userId],
-      });
-      navigate(`/messages?conversation=${res.data.data._id}`);
-    } catch (error) {
-      console.error("Start chat error", error);
-      toast.error("Failed to start conversation");
-    }
-  };
-
   return (
-    <div className="container mx-auto py-8 px-4 space-y-8">
+    <div className="container mx-auto py-8 px-4 space-y-8 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Panel</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Manage users, artists, orders, and platform statistics.
+            Platform-wide management for users, content, and system settings.
           </p>
         </div>
       </div>
+
+      {pendingCount > 0 && (
+        <div
+          className="group relative overflow-hidden bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-300"
+          onClick={() => handleTabChange("users", { artistStatus: "pending" })}
+        >
+          {/* Background Accent */}
+          <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 bg-orange-200/20 dark:bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-300/30 transition-colors" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center shrink-0">
+                <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-orange-900 dark:text-orange-300">
+                    Attention Needed
+                  </h3>
+                  <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 h-4 px-1.5 text-[10px] animate-pulse">
+                    {pendingCount} Pending
+                  </Badge>
+                </div>
+                <p className="text-xs text-orange-800/70 dark:text-orange-400/70 mt-0.5">
+                  New profile verification requests awaiting your review.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-orange-700 dark:text-orange-400 font-bold group-hover:translate-x-1 transition-transform">
+              <span>Manage Applications</span>
+              <ArrowRight className="h-4 w-4" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
         className="w-full space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
-          <TabsTrigger value="stats">Dashboard & Stats</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="users">
-            <span className="flex items-center gap-2">
-              Users & Artists
-              {pendingCount > 0 && (
-                <Badge variant="destructive" className="h-5 px-1.5 text-xs">
-                  {pendingCount}
-                </Badge>
-              )}
-            </span>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto p-1 bg-muted/30">
+          <TabsTrigger value="stats" className="gap-2">
+            <LayoutDashboard className="h-4 w-4" /> Stats
           </TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="theme">Appearance</TabsTrigger>
-          {isSuperAdmin && <TabsTrigger value="storage">Storage</TabsTrigger>}
+          <TabsTrigger value="users" className="gap-2">
+            <Users className="h-4 w-4" /> Users
+            {pendingCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="ml-1 h-4 px-1 text-[10px]"
+              >
+                {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="gap-2">
+            <Package className="h-4 w-4" /> Orders
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2">
+            <Palette className="h-4 w-4" /> Appearance
+          </TabsTrigger>
+          <TabsTrigger value="storage" className="gap-2">
+            <HardDrive className="h-4 w-4" /> Storage
+          </TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="system" className="gap-2">
+              <Settings className="h-4 w-4" /> System
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="analytics" className="gap-2">
+            <BarChart3 className="h-4 w-4" /> Analytics
+          </TabsTrigger>
         </TabsList>
 
         {/* --- STATS TAB --- */}
         <TabsContent value="stats" className="space-y-6">
           <div className="flex items-center justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Time Period:</span>
-              <Select value={statsPeriod} onValueChange={setStatsPeriod}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">Last 7 Days</SelectItem>
-                  <SelectItem value="month">Last 30 Days</SelectItem>
-                  <SelectItem value="year">Last Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={statsPeriod} onValueChange={setStatsPeriod}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {statsLoading ? (
             <div className="py-20 flex justify-center">
-              <Loading message="Loading stats..." />
+              <Loading />
             </div>
-          ) : stats ? (
-            <>
-              {/* KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Revenue
+          ) : (
+            stats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Revenue
                     </CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold line-clamp-1">
                       {formatCurrency(stats.commission?.totalRevenue)}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Gross volume
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <DollarSign className="h-3 w-3 mr-1" /> Gross Sales
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Platform Fees
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Users
                     </CardTitle>
-                    <DollarSign className="h-4 w-4 text-green-600" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(stats.commission?.totalPlatformFees)}
+                      {stats.users?.total || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      20% Commission
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <Users className="h-3 w-3 mr-1" /> Total Registered
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Artist Earnings
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Orders
                     </CardTitle>
-                    <Palette className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(stats.commission?.totalArtistEarnings)}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Paid to artists
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Orders
-                    </CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {stats.orders?.total || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Processed orders
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <Package className="h-3 w-3 mr-1" /> Transactions
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Views
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.analytics?.totalViews || 0}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <BarChart3 className="h-3 w-3 mr-1" /> Content Views
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Plays
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.analytics?.totalPlays || 0}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <Palette className="h-3 w-3 mr-1" /> Video Plays
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-gradient-to-br from-background to-muted/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                      Storage
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {formatBytes(stats.storage?.totalStorageUsed)}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground flex items-center mt-1">
+                      <HardDrive className="h-3 w-3 mr-1" /> Global usage
                     </p>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Detailed Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Users Stats */}
-                <Card
-                  className="cursor-pointer hover:border-primary/50 transition-colors"
-                  onClick={() => handleTabChange("users")}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" /> User Demographics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center border-b pb-2">
-                      <span>Total Users</span>
-                      <span className="font-bold">
-                        {stats.users?.total || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center border-b pb-2">
-                      <span>New Signups ({statsPeriod})</span>
-                      <span className="font-bold">
-                        {stats.users?.recentSignups || 0}
-                      </span>
-                    </div>
-                    <div className="space-y-2 pt-2">
-                      {stats.users?.byRole?.map((r) => (
-                        <div
-                          key={r._id}
-                          className="flex justify-between items-center text-sm"
-                        >
-                          <span className="capitalize">{r._id}s</span>
-                          <Badge variant="secondary">{r.count}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Storage Stats */}
-                <Card
-                  className={
-                    isSuperAdmin
-                      ? "cursor-pointer hover:border-primary/50 transition-colors"
-                      : ""
-                  }
-                  onClick={() => isSuperAdmin && handleTabChange("storage")}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <HardDrive className="h-5 w-5" /> Storage Usage
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center border-b pb-2">
-                      <span>Total Storage Used</span>
-                      <span className="font-bold">
-                        {formatBytes(stats.storage?.totalStorageUsed)}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">
-                          Images
-                        </span>
-                        <div className="font-medium">
-                          {formatBytes(stats.storage?.totalImageBytes)}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">
-                          Videos
-                        </span>
-                        <div className="font-medium">
-                          {formatBytes(stats.storage?.totalVideoBytes)}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-xs text-muted-foreground">
-                          Total Files
-                        </span>
-                        <div className="font-medium">
-                          {stats.storage?.totalFiles || 0}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Top Performers */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Selling Artists</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {stats.topArtists?.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Artist</TableHead>
-                            <TableHead className="text-right">Sales</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {stats.topArtists.map((artist) => (
-                            <TableRow
-                              key={artist.artistId}
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() =>
-                                navigate(`/artists/${artist.artistId}`)
-                              }
-                            >
-                              <TableCell className="font-medium hover:underline hover:text-primary transition-colors">
-                                {artist.companyName || artist.artistName}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(artist.totalSales)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No data available.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Artworks</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {stats.topArtworks?.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead className="text-right">
-                              Revenue
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {stats.topArtworks.map((artwork) => (
-                            <TableRow
-                              key={artwork.artworkId}
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() =>
-                                navigate(`/artworks/${artwork.artworkId}`)
-                              }
-                            >
-                              <TableCell className="font-medium truncate max-w-[150px] hover:underline hover:text-primary transition-colors">
-                                {artwork.title}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(artwork.totalSales)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No data available.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              Failed to load statistics
-            </div>
+            )
           )}
         </TabsContent>
 
         {/* --- USERS TAB --- */}
         <TabsContent value="users" className="space-y-4">
-          {pendingCount > 0 && usersFilters.artistStatus !== "pending" && (
-            <div
-              className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 p-4 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors mb-4"
-              onClick={() => updateUserFilter("artistStatus", "pending")}
-            >
-              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              <div>
-                <p className="font-semibold">Action Required</p>
-                <p className="text-sm">
-                  You have {pendingCount} pending artist application
-                  {pendingCount !== 1 ? "s" : ""}. Click here to review them.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-background p-4 rounded-lg border">
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create User
-            </Button>
-
-            <TableGroupingControls
-              groupBy={groupBy}
-              setGroupBy={setGroupBy}
-              options={groupOptions}
-              onExpandAll={expandAll}
-              onCollapseAll={collapseAll}
-            />
-
-            <div className="relative w-full md:w-auto">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/10 p-4 rounded-xl border border-muted/20">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users..."
-                value={usersFilters.search || ""}
+                placeholder="Search by name, email, company..."
+                className="pl-10 h-10"
+                value={usersFilters.search}
                 onChange={(e) => updateUserFilter("search", e.target.value)}
-                className="pl-8 w-full md:w-[300px]"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Status:</span>
+            <div className="flex gap-2 w-full md:w-auto">
               <Select
                 value={usersFilters.artistStatus || "all"}
                 onValueChange={(val) => updateUserFilter("artistStatus", val)}
               >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="All Users" />
+                <SelectTrigger className="w-full md:w-40">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
-                  {artistStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="shrink-0 font-bold"
+              >
+                Add User
+              </Button>
             </div>
-
-            {users && (
-              <div className="ml-auto text-sm text-muted-foreground">
-                Showing {users.length} of {usersPagination.total} users
-              </div>
-            )}
           </div>
 
           {usersLoading ? (
             <div className="py-20 flex justify-center">
-              <Loading message="Loading users..." />
+              <Loading />
             </div>
           ) : (
-            <Card>
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow className="border-b-0 hover:bg-transparent">
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground dark:hover:text-white transition-colors"
-                      onClick={() => handleUserSort("lastName")}
-                    >
-                      <div className="flex items-center">
-                        User {getSortIcon(userSort, "lastName")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground dark:hover:text-white transition-colors"
-                      onClick={() => handleUserSort("role")}
-                    >
-                      <div className="flex items-center">
-                        Role {getSortIcon(userSort, "role")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground dark:hover:text-white transition-colors"
-                      onClick={() => handleUserSort("artistStatus")}
-                    >
-                      <div className="flex items-center">
-                        Status {getSortIcon(userSort, "artistStatus")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground dark:hover:text-white transition-colors"
-                      onClick={() => handleUserSort("storage.totalBytes")}
-                    >
-                      <div className="flex items-center">
-                        Storage {getSortIcon(userSort, "storage.totalBytes")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:text-foreground dark:hover:text-white transition-colors"
-                      onClick={() => handleUserSort("artistInfo.companyName")}
-                    >
-                      <div className="flex items-center">
-                        Company{" "}
-                        {getSortIcon(userSort, "artistInfo.companyName")}
-                      </div>
-                    </TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.length === 0 ? (
+            <Card className="overflow-hidden border-muted/30">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10">
                     <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No users found.
-                      </TableCell>
+                      <TableHead>User / Artist</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Usage</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
                     </TableRow>
-                  ) : groupBy ? (
-                    Object.entries(groupedUsers).map(
-                      ([groupName, groupItems]) => {
-                        const isExpanded = expandedGroups[groupName];
-                        return (
-                          <Fragment key={groupName}>
-                            <TableRow
-                              className="bg-muted/10 hover:bg-muted/20 border-y cursor-pointer transition-colors"
-                              onClick={() => toggleGroup(groupName)}
+                  </TableHeader>
+                  <TableBody>
+                    {users.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center py-10 text-muted-foreground"
+                        >
+                          No users found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      users.map((u) => (
+                        <TableRow
+                          key={u._id}
+                          className="hover:bg-muted/30 cursor-pointer transition-colors"
+                          onClick={() => setSelectedUserId(u._id)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground overflow-hidden">
+                                {u.profilePicture ? (
+                                  <img
+                                    src={u.profilePicture}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  u.firstName?.[0]
+                                )}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold truncate">
+                                  {u.firstName} {u.lastName}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {u.email}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="capitalize text-[10px] tracking-wide font-bold"
                             >
-                              <TableCell
-                                colSpan={6}
-                                className="py-2 px-4 text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/5"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {isExpanded ? (
-                                    <ChevronDown className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <ChevronRight className="h-3.5 w-3.5" />
-                                  )}
-                                  {groupName} ({groupItems.length})
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                            {isExpanded &&
-                              groupItems.map((u) => renderUserRow(u))}
-                          </Fragment>
-                        );
-                      },
-                    )
-                  ) : (
-                    users.map((user) => renderUserRow(user))
-                  )}
-                </TableBody>
-              </Table>
-
+                              {u.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`${getStatusColorClass(u.artistStatus)} capitalize text-[10px] font-bold`}
+                            >
+                              {u.artistStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-[10px] font-mono whitespace-nowrap">
+                            {formatBytes(u.storage?.totalBytes || 0)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" className="h-8">
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
               {usersPagination.pages > 1 && (
-                <div className="p-4 border-t">
+                <div className="p-4 border-t bg-muted/5">
                   <Pagination
                     currentPage={usersPagination.page}
                     totalPages={usersPagination.pages}
@@ -1002,314 +571,15 @@ const AdminPage = () => {
           )}
         </TabsContent>
 
-        {/* --- THEME TAB --- */}
-        <TabsContent value="theme">
-          <div className="w-full">
-            <ThemeEditor />
-          </div>
-        </TabsContent>
-
-        {/* --- ANALYTICS TAB --- */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="flex items-center justify-end">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Time Period:</span>
-              <Select value={statsPeriod} onValueChange={setStatsPeriod}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today (Filtered)</SelectItem>
-                  <SelectItem value="week">Last 7 Days (Filtered)</SelectItem>
-                  <SelectItem value="month">Last 30 Days (Filtered)</SelectItem>
-                  <SelectItem value="year">Last Year (Filtered)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground -mt-4 italic">
-            * Note: Currently view counts are all-time cumulative. Date filters
-            apply to other stats.
-          </p>
-
-          {statsLoading ? (
-            <div className="py-20 flex justify-center">
-              <Loading message="Loading analytics..." />
-            </div>
-          ) : stats ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Top Viewed Videos */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" /> Top Viewed Videos
-                  </CardTitle>
-                  <CardDescription>Most watched video content</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {stats.topViewedVideos?.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Video Title</TableHead>
-                          <TableHead>Artist</TableHead>
-                          <TableHead className="text-right">Views</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stats.topViewedVideos.map((video) => (
-                          <TableRow
-                            key={video._id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/videos/${video._id}`)}
-                          >
-                            <TableCell className="font-medium truncate max-w-[200px]">
-                              {video.title}
-                            </TableCell>
-                            <TableCell>
-                              {video.companyName || video.artistName}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">
-                              {video.views.toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No video views yet
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Top Viewed Artworks */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" /> Top Viewed Artworks
-                  </CardTitle>
-                  <CardDescription>
-                    Most viewed images and other media
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {stats.topViewedOther?.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Title</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Views</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stats.topViewedOther.map((artwork) => (
-                          <TableRow
-                            key={artwork._id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/artworks/${artwork._id}`)}
-                          >
-                            <TableCell className="font-medium truncate max-w-[200px]">
-                              {artwork.title}
-                            </TableCell>
-                            <TableCell className="capitalize">
-                              {artwork.category}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">
-                              {artwork.views.toLocaleString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No artwork views yet
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              Failed to load analytics
-            </div>
-          )}
-        </TabsContent>
-
-        {isSuperAdmin && (
-          <TabsContent value="storage" className="space-y-4">
-            <div className="flex justify-between items-center bg-background p-4 rounded-lg border">
-              <h3 className="text-lg font-medium">Storage Usage by Artist</h3>
-              <div className="text-sm text-muted-foreground">
-                Showing {storageUsers?.length || 0} of {storagePagination.total}{" "}
-                artists
-              </div>
-            </div>
-
-            {storageLoading ? (
-              <div className="py-20 flex justify-center">
-                <Loading message="Loading storage data..." />
-              </div>
-            ) : (
-              <Card>
-                <Table>
-                  <TableHeader className="bg-muted/40">
-                    <TableRow className="border-b-0 hover:bg-transparent">
-                      <TableHead
-                        className="w-[250px] cursor-pointer"
-                        onClick={() => handleStorageSort("firstName")}
-                      >
-                        Artist / User
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer"
-                        onClick={() =>
-                          handleStorageSort("artistInfo.companyName")
-                        }
-                      >
-                        Company
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer"
-                        onClick={() => handleStorageSort("subscriptionTier")}
-                      >
-                        Tier
-                      </TableHead>
-                      <TableHead
-                        className="w-[300px] cursor-pointer"
-                        onClick={() => handleStorageSort("storage.totalBytes")}
-                      >
-                        Storage Usage
-                      </TableHead>
-                      <TableHead className="text-right">Content</TableHead>
-                      <TableHead
-                        className="text-right cursor-pointer"
-                        onClick={() => handleStorageSort("updatedAt")}
-                      >
-                        Last Update
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {storageUsers?.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          No data found.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      storageUsers?.map((u) => {
-                        const usage = u.storage?.totalBytes || 0;
-                        const limit =
-                          u.storage?.quotaBytes || 5 * 1024 * 1024 * 1024;
-                        const percent = Math.min((usage / limit) * 100, 100);
-
-                        return (
-                          <TableRow
-                            key={u._id}
-                            className="cursor-pointer hover:bg-muted/30"
-                            onClick={() => setSelectedUserId(u._id)}
-                          >
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                                  {u.profilePicture ? (
-                                    <img
-                                      src={u.profilePicture}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    u.firstName?.[0]
-                                  )}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">
-                                    {u.firstName} {u.lastName}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {u.email}
-                                  </span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {u.artistInfo?.companyName || "-"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="uppercase">
-                                {u.subscriptionTier}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                  <span>{formatBytes(usage)}</span>
-                                  <span className="text-muted-foreground">
-                                    of {formatBytes(limit)}
-                                  </span>
-                                </div>
-                                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full ${percent > 90 ? "bg-destructive" : percent > 75 ? "bg-yellow-500" : "bg-primary"}`}
-                                    style={{ width: `${percent}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right text-xs">
-                              <div title={formatBytes(u.storage?.videoBytes)}>
-                                {u.videoCount || 0} Videos{" "}
-                                <span className="text-muted-foreground">
-                                  ({formatBytes(u.storage?.videoBytes)})
-                                </span>
-                              </div>
-                              <div title={formatBytes(u.storage?.imageBytes)}>
-                                {u.imageCount || 0} Images{" "}
-                                <span className="text-muted-foreground">
-                                  ({formatBytes(u.storage?.imageBytes)})
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right text-xs text-muted-foreground">
-                              {new Date(u.updatedAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-                {storagePagination.pages > 1 && (
-                  <div className="p-4 border-t">
-                    <Pagination
-                      currentPage={storagePagination.page}
-                      totalPages={storagePagination.pages}
-                      onPageChange={setStoragePage}
-                    />
-                  </div>
-                )}
-              </Card>
-            )}
-          </TabsContent>
-        )}
-
         {/* --- ORDERS TAB --- */}
         <TabsContent value="orders" className="space-y-4">
-          <div className="flex items-center gap-4 bg-background p-4 rounded-lg border">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filter by Status:</span>
+          <div className="flex border border-muted/20 rounded-xl p-4 bg-muted/5 mb-4">
             <Select
               value={ordersFilters.status || "all"}
               onValueChange={(val) => updateOrderFilter("status", val)}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-48">
+                <Filter className="mr-2 h-4 w-4" />
                 <SelectValue placeholder="All Orders" />
               </SelectTrigger>
               <SelectContent>
@@ -1318,79 +588,74 @@ const AdminPage = () => {
                 <SelectItem value="paid">Paid</SelectItem>
                 <SelectItem value="shipped">Shipped</SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
           {ordersLoading ? (
             <div className="py-20 flex justify-center">
-              <Loading message="Loading orders..." />
+              <Loading />
             </div>
           ) : (
-            <Card>
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow className="border-b-0 hover:bg-transparent">
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.length === 0 ? (
+            <Card className="overflow-hidden border-muted/30">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/10">
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No orders found.
-                      </TableCell>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
-                  ) : (
-                    orders.map((order) => (
-                      <TableRow
-                        key={order._id}
-                        className="cursor-pointer border-b-0 hover:bg-muted/30"
-                        onClick={() => setSelectedOrderId(order._id)}
-                      >
-                        <TableCell className="font-mono text-xs">
-                          {order._id.slice(-6).toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {order.user?.firstName} {order.user?.lastName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {order.user?.email}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={getStatusColorClass(order.status)}
-                          >
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(order.totalAmount)}
+                  </TableHeader>
+                  <TableBody>
+                    {orders.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-center py-10 text-muted-foreground"
+                        >
+                          No orders found.
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-
+                    ) : (
+                      orders.map((o) => (
+                        <TableRow
+                          key={o._id}
+                          className="hover:bg-muted/30 cursor-pointer transition-colors"
+                          onClick={() => setSelectedOrderId(o._id)}
+                        >
+                          <TableCell className="font-mono text-xs uppercase font-bold text-primary">
+                            {o._id.slice(-6)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {o.user?.firstName} {o.user?.lastName}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {o.user?.email}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`${getStatusColorClass(o.status)} text-[10px] font-bold uppercase`}
+                            >
+                              {o.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-bold tabular-nums">
+                            {formatCurrency(o.totalAmount)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
               {ordersPagination.pages > 1 && (
-                <div className="p-4 border-t">
+                <div className="p-4 border-t bg-muted/5">
                   <Pagination
                     currentPage={ordersPagination.page}
                     totalPages={ordersPagination.pages}
@@ -1401,24 +666,156 @@ const AdminPage = () => {
             </Card>
           )}
         </TabsContent>
+
+        {/* --- MODULAR COMPONENTS --- */}
+        <TabsContent
+          value="appearance"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+        >
+          <AdminAppearanceTab />
+        </TabsContent>
+        <TabsContent
+          value="storage"
+          className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+        >
+          <AdminStorageTab isSuperAdmin={isSuperAdmin} />
+        </TabsContent>
+        {isSuperAdmin && (
+          <TabsContent
+            value="system"
+            className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+          >
+            <AdminSystemTab />
+          </TabsContent>
+        )}
+
+        {/* --- ANALYTICS --- */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Viewed Videos */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Film className="h-5 w-5" /> Top Viewed Videos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Video Title</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead className="text-right">Plays</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats?.topViewedVideos?.length > 0 ? (
+                      stats.topViewedVideos.map((v) => (
+                        <TableRow key={v._id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium truncate max-w-[200px]">
+                                {v.title}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                {v.artistName || v.companyName}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {v.views || 0}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-primary font-bold">
+                            {v.plays || 0}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          className="text-center py-6 text-muted-foreground"
+                        >
+                          No data available
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Top Viewed Artworks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Palette className="h-5 w-5" /> Top Viewed Artworks
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Artwork Title</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats?.topViewedOther?.length > 0 ? (
+                      stats.topViewedOther.map((a) => (
+                        <TableRow key={a._id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium truncate max-w-[200px]">
+                                {a.title}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Badge
+                                  variant="outline"
+                                  className="text-[8px] h-3 px-1 capitalize"
+                                >
+                                  {a.category}
+                                </Badge>
+                                {a.artistName}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {a.views || 0}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={2}
+                          className="text-center py-6 text-muted-foreground"
+                        >
+                          No data available
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
-      {/* User Detail Modal */}
+      {/* Modals & Overlays */}
       {selectedUserId && (
         <UserDetailModal
           userId={selectedUserId}
           onClose={() => setSelectedUserId(null)}
           onUpdate={() => refreshUsers()}
-          onDelete={() => refreshUsers()}
         />
       )}
 
-      {/* Order Detail Modal */}
       {selectedOrderId && (
         <OrderDetailModal
           orderId={selectedOrderId}
           onClose={() => setSelectedOrderId(null)}
-          onUpdate={() => refreshOrders()}
         />
       )}
 
@@ -1428,6 +825,8 @@ const AdminPage = () => {
         onSuccess={refreshUsers}
         isSuperAdmin={isSuperAdmin}
       />
+
+      <div className="h-12" />
     </div>
   );
 };

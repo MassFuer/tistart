@@ -32,20 +32,38 @@ const CreateUserModal = ({ open, onOpenChange, onSuccess, isSuperAdmin }) => {
     password: "",
     role: "user",
     artistStatus: "none",
+    galleristStatus: "none",
     isEmailVerified: true, // Default to true for admin creation
+    artistInfo: {
+      companyName: "",
+      type: "individual",
+    },
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name.includes(".")) {
+      const [obj, field] = name.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        [obj]: { ...prev[obj], [field]: value },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSelectChange = (name, value) => {
-    // If setting to user, also reset artistStatus
+    // If setting to user, also reset statuses
     if (name === "role" && value === "user") {
-        setFormData((prev) => ({ ...prev, role: value, artistStatus: "none" }));
+      setFormData((prev) => ({
+        ...prev,
+        role: value,
+        artistStatus: "none",
+        galleristStatus: "none",
+      }));
     } else {
-        setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -71,7 +89,12 @@ const CreateUserModal = ({ open, onOpenChange, onSuccess, isSuperAdmin }) => {
         password: "",
         role: "user",
         artistStatus: "none",
+        galleristStatus: "none",
         isEmailVerified: true,
+        artistInfo: {
+          companyName: "",
+          type: "individual",
+        },
       });
     } catch (error) {
       console.error("Create user error:", error);
@@ -81,11 +104,11 @@ const CreateUserModal = ({ open, onOpenChange, onSuccess, isSuperAdmin }) => {
     }
   };
 
-  const roles = isSuperAdmin 
-    ? ["user", "artist", "admin", "superAdmin"] 
-    : ["user", "artist", "admin"]; // Regular admin can create other regular admins or users/artists
+  const roles = isSuperAdmin
+    ? ["user", "artist", "gallerist", "admin", "superAdmin"]
+    : ["user", "artist", "gallerist", "admin"]; // Regular admin can create other regular admins or users/artists/gallerists
 
-  const artistStatuses = ["none", "pending", "incomplete", "verified", "suspended"];
+  const statuses = ["none", "pending", "incomplete", "verified", "suspended"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,7 +117,8 @@ const CreateUserModal = ({ open, onOpenChange, onSuccess, isSuperAdmin }) => {
           <DialogHeader>
             <DialogTitle>Create New User</DialogTitle>
             <DialogDescription>
-              Add a new user to the platform. They will be able to log in immediately.
+              Add a new user to the platform. They will be able to log in
+              immediately.
             </DialogDescription>
           </DialogHeader>
 
@@ -182,26 +206,59 @@ const CreateUserModal = ({ open, onOpenChange, onSuccess, isSuperAdmin }) => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Artist Status</Label>
-                <Select
-                  value={formData.artistStatus}
-                  onValueChange={(val) => handleSelectChange("artistStatus", val)}
-                  disabled={formData.role === "user"}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {artistStatuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(formData.role === "artist" ||
+                formData.role === "gallerist") && (
+                <div className="space-y-2">
+                  <Label>
+                    {formData.role === "artist"
+                      ? "Artist Status"
+                      : "Gallerist Status"}
+                  </Label>
+                  <Select
+                    value={
+                      formData.role === "artist"
+                        ? formData.artistStatus
+                        : formData.galleristStatus
+                    }
+                    onValueChange={(val) =>
+                      handleSelectChange(
+                        formData.role === "artist"
+                          ? "artistStatus"
+                          : "galleristStatus",
+                        val,
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
+
+            {(formData.role === "artist" || formData.role === "gallerist") && (
+              <div className="space-y-2 border-t pt-2">
+                <Label htmlFor="artistInfo.companyName">
+                  Company / Professional Name
+                </Label>
+                <Input
+                  id="artistInfo.companyName"
+                  name="artistInfo.companyName"
+                  value={formData.artistInfo.companyName}
+                  onChange={handleChange}
+                  placeholder="Nemesis Art Gallery"
+                  required
+                />
+              </div>
+            )}
 
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox

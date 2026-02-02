@@ -12,20 +12,24 @@ import {
 import { Link } from "react-router-dom";
 
 const ConversationHeader = ({ onBack }) => {
-  const { activeConversation, closeConversation, isUserOnline } = useMessaging();
+  const { activeConversation, closeConversation, isUserOnline } =
+    useMessaging();
   const { user } = useAuth();
 
   if (!activeConversation) return null;
 
-  const otherParticipant = activeConversation.participants?.find(
-    (p) => p._id !== user?._id
-  );
+  const otherParticipant =
+    activeConversation.participants?.find((p) => p._id !== user?._id) ||
+    activeConversation.participants?.[0];
 
   if (!otherParticipant) return null;
 
-  const displayName =
-    otherParticipant.artistInfo?.companyName ||
-    `${otherParticipant.firstName} ${otherParticipant.lastName}`;
+  const isSelf = otherParticipant._id === user?._id;
+
+  const displayName = isSelf
+    ? "My Notes (You)"
+    : otherParticipant.artistInfo?.companyName ||
+      `${otherParticipant.firstName} ${otherParticipant.lastName}`;
 
   const isOnline = isUserOnline(otherParticipant._id);
 
@@ -36,14 +40,25 @@ const ConversationHeader = ({ onBack }) => {
 
   return (
     <div className="flex items-center gap-3 p-4 border-b bg-background">
-      <Button variant="ghost" size="icon" className="md:hidden" onClick={handleBack}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={handleBack}
+      >
         <ArrowLeft className="h-5 w-5" />
       </Button>
 
-      <Link to={`/artists/${otherParticipant._id}`} className="flex items-center gap-3 flex-1 min-w-0">
+      <Link
+        to={`/artists/${otherParticipant._id}`}
+        className="flex items-center gap-3 flex-1 min-w-0"
+      >
         <div className="relative">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={otherParticipant.profilePicture} alt={displayName} />
+            <AvatarImage
+              src={otherParticipant.profilePicture}
+              alt={displayName}
+            />
             <AvatarFallback>
               {otherParticipant.firstName?.[0]}
               {otherParticipant.lastName?.[0]}

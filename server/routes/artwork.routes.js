@@ -119,20 +119,20 @@ router.get("/", optionalAuth, async (req, res, next) => {
     let sortDirection = 1;
 
     // Handle negative prefix for descending order
-    if (sort.startsWith('-')) {
+    if (sort.startsWith("-")) {
       sortDirection = -1;
       sortField = sort.substring(1);
     }
 
     // Map frontend sort keys to actual database fields
     const sortMapping = {
-      'revenue': 'stats.totalRevenue',
-      'sales': 'stats.totalSold',
-      'rating': 'averageRating',
-      'price': 'price',
-      'title': 'title',
-      'createdAt': 'createdAt',
-      'stock': 'stock'
+      revenue: "stats.totalRevenue",
+      sales: "stats.totalSold",
+      rating: "averageRating",
+      price: "price",
+      title: "title",
+      createdAt: "createdAt",
+      stock: "stock",
     };
 
     const dbSortField = sortMapping[sortField] || sortField;
@@ -144,15 +144,14 @@ router.get("/", optionalAuth, async (req, res, next) => {
         .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
         .sort(sortObj)
         .skip(skip)
-        .limit(Number(limit)).lean(),
+        .limit(Number(limit))
+        .lean(),
       Artwork.countDocuments(filter),
     ]);
 
     // Sanitize artworks to protect paid video content
     const user = req.user || req.payload; // From optionalAuth
-    const sanitizedArtworks = await Promise.all(
-      artworks.map(art => sanitizeArtwork(art, user))
-    );
+    const sanitizedArtworks = await Promise.all(artworks.map((art) => sanitizeArtwork(art, user)));
 
     res.status(200).json({
       data: sanitizedArtworks,
@@ -204,12 +203,12 @@ router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, 
 
     orderStats.forEach((stat) => {
       if (stat._id) {
-          statsMap[stat._id.toString()] = {
-            sold: stat.totalSold,
-            revenue: stat.totalRevenue,
-          };
-          totalArtistRevenue += stat.totalRevenue;
-          totalItemsSold += stat.totalSold;
+        statsMap[stat._id.toString()] = {
+          sold: stat.totalSold,
+          revenue: stat.totalRevenue,
+        };
+        totalArtistRevenue += stat.totalRevenue;
+        totalItemsSold += stat.totalSold;
       }
     });
 
@@ -232,7 +231,10 @@ router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, 
     const totalArtworks = artworks.length;
     const totalReviews = artworks.reduce((acc, curr) => acc + (curr.numOfReviews || 0), 0);
     // Weighted average rating
-    const totalRatingSum = artworks.reduce((acc, curr) => acc + ((curr.averageRating || 0) * (curr.numOfReviews || 0)), 0);
+    const totalRatingSum = artworks.reduce(
+      (acc, curr) => acc + (curr.averageRating || 0) * (curr.numOfReviews || 0),
+      0
+    );
     const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
 
     res.status(200).json({
@@ -309,8 +311,12 @@ router.post(
       const videoData = {};
       if (req.body.video) {
         // Only include fields that have values (strips empty strings)
-        Object.keys(req.body.video).forEach(key => {
-          if (req.body.video[key] !== "" && req.body.video[key] !== undefined && req.body.video[key] !== null) {
+        Object.keys(req.body.video).forEach((key) => {
+          if (
+            req.body.video[key] !== "" &&
+            req.body.video[key] !== undefined &&
+            req.body.video[key] !== null
+          ) {
             videoData[key] = req.body.video[key];
           }
         });
@@ -326,7 +332,7 @@ router.post(
         category,
         materialsUsed: materialsUsed || [],
         colors: colors || [],
-        dimensions: (dimensions?.width || dimensions?.height) ? dimensions : {},
+        dimensions: dimensions?.width || dimensions?.height ? dimensions : {},
         totalInStock: totalInStock || 1,
         video: videoData,
       });
@@ -348,7 +354,10 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     }
 
     // Check if user is the owner OR admin
-    if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
+    if (
+      !isAdminRole(req.payload.role) &&
+      artwork.artist.toString() !== req.payload._id.toString()
+    ) {
       return res.status(403).json({ error: "You can only update your own artworks." });
     }
 
@@ -374,20 +383,28 @@ router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) =
     }
 
     // Explicitly handle video metadata fields
-    const videoFields = ["synopsis", "director", "coAuthor", "cast", "productionTeam", "isPaid", "quality"];
+    const videoFields = [
+      "synopsis",
+      "director",
+      "coAuthor",
+      "cast",
+      "productionTeam",
+      "isPaid",
+      "quality",
+    ];
     // Check if req.body has a nested 'video' object
     if (req.body.video) {
-        for (const vField of videoFields) {
-            const value = req.body.video[vField];
-            // Only update if not undefined AND (not an empty string for fields with enums/strict requirements)
-            if (value !== undefined) {
-                if (vField === "quality" && value === "") {
-                    // Skip empty quality to avoid enum validation error
-                    continue;
-                }
-                updateObj[`video.${vField}`] = value;
-            }
+      for (const vField of videoFields) {
+        const value = req.body.video[vField];
+        // Only update if not undefined AND (not an empty string for fields with enums/strict requirements)
+        if (value !== undefined) {
+          if (vField === "quality" && value === "") {
+            // Skip empty quality to avoid enum validation error
+            continue;
+          }
+          updateObj[`video.${vField}`] = value;
         }
+      }
     }
     // Also check flat fields if sent that way (e.g. video.synopsis)
     // pass
@@ -449,7 +466,10 @@ router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) 
     }
 
     // Check if user is the owner OR admin/superAdmin
-    if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
+    if (
+      !isAdminRole(req.payload.role) &&
+      artwork.artist.toString() !== req.payload._id.toString()
+    ) {
       return res.status(403).json({ error: "You can only delete your own artworks." });
     }
 
@@ -497,7 +517,10 @@ router.post(
       }
 
       // Check if user is the owner OR admin/superAdmin
-      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
+      if (
+        !isAdminRole(req.payload.role) &&
+        artwork.artist.toString() !== req.payload._id.toString()
+      ) {
         return res.status(403).json({ error: "You can only upload images to your own artworks." });
       }
 
@@ -540,7 +563,10 @@ router.post(
       }
 
       // Check if user is the owner OR admin
-      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
+      if (
+        !isAdminRole(req.payload.role) &&
+        artwork.artist.toString() !== req.payload._id.toString()
+      ) {
         return res.status(403).json({ error: "You can only upload videos to your own artworks." });
       }
 
@@ -550,34 +576,35 @@ router.post(
 
       // Determine which field to update based on upload field name
       const fieldMap = {
-          "video": "fullVideoUrl", // legacy default
-          "fullVideo": "fullVideoUrl",
-          "previewVideo": "previewVideoUrl",
-          "backgroundAudio": "backgroundAudioUrl",
-          "subtitles": "subtitlesUrl"
+        video: "fullVideoUrl", // legacy default
+        fullVideo: "fullVideoUrl",
+        previewVideo: "previewVideoUrl",
+        backgroundAudio: "backgroundAudioUrl",
+        subtitles: "subtitlesUrl",
       };
 
       const targetField = fieldMap[req.uploadedVideo.fieldName] || "fullVideoUrl";
-      
+
       // We use $set to avoid overwriting the entire video object
       const updatePayload = {
-          [`video.${targetField}`]: req.uploadedVideo.url
+        [`video.${targetField}`]: req.uploadedVideo.url,
       };
 
       // Handle specific metadata side-effects
       if (targetField === "fullVideoUrl") {
-          if (req.body.isPaid !== undefined) updatePayload["video.isPaid"] = req.body.isPaid === "true" || req.body.isPaid === true;
-          updatePayload["video.fileSize"] = req.uploadedVideo.size;
-          // Duration usually comes from metadata extraction which we aren't doing backend-side yet
-          if (req.body.duration) updatePayload["video.duration"] = Number(req.body.duration);
-          // Legacy url field update
-          updatePayload["video.url"] = req.uploadedVideo.url; 
+        if (req.body.isPaid !== undefined)
+          updatePayload["video.isPaid"] = req.body.isPaid === "true" || req.body.isPaid === true;
+        updatePayload["video.fileSize"] = req.uploadedVideo.size;
+        // Duration usually comes from metadata extraction which we aren't doing backend-side yet
+        if (req.body.duration) updatePayload["video.duration"] = Number(req.body.duration);
+        // Legacy url field update
+        updatePayload["video.url"] = req.uploadedVideo.url;
       }
 
       const updatedArtwork = await Artwork.findByIdAndUpdate(
-          req.params.id, 
-          { $set: updatePayload }, 
-          { new: true }
+        req.params.id,
+        { $set: updatePayload },
+        { new: true }
       );
 
       // Storage tracking is handled by streamAndUploadVideo middleware
@@ -607,7 +634,10 @@ router.post(
         return res.status(404).json({ error: "Artwork not found." });
       }
 
-      if (!isAdminRole(req.payload.role) && artwork.artist.toString() !== req.payload._id.toString()) {
+      if (
+        !isAdminRole(req.payload.role) &&
+        artwork.artist.toString() !== req.payload._id.toString()
+      ) {
         return res.status(403).json({ error: "You can only update your own artworks." });
       }
 
@@ -652,15 +682,14 @@ router.get("/artist/:artistId", optionalAuth, async (req, res, next) => {
       Artwork.find({ artist: req.params.artistId })
         .sort("-createdAt")
         .skip(skip)
-        .limit(Number(limit)).lean(),
+        .limit(Number(limit))
+        .lean(),
       Artwork.countDocuments({ artist: req.params.artistId }),
     ]);
 
     // Sanitize artworks
     const user = req.user || req.payload;
-    const sanitizedArtworks = await Promise.all(
-      artworks.map(art => sanitizeArtwork(art, user))
-    );
+    const sanitizedArtworks = await Promise.all(artworks.map((art) => sanitizeArtwork(art, user)));
 
     res.status(200).json({
       data: sanitizedArtworks,
@@ -678,13 +707,24 @@ router.get("/artist/:artistId", optionalAuth, async (req, res, next) => {
 
 // POST /api/artworks/:id/view - Increment view count
 router.post("/:id/view", async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        await Artwork.findByIdAndUpdate(id, { $inc: { views: 1 } });
-        res.status(200).json({ message: "View counted" });
-    } catch (error) {
-        next(error);
-    }
+  try {
+    const { id } = req.params;
+    await Artwork.findByIdAndUpdate(id, { $inc: { views: 1 } });
+    res.status(200).json({ message: "View counted" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/artworks/:id/play - Increment play count
+router.post("/:id/play", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await Artwork.findByIdAndUpdate(id, { $inc: { plays: 1 } });
+    res.status(200).json({ message: "Play counted" });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

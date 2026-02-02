@@ -14,6 +14,7 @@ import {
   Calendar,
   ShoppingCart,
   User,
+  Users,
   LogOut,
   Settings,
   Heart,
@@ -21,6 +22,8 @@ import {
   Palette,
   LayoutDashboard,
   ShieldAlert,
+  ShieldCheck,
+  ChevronDown,
   Moon,
   Sun,
   MessageCircle,
@@ -28,6 +31,7 @@ import {
   Home,
   Image as ImageIcon,
   CreditCard,
+  HardDrive,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,7 +52,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
-  const { user, isAuthenticated, isVerifiedArtist, isAdmin, isSuperAdmin, logout } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isVerifiedArtist,
+    isAdmin,
+    isSuperAdmin,
+    logout,
+  } = useAuth();
   const { cartCount } = useCart();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { unreadCount } = useMessaging();
@@ -115,7 +126,7 @@ const Navbar = () => {
     <motion.header
       variants={{
         visible: { y: 0 },
-        hidden: { y: "-100%" }
+        hidden: { y: "-100%" },
       }}
       animate={isNavbarHidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
@@ -123,9 +134,19 @@ const Navbar = () => {
     >
       <div className="w-full flex h-16 items-center px-4 md:px-12">
         {/* LOGO - Left */}
-        <Link to="/" className="mr-6 flex items-center space-x-2 flex-none" onClick={handleNavClick}>
-          <img src={logo} alt="Nemesis" className="h-8 w-8 rounded-full object-cover" />
-          <span className="hidden font-bold sm:inline-block text-xl tracking-tight">Nemesis</span>
+        <Link
+          to="/"
+          className="mr-6 flex items-center space-x-2 flex-none"
+          onClick={handleNavClick}
+        >
+          <img
+            src={logo}
+            alt="Nemesis"
+            className="h-8 w-8 rounded-full object-cover"
+          />
+          <span className="hidden font-bold sm:inline-block text-xl tracking-tight">
+            Nemesis
+          </span>
         </Link>
 
         {/* DESKTOP NAV - Center */}
@@ -135,25 +156,123 @@ const Navbar = () => {
 
         {/* RIGHT ACTIONS - Right */}
         <div className="flex items-center justify-end space-x-2 ml-auto">
-          
+          {/* Admin Dropdown */}
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="gap-2 h-9 px-3 bg-primary/5 hover:bg-primary/10 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90 transition-all rounded-full font-bold border border-primary/10 dark:border-transparent group"
+                >
+                  <ShieldCheck className="h-4 w-4 text-primary dark:text-primary-foreground" />
+                  <span className="hidden xl:inline">Admin</span>
+                  <ChevronDown className="h-3 w-3 opacity-50 group-hover:opacity-80 transition-opacity" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 p-1 bg-background/95 backdrop-blur"
+              >
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold px-2 py-2">
+                  Management
+                </DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin?tab=stats"
+                    onClick={handleNavClick}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin?tab=users"
+                    onClick={handleNavClick}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <Users className="mr-2 h-4 w-4" /> Users & Artists
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin?tab=orders"
+                    onClick={handleNavClick}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <Package className="mr-2 h-4 w-4" /> Orders
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin?tab=appearance"
+                    onClick={handleNavClick}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <Palette className="mr-2 h-4 w-4" /> Appearance
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin?tab=storage"
+                    onClick={handleNavClick}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <HardDrive className="mr-2 h-4 w-4" /> Storage Usage
+                  </Link>
+                </DropdownMenuItem>
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      asChild
+                      className="bg-primary/5 focus:bg-primary/10"
+                    >
+                      <Link
+                        to="/admin?tab=system"
+                        onClick={handleNavClick}
+                        className="flex items-center font-semibold text-primary cursor-pointer"
+                      >
+                        <Settings className="mr-2 h-4 w-4" /> System Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {/* Theme Toggle */}
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="h-9 w-9">
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleDarkMode}
+            className="h-9 w-9"
+          >
+            {isDarkMode ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
             <span className="sr-only">Toggle theme</span>
           </Button>
 
           {/* Cart */}
           {isAuthenticated && (
             <Link to="/cart" onClick={handleNavClick}>
-                <Button variant="ghost" className="relative h-9 px-0 w-9 lg:w-auto lg:px-3 gap-2">
-                    <ShoppingCart className="h-4 w-4" />
-                    <span className="hidden lg:inline">Cart</span>
-                    {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-1 lg:top-0 lg:right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground animate-in zoom-in">
-                            {cartCount}
-                        </span>
-                    )}
-                </Button>
+              <Button
+                variant="ghost"
+                className="relative h-9 px-0 w-9 lg:w-auto lg:px-3 gap-2"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span className="hidden lg:inline">Cart</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 lg:top-0 lg:right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground animate-in zoom-in">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
             </Link>
           )}
 
@@ -161,125 +280,144 @@ const Navbar = () => {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full p-0 overflow-hidden ml-2">
-                    {unreadCount > 0 && (
-                        <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-background z-10 animate-pulse" />
-                    )}
-                    {user?.profilePicture ? (
-                         <img src={user.profilePicture} alt={user.firstName} className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
-                            <User className="h-4 w-4" />
-                        </div>
-                    )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-9 w-9 rounded-full p-0 overflow-hidden ml-2"
+                >
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-background z-10 animate-pulse" />
+                  )}
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.firstName}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-muted">
+                      <User className="h-4 w-4" />
+                    </div>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal px-2 py-1.5">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                    {user?.artistStatus && user.artistStatus !== 'none' && (
-                        <Badge variant={user.artistStatus === 'verified' ? 'default' : 'secondary'} className="mt-1 w-fit text-[10px] h-5 capitalize px-1.5">
-                            {user.artistStatus}
-                        </Badge>
+                    <p className="text-sm font-medium leading-none">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                    {user?.artistStatus && user.artistStatus !== "none" && (
+                      <Badge
+                        variant={
+                          user.artistStatus === "verified"
+                            ? "default"
+                            : "secondary"
+                        }
+                        className="mt-1 w-fit text-[10px] h-5 capitalize px-1.5"
+                      >
+                        {user.artistStatus}
+                      </Badge>
                     )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link to="/favorites" onClick={handleNavClick}><Heart className="mr-2 h-4 w-4" /> Favorites</Link>
+                  <Link to="/favorites" onClick={handleNavClick}>
+                    <Heart className="mr-2 h-4 w-4" /> Favorites
+                  </Link>
                 </DropdownMenuItem>
                 {(isVerifiedArtist || isAdmin || isSuperAdmin) && (
-                    <DropdownMenuItem asChild>
-                        <Link to={`/artists/${user._id}`} onClick={handleNavClick}><User className="mr-2 h-4 w-4" /> Public Profile</Link>
-                    </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/artists/${user._id}`} onClick={handleNavClick}>
+                      <User className="mr-2 h-4 w-4" /> Public Profile
+                    </Link>
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=overview" onClick={handleNavClick}><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                  <Link to="/dashboard?tab=overview" onClick={handleNavClick}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/dashboard?tab=activity" onClick={handleNavClick}><Package className="mr-2 h-4 w-4" /> Orders</Link>
+                  <Link to="/dashboard?tab=activity" onClick={handleNavClick}>
+                    <Package className="mr-2 h-4 w-4" /> Orders
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link to="/messages" className="flex items-center" onClick={handleNavClick}>
-                      <MessageCircle className="mr-2 h-4 w-4" /> Messages
-                      {unreadCount > 0 && (
-                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
-                          {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
-                      )}
-                    </Link>
+                  <Link
+                    to="/messages"
+                    className="flex items-center"
+                    onClick={handleNavClick}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" /> Messages
+                    {unreadCount > 0 && (
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
                 </DropdownMenuItem>
 
-                
                 <DropdownMenuSeparator />
-                
-                <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
-                    {(isVerifiedArtist || isAdmin) ? (
-                        <Link to="/dashboard?tab=artworks" onClick={handleNavClick}><Palette className="mr-2 h-4 w-4" /> Artworks</Link>
-                    ) : (
-                        <span className="flex items-center w-full opacity-50"><Palette className="mr-2 h-4 w-4" /> Artworks</span>
-                    )}
-                </DropdownMenuItem>
-                 <DropdownMenuItem asChild={isVerifiedArtist || isAdmin} disabled={!isVerifiedArtist && !isAdmin}>
-                    {(isVerifiedArtist || isAdmin) ? (
-                        <Link to="/dashboard?tab=events" onClick={handleNavClick}><Calendar className="mr-2 h-4 w-4" /> Events</Link>
-                    ) : (
-                        <span className="flex items-center w-full opacity-50"><Calendar className="mr-2 h-4 w-4" /> Events</span>
-                    )}
-                </DropdownMenuItem>
-                {isAdmin && (
-                    <DropdownMenuItem asChild>
-                        <Link to="/admin" onClick={handleNavClick}><ShieldAlert className="mr-2 h-4 w-4" /> Admin Panel</Link>
-                    </DropdownMenuItem>
-                )}
-                
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-500 cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" asChild>
-                    <Link to="/login">Log in</Link>
-                </Button>
-                <Button asChild className="transition-all font-bold">
-                    <Link to="/signup">Sign up</Link>
-                </Button>
-             </div>
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="ghost" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button asChild className="transition-all font-bold">
+                <Link to="/signup">Sign up</Link>
+              </Button>
+            </div>
           )}
 
           {/* MOBILE MENU (SHEET) */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Menu</span>
-                </Button>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
             </SheetTrigger>
             <SheetContent side="right" className="flex flex-col">
-                <SheetHeader>
-                    <SheetTitle className="text-left flex items-center gap-2">
-                        <img src={logo} alt="Nemesis" className="h-6 w-6 rounded-full" />
-                        Nemesis
-                    </SheetTitle>
-                </SheetHeader>
-                <div className="grid gap-6 py-6">
-                    <NavItems mobile />
-                    {!isAuthenticated && (
-                        <div className="flex flex-col gap-2 mt-4">
-                            <Button variant="outline" asChild className="justify-start">
-                                <Link to="/login" onClick={() => setIsSheetOpen(false)}>Log in</Link>
-                            </Button>
-                            <Button asChild className="justify-start transition-all">
-                                <Link to="/signup" onClick={() => setIsSheetOpen(false)}>Sign up</Link>
-                            </Button>
-                        </div>
-                    )}
-                 </div>
+              <SheetHeader>
+                <SheetTitle className="text-left flex items-center gap-2">
+                  <img
+                    src={logo}
+                    alt="Nemesis"
+                    className="h-6 w-6 rounded-full"
+                  />
+                  Nemesis
+                </SheetTitle>
+              </SheetHeader>
+              <div className="grid gap-6 py-6">
+                <NavItems mobile />
+                {!isAuthenticated && (
+                  <div className="flex flex-col gap-2 mt-4">
+                    <Button variant="outline" asChild className="justify-start">
+                      <Link to="/login" onClick={() => setIsSheetOpen(false)}>
+                        Log in
+                      </Link>
+                    </Button>
+                    <Button asChild className="justify-start transition-all">
+                      <Link to="/signup" onClick={() => setIsSheetOpen(false)}>
+                        Sign up
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
             </SheetContent>
           </Sheet>
         </div>

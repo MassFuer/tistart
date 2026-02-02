@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -257,7 +257,9 @@ function App() {
                           path="/superadmin"
                           element={
                             <SuperAdminRoute>
-                              {withEB(<SuperAdminPage />)}
+                              {withEB(
+                                <Navigate to="/admin?tab=system" replace />,
+                              )}
                             </SuperAdminRoute>
                           }
                         />

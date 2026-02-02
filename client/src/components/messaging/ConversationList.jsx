@@ -6,8 +6,13 @@ import { Skeleton } from "../ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 
 const ConversationList = () => {
-  const { conversations, activeConversation, openConversation, isLoadingConversations, isUserOnline } =
-    useMessaging();
+  const {
+    conversations,
+    activeConversation,
+    openConversation,
+    isLoadingConversations,
+    isUserOnline,
+  } = useMessaging();
   const { user } = useAuth();
 
   if (isLoadingConversations) {
@@ -41,17 +46,22 @@ const ConversationList = () => {
     <div className="flex flex-col">
       {conversations.map((conversation) => {
         // Get the other participant
-        const otherParticipant = conversation.participants?.find(
-          (p) => p._id !== user?._id
-        );
+        const otherParticipant =
+          conversation.participants?.find((p) => p._id !== user?._id) ||
+          conversation.participants?.[0] ||
+          user; // Fallback to current user if no other participant or participants array is empty
 
+        // If for some reason, otherParticipant is still null/undefined (e.g., user is null and participants is empty), skip.
         if (!otherParticipant) return null;
+
+        const isSelf = otherParticipant._id === user?._id;
 
         const isActive = activeConversation?._id === conversation._id;
         const isOnline = isUserOnline(otherParticipant._id);
-        const displayName =
-          otherParticipant.artistInfo?.companyName ||
-          `${otherParticipant.firstName} ${otherParticipant.lastName}`;
+        const displayName = isSelf
+          ? "My Notes (You)"
+          : otherParticipant.artistInfo?.companyName ||
+            `${otherParticipant.firstName} ${otherParticipant.lastName}`;
 
         return (
           <button
@@ -82,9 +92,12 @@ const ConversationList = () => {
                 <span className="font-medium truncate">{displayName}</span>
                 {conversation.lastMessage?.createdAt && (
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(conversation.lastMessage.createdAt), {
-                      addSuffix: false,
-                    })}
+                    {formatDistanceToNow(
+                      new Date(conversation.lastMessage.createdAt),
+                      {
+                        addSuffix: false,
+                      },
+                    )}
                   </span>
                 )}
               </div>

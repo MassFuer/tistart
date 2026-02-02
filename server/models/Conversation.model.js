@@ -111,7 +111,7 @@ conversationSchema.statics.findOrCreateConversation = async function (
 
   // Find existing conversation with same participants and artwork
   let conversation = await this.findOne({
-    participants: { $all: sortedParticipants, $size: sortedParticipants.length },
+    participants: sortedParticipants,
     artwork: artworkId,
     status: "active",
   });
@@ -148,10 +148,7 @@ conversationSchema.methods.resetUnread = async function (userId) {
 // Instance method to update last message
 conversationSchema.methods.updateLastMessage = async function (message) {
   this.lastMessage = {
-    content:
-      message.type === "offer"
-        ? `Price offer: €${message.offer.amount}`
-        : message.content,
+    content: message.type === "offer" ? `Price offer: €${message.offer.amount}` : message.content,
     sender: message.sender,
     createdAt: message.createdAt || new Date(),
   };

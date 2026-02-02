@@ -25,10 +25,10 @@ VITE_API_URL=http://localhost:5005
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `http://localhost:5005` | Backend API URL (no trailing slash) |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | -- | Stripe publishable key (for checkout) |
+| Variable                      | Default                 | Description                           |
+| ----------------------------- | ----------------------- | ------------------------------------- |
+| `VITE_API_URL`                | `http://localhost:5005` | Backend API URL (no trailing slash)   |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | --                      | Stripe publishable key (for checkout) |
 
 ### Running
 
@@ -119,7 +119,8 @@ client/src/
 - **CSRF Protection** -- Automatic CSRF token injection via axios request interceptor
 - **Real-time Chat** -- Socket.io-powered messaging with typing indicators
 - **Interactive Maps** -- Leaflet cluster maps for events, geocoded locations
-- **Secure Video** -- Preview mode for non-purchased videos, streaming access control
+- **Secure Video** -- Preview mode for non-purchased videos, playback tracking (views/plays), streaming access control
+- **Advanced Analytics** -- Dedicated Analytics Hub for admins with top-viewed content tables and performance metrics
 - **Advanced Filters** -- Responsive filter sidebar (sheet on mobile, aside on desktop)
 - **Platform Config** -- Display settings (currency, page sizes, colors) driven by PlatformSettings API
 

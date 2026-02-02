@@ -21,21 +21,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle2, XCircle, Eye, Globe, Mail, MessageCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Eye,
+  Globe,
+  Mail,
+  MessageCircle,
+} from "lucide-react";
 import Pagination from "../common/Pagination";
 
 // Status Badge Helper
 const StatusBadge = ({ status }) => {
   const styles = {
-    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-    verified: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    incomplete: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+    pending:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    verified:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    incomplete:
+      "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
     suspended: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     none: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
   };
 
   return (
-    <Badge variant="outline" className={`capitalize border-0 ${styles[status] || styles.none}`}>
+    <Badge
+      variant="outline"
+      className={`capitalize border-0 ${styles[status] || styles.none}`}
+    >
       {status}
     </Badge>
   );
@@ -67,38 +80,44 @@ const ArtistApplications = () => {
     setLoading(true);
     try {
       let response;
-      const params = { page, limit, sort: '-createdAt' };
+      const params = { page, limit, sort: "-createdAt" };
 
       if (filter === "pending") {
-         // Server-side filtering for pending ensures we don't miss any
-         response = await adminAPI.getAllUsers({ ...params, artistStatus: 'pending' });
-         setUsers(response.data.data);
-         if (response.data.pagination) setTotalPages(response.data.pagination.pages);
+        // Server-side filtering for pending ensures we don't miss any
+        response = await adminAPI.getAllUsers({
+          ...params,
+          artistStatus: "pending",
+        });
+        setUsers(response.data.data);
+        if (response.data.pagination)
+          setTotalPages(response.data.pagination.pages);
       } else {
-         // "All" View: Fetch all users (with larger limit if needed, or rely on pagination)
-         // And client-side filter for now to match legacy behavior, 
-         // OR just show all verified artists if we want to be strict.
-         // Let's use the API to filter by role if possible, or just fetch mostly recent users.
-         // Note: If we use { role: 'artist' }, we miss "none" status applicants who were rejected.
-         // But usually "All Artists" implies verified ones.
-         // Let's stick to fetching a larger batch of all users and filtering, 
-         // OR use a safe fallback.
-         
-         // Using limit 100 to catch most recent history
-         response = await adminAPI.getAllUsers({ ...params, limit: 100 });
-         const allUsers = response.data.data;
-         
-         // Filter: either artist role OR not 'none' status (meaning they applied)
-         const filtered = allUsers.filter(u => u.role === "artist" || u.artistStatus !== "none");
-         
-         // Client side pagination for this view since backend query is broad
-         // This is a trade-off until backend supports "artist OR applied" query
-         setUsers(filtered);
-         // Recalculate total pages based on filtered result if we are doing client side filtering on a server page
-         // This is imperfect but better than broken pending view
-         if (response.data.pagination) setTotalPages(response.data.pagination.pages);
-      }
+        // "All" View: Fetch all users (with larger limit if needed, or rely on pagination)
+        // And client-side filter for now to match legacy behavior,
+        // OR just show all verified artists if we want to be strict.
+        // Let's use the API to filter by role if possible, or just fetch mostly recent users.
+        // Note: If we use { role: 'artist' }, we miss "none" status applicants who were rejected.
+        // But usually "All Artists" implies verified ones.
+        // Let's stick to fetching a larger batch of all users and filtering,
+        // OR use a safe fallback.
 
+        // Using limit 100 to catch most recent history
+        response = await adminAPI.getAllUsers({ ...params, limit: 100 });
+        const allUsers = response.data.data;
+
+        // Filter: either artist role OR not 'none' status (meaning they applied)
+        const filtered = allUsers.filter(
+          (u) => u.role === "artist" || u.artistStatus !== "none",
+        );
+
+        // Client side pagination for this view since backend query is broad
+        // This is a trade-off until backend supports "artist OR applied" query
+        setUsers(filtered);
+        // Recalculate total pages based on filtered result if we are doing client side filtering on a server page
+        // This is imperfect but better than broken pending view
+        if (response.data.pagination)
+          setTotalPages(response.data.pagination.pages);
+      }
     } catch (error) {
       console.error("Failed to fetch users", error);
       toast.error("Failed to load applications");
@@ -108,7 +127,8 @@ const ArtistApplications = () => {
   };
 
   const handleStatusUpdate = async (userId, newStatus) => {
-    if (!confirm(`Are you sure you want to mark this user as ${newStatus}?`)) return;
+    if (!confirm(`Are you sure you want to mark this user as ${newStatus}?`))
+      return;
 
     try {
       await adminAPI.updateArtistStatus(userId, newStatus);
@@ -122,13 +142,16 @@ const ArtistApplications = () => {
   };
 
   const handleContact = async () => {
-      try {
-          const response = await messagingAPI.createConversation({ recipientId: selectedUser._id });
-          setIsDetailsOpen(false);
-          navigate(`/messages?conversation=${response.data.data._id}`);
-      } catch (error) {
-          toast.error("Failed to start conversation");
-      }
+    try {
+      const res = await messagingAPI.createConversation({
+        participantId: selectedUser._id,
+      });
+      setIsDetailsOpen(false);
+      const conversationId = res.data.data?._id || res.data._id;
+      navigate(`/messages?conversation=${conversationId}`);
+    } catch (error) {
+      toast.error("Failed to start conversation");
+    }
   };
 
   const openDetails = (user) => {
@@ -140,24 +163,26 @@ const ArtistApplications = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-           <h3 className="text-lg font-medium">Artist Applications</h3>
-           <p className="text-sm text-muted-foreground">Review and manage artist verification requests.</p>
+          <h3 className="text-lg font-medium">Artist Applications</h3>
+          <p className="text-sm text-muted-foreground">
+            Review and manage artist verification requests.
+          </p>
         </div>
         <div className="flex gap-2">
-            <Button 
-                variant={filter === "pending" ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setFilter("pending")}
-            >
-                Pending Review
-            </Button>
-            <Button 
-                variant={filter === "all" ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setFilter("all")}
-            >
-                All Artists
-            </Button>
+          <Button
+            variant={filter === "pending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("pending")}
+          >
+            Pending Review
+          </Button>
+          <Button
+            variant={filter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("all")}
+          >
+            All Artists
+          </Button>
         </div>
       </div>
 
@@ -174,43 +199,56 @@ const ArtistApplications = () => {
           </TableHeader>
           <TableBody>
             {loading ? (
-                 <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                        <Loading message="Loading applications..." />
-                    </TableCell>
-                 </TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  <Loading message="Loading applications..." />
+                </TableCell>
+              </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  {filter === "pending" ? "No pending applications." : "No artists found."}
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  {filter === "pending"
+                    ? "No pending applications."
+                    : "No artists found."}
                 </TableCell>
               </TableRow>
             ) : (
               users.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                          <Avatar>
-                              <AvatarImage src={user.profilePicture} />
-                              <AvatarFallback>{user.firstName?.[0]}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                              <p className="font-medium">{user.firstName} {user.lastName}</p>
-                              <p className="text-xs text-muted-foreground">{user.email}</p>
-                          </div>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={user.profilePicture} />
+                        <AvatarFallback>{user.firstName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
                       </div>
+                    </div>
                   </TableCell>
                   <TableCell>{user.artistInfo?.companyName || "N/A"}</TableCell>
                   <TableCell>
-                      <StatusBadge status={user.artistStatus} />
+                    <StatusBadge status={user.artistStatus} />
                   </TableCell>
                   <TableCell>
-                      {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(user.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => openDetails(user)}>
-                          <Eye className="mr-2 h-4 w-4" /> Review
-                      </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDetails(user)}
+                    >
+                      <Eye className="mr-2 h-4 w-4" /> Review
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -219,7 +257,7 @@ const ArtistApplications = () => {
         </Table>
       </div>
 
-      <Pagination 
+      <Pagination
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -229,121 +267,141 @@ const ArtistApplications = () => {
 
       {/* DETAILED REVIEW DIALOG */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                  <DialogTitle>Review Artist Application</DialogTitle>
-                  <DialogDescription>
-                      Verify applicant details before approving.
-                  </DialogDescription>
-              </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Review Artist Application</DialogTitle>
+            <DialogDescription>
+              Verify applicant details before approving.
+            </DialogDescription>
+          </DialogHeader>
 
-              {selectedUser && (
-                  <div className="space-y-6">
-                      {/* Personal Info */}
-                      <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
-                          <Avatar className="h-16 w-16">
-                              <AvatarImage src={selectedUser.profilePicture} />
-                              <AvatarFallback>{selectedUser.firstName?.[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                              <h4 className="text-lg font-semibold">{selectedUser.firstName} {selectedUser.lastName}</h4>
-                              <p className="text-muted-foreground flex items-center gap-2">
-                                  <Mail className="h-4 w-4" /> {selectedUser.email}
-                              </p>
-                              <div className="mt-2 flex gap-2">
-                                  <StatusBadge status={selectedUser.artistStatus} />
-                                  <Badge variant="outline">{selectedUser.subscriptionTier} Plan</Badge>
-                              </div>
-                          </div>
-                      </div>
-
-                      {/* Business Info */}
-                      <div className="space-y-4">
-                          <h4 className="font-medium border-b pb-2">Business Details</h4>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                  <p className="text-muted-foreground">Type</p>
-                                  <p>{selectedUser.artistInfo?.type || "Individual"}</p>
-                              </div>
-                              <div>
-                                  <p className="text-muted-foreground">Company Name</p>
-                                  <p>{selectedUser.artistInfo?.companyName || "N/A"}</p>
-                              </div>
-                              <div>
-                                  <p className="text-muted-foreground">Tax ID</p>
-                                  <p>{selectedUser.artistInfo?.taxId || "N/A"}</p>
-                              </div>
-                              <div>
-                                  <p className="text-muted-foreground">VAT Number</p>
-                                  <p>{selectedUser.artistInfo?.vatNumber || "N/A"}</p>
-                              </div>
-                          </div>
-                      </div>
-
-                      {/* Bio & Socials */}
-                      <div className="space-y-4">
-                          <h4 className="font-medium border-b pb-2">Profile & Socials</h4>
-                          <div>
-                              <p className="text-sm text-muted-foreground mb-1">Bio / Description</p>
-                              <p className="text-sm bg-muted/30 p-3 rounded-md min-h-[80px]">
-                                  {selectedUser.artistInfo?.description || "No description provided."}
-                              </p>
-                          </div>
-                          <div className="flex gap-4 pt-2">
-                               {selectedUser.artistInfo?.socialMedia?.website && (
-                                   <a href={selectedUser.artistInfo.socialMedia.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
-                                       <Globe className="h-4 w-4" /> Website
-                                   </a>
-                               )}
-                               {/* Add others if needed */}
-                          </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-                           <Button variant="outline" onClick={handleContact}>
-                                <MessageCircle className="mr-2 h-4 w-4" /> Message
-                           </Button>
-
-                          {selectedUser.artistStatus === "pending" && (
-                              <>
-                                  <Button 
-                                    variant="outline" 
-                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
-                                    onClick={() => handleStatusUpdate(selectedUser._id, "incomplete")}
-                                  >
-                                      Mark Incomplete
-                                  </Button>
-                                  <Button 
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => handleStatusUpdate(selectedUser._id, "verified")}
-                                  >
-                                      <CheckCircle2 className="mr-2 h-4 w-4" /> Approve & Verify
-                                  </Button>
-                              </>
-                          )}
-                          
-                          {selectedUser.artistStatus === "verified" && (
-                               <Button 
-                                 variant="destructive"
-                                 onClick={() => handleStatusUpdate(selectedUser._id, "suspended")}
-                               >
-                                   <XCircle className="mr-2 h-4 w-4" /> Suspend Artist
-                               </Button>
-                          )}
-
-                           {selectedUser.artistStatus === "suspended" && (
-                               <Button 
-                                 variant="outline"
-                                 onClick={() => handleStatusUpdate(selectedUser._id, "verified")}
-                               >
-                                   Re-activate
-                               </Button>
-                          )}
-                      </div>
+          {selectedUser && (
+            <div className="space-y-6">
+              {/* Personal Info */}
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={selectedUser.profilePicture} />
+                  <AvatarFallback>{selectedUser.firstName?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h4 className="text-lg font-semibold">
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </h4>
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-4 w-4" /> {selectedUser.email}
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <StatusBadge status={selectedUser.artistStatus} />
+                    <Badge variant="outline">
+                      {selectedUser.subscriptionTier} Plan
+                    </Badge>
                   </div>
-              )}
-          </DialogContent>
+                </div>
+              </div>
+
+              {/* Business Info */}
+              <div className="space-y-4">
+                <h4 className="font-medium border-b pb-2">Business Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Type</p>
+                    <p>{selectedUser.artistInfo?.type || "Individual"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Company Name</p>
+                    <p>{selectedUser.artistInfo?.companyName || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Tax ID</p>
+                    <p>{selectedUser.artistInfo?.taxId || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">VAT Number</p>
+                    <p>{selectedUser.artistInfo?.vatNumber || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio & Socials */}
+              <div className="space-y-4">
+                <h4 className="font-medium border-b pb-2">Profile & Socials</h4>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Bio / Description
+                  </p>
+                  <p className="text-sm bg-muted/30 p-3 rounded-md min-h-[80px]">
+                    {selectedUser.artistInfo?.description ||
+                      "No description provided."}
+                  </p>
+                </div>
+                <div className="flex gap-4 pt-2">
+                  {selectedUser.artistInfo?.socialMedia?.website && (
+                    <a
+                      href={selectedUser.artistInfo.socialMedia.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                    >
+                      <Globe className="h-4 w-4" /> Website
+                    </a>
+                  )}
+                  {/* Add others if needed */}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t mt-4">
+                <Button variant="outline" onClick={handleContact}>
+                  <MessageCircle className="mr-2 h-4 w-4" /> Message
+                </Button>
+
+                {selectedUser.artistStatus === "pending" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
+                      onClick={() =>
+                        handleStatusUpdate(selectedUser._id, "incomplete")
+                      }
+                    >
+                      Mark Incomplete
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() =>
+                        handleStatusUpdate(selectedUser._id, "verified")
+                      }
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Approve & Verify
+                    </Button>
+                  </>
+                )}
+
+                {selectedUser.artistStatus === "verified" && (
+                  <Button
+                    variant="destructive"
+                    onClick={() =>
+                      handleStatusUpdate(selectedUser._id, "suspended")
+                    }
+                  >
+                    <XCircle className="mr-2 h-4 w-4" /> Suspend Artist
+                  </Button>
+                )}
+
+                {selectedUser.artistStatus === "suspended" && (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      handleStatusUpdate(selectedUser._id, "verified")
+                    }
+                  >
+                    Re-activate
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
       </Dialog>
     </div>
   );
