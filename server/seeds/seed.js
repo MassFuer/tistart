@@ -1,4 +1,8 @@
 require("dotenv").config();
+// Map environment-specific variables
+const { mapEnvVariables } = require("../utils/envMapper");
+mapEnvVariables();
+
 const mongoose = require("mongoose");
 const bcryptjs = require("bcryptjs");
 const { faker } = require("@faker-js/faker");
@@ -143,7 +147,10 @@ const createArtists = async (count = 5) => {
 
 // Create admin user
 const createAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash(process.env.SEED_ADMIN_PASSWORD || "Admin1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(
+    process.env.SEED_ADMIN_PASSWORD || "Admin1234567!!",
+    12
+  );
 
   return User.create({
     firstName: "Admin",
@@ -155,25 +162,28 @@ const createAdmin = async () => {
     artistStatus: "verified",
     isEmailVerified: true,
     artistInfo: {
-        companyName: "Nemesis Admin",
-        tagline: "Platform Administrator",
-        description: "Official administrator account.",
-        type: "company",
-        address: {
-            city: "Admin City",
-            country: "Adminland",
-            location: {
-              type: "Point",
-              coordinates: [43.21529158236424, 5.34568060941165]
-            }
-        }
+      companyName: "Nemesis Admin",
+      tagline: "Platform Administrator",
+      description: "Official administrator account.",
+      type: "company",
+      address: {
+        city: "Admin City",
+        country: "Adminland",
+        location: {
+          type: "Point",
+          coordinates: [43.21529158236424, 5.34568060941165],
+        },
+      },
     },
   });
 };
 
 // Create superadmin user
 const createSuperAdmin = async () => {
-  const hashedPassword = await bcryptjs.hash(process.env.SEED_SUPERADMIN_PASSWORD || "SuperAdmin1234567!!", 12);
+  const hashedPassword = await bcryptjs.hash(
+    process.env.SEED_SUPERADMIN_PASSWORD || "SuperAdmin1234567!!",
+    12
+  );
 
   return User.create({
     firstName: "Super",
@@ -185,18 +195,18 @@ const createSuperAdmin = async () => {
     artistStatus: "verified",
     isEmailVerified: true,
     artistInfo: {
-        companyName: "Nemesis SuperAdmin",
-        tagline: "Platform Super Administrator",
-        description: "Official super administrator account.",
-        type: "company",
-        address: {
-            city: "Super City",
-            country: "Superland",
-            location: {
-              type: "Point",
-              coordinates: [43.29437263880987, 5.368905861167409]
-            }
-        }
+      companyName: "Nemesis SuperAdmin",
+      tagline: "Platform Super Administrator",
+      description: "Official super administrator account.",
+      type: "company",
+      address: {
+        city: "Super City",
+        country: "Superland",
+        location: {
+          type: "Point",
+          coordinates: [43.29437263880987, 5.368905861167409],
+        },
+      },
     },
   });
 };
@@ -392,7 +402,6 @@ const createEvents = async (artists, users, count = 200) => {
 
   return Event.insertMany(events);
 };
-
 
 // Create reviews
 const createReviews = async (users, artworks, count = 750) => {
