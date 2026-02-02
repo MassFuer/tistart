@@ -511,13 +511,27 @@ const seed = async () => {
     console.log("\n" + "=".repeat(50));
     console.log("✅ Seed completed successfully!\n");
     console.log("📊 Summary:");
-    console.log(`   - SuperAdmin: 1 (superadmin@nemesis.com / ${SEED_SUPERADMIN_PASSWORD})`);
-    console.log(`   - Admin: 1 (admin@nemesis.com / ${SEED_ADMIN_PASSWORD})`);
-    console.log(`   - Test User: 1 (user@test.com / ${SEED_PASSWORD})`);
-    console.log(`   - Pending Artist: 1 (pending@test.com / ${SEED_PASSWORD})`);
-    console.log(`   - Verified Artist: 1 (artist@nemesis.com / ${SEED_PASSWORD})`);
-    console.log(`   - Random Users: ${users.length - 1} (password: ${SEED_PASSWORD})`);
-    console.log(`   - Random Artists: ${artists.length - 1} (password: ${SEED_PASSWORD})`);
+    console.log(
+      `   - SuperAdmin: 1 (superadmin@nemesis.com / ${process.env.SEED_SUPERADMIN_PASSWORD || "SuperAdmin1234567!!"})`
+    );
+    console.log(
+      `   - Admin: 1 (admin@nemesis.com / ${process.env.SEED_ADMIN_PASSWORD || "Admin1234567!!"})`
+    );
+    console.log(
+      `   - Test User: 1 (user@test.com / ${process.env.SEED_PASSWORD || "Test1234567!!"})`
+    );
+    console.log(
+      `   - Pending Artist: 1 (pending@test.com / ${process.env.SEED_PASSWORD || "Test1234567!!"})`
+    );
+    console.log(
+      `   - Verified Artist: 1 (artist@nemesis.com / ${process.env.SEED_PASSWORD || "Password1234567!!"})`
+    );
+    console.log(
+      `   - Random Users: ${users.length - 1} (password: ${process.env.SEED_PASSWORD || "Password1234567!!"})`
+    );
+    console.log(
+      `   - Random Artists: ${artists.length - 1} (password: ${process.env.SEED_PASSWORD || "Password1234567!!"})`
+    );
     console.log(`   - Artworks: ${artworks.length}`);
     console.log(`   - Events: ${events.length}`);
     console.log(`   - Reviews: ${reviews.length}`);
