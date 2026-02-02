@@ -17,7 +17,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ArrowRight, Palette, ShieldCheck, Users } from "lucide-react"; // Icons
+import {
+  ArrowRight,
+  Palette,
+  ShieldCheck,
+  Users,
+  Building2,
+  LayoutDashboard,
+  Clock,
+  AlertCircle,
+} from "lucide-react"; // Icons
 import ArtworkCard from "../components/artwork/ArtworkCard";
 import EventCard from "../components/event/EventCard";
 import WordRotate from "../components/ui/word-rotate";
@@ -32,13 +41,13 @@ const HomePage = () => {
     const fetchFeatured = async () => {
       try {
         const [artworksRes, eventsRes] = await Promise.all([
-          artworksAPI.getAll({ limit: 8, sort: '-createdAt' }),
-          eventsAPI.getAll({ limit: 8, sort: '-createdAt' })
+          artworksAPI.getAll({ limit: 8, sort: "-createdAt" }),
+          eventsAPI.getAll({ limit: 8, sort: "-createdAt" }),
         ]);
         setFeaturedArtworks(artworksRes.data.data);
         setFeaturedEvents(eventsRes.data.data || []);
       } catch (error) {
-        console.error('Error fetching featured content:', error);
+        console.error("Error fetching featured content:", error);
       } finally {
         setLoading(false);
       }
@@ -48,29 +57,28 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      
       {/* HERO SECTION */}
       <section className="relative w-full h-[600px] flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <img
-            src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg"
-            alt="Arrière-plan Cercle d'Art"
-            {...{ fetchpriority: "high" }} // Syntaxe React pour l'attribut récent fetchpriority
-            className="absolute inset-0 z-0 w-full h-full object-cover"
-          />
-          
-          {/* Overlay */}
-          <div className="absolute inset-0 z-[1] bg-black/60" />
+          src="https://www.cercledart.com/wp-content/uploads/2025/06/7638588-scaled.jpg"
+          alt="Arrière-plan Cercle d'Art"
+          {...{ fetchpriority: "high" }} // Syntaxe React pour l'attribut récent fetchpriority
+          className="absolute inset-0 z-0 w-full h-full object-cover"
+        />
+
+        {/* Overlay */}
+        <div className="absolute inset-0 z-[1] bg-black/60" />
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto space-y-8">
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-            >
-          <h1
-            className="
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <h1
+              className="
               text-4xl md:text-6xl
               font-extrabold tracking-tight
               text-white drop-shadow-2xl
@@ -80,10 +88,10 @@ const HomePage = () => {
               justify-center
               gap-x-3 gap-y-2
             "
-          >
-            <span className="whitespace-nowrap">Where Art Meets</span>
-            <WordRotate
-              className="
+            >
+              <span className="whitespace-nowrap">Where Art Meets</span>
+              <WordRotate
+                className="
                 text-transparent
                 bg-clip-text
                 bg-gradient-to-r
@@ -92,65 +100,79 @@ const HomePage = () => {
                 to-rose-300
                 text-center
               "
-              words={[
-                "Innovation",
-                "Creativity",
-                "Ironhack ",
-                "Passion",
-                "Future",
-                "Marseille",
-              ]}
-            />
-          </h1>
-                <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl mx-auto leading-relaxed">
-                  The premier platform for discovering unique artworks, connecting with visionary artists, and collecting with confidence.
-                </p>
-            </motion.div>
+                words={[
+                  "Innovation",
+                  "Creativity",
+                  "Ironhack ",
+                  "Passion",
+                  "Future",
+                  "Marseille",
+                ]}
+              />
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-200 font-light max-w-3xl mx-auto leading-relaxed">
+              The premier platform for discovering unique artworks, connecting
+              with visionary artists, and collecting with confidence.
+            </p>
+          </motion.div>
 
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            <Button
+              asChild
+              size="lg"
+              className="h-12 px-8 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] hover:brightness-110 transition-all duration-200"
             >
-              <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] hover:brightness-110 transition-all duration-200">
-                <Link to="/gallery">
-                  Explore Gallery
-                </Link>
-              </Button>
-              <Button asChild variant="secondary" size="lg" className="h-12 px-8 text-base font-semibold bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:text-white hover:scale-[1.02] transition-all duration-200">
-                <Link to="/events">
-                  Discover Events
-                </Link>
-              </Button>
-            </motion.div>
+              <Link to="/gallery">Explore Gallery</Link>
+            </Button>
+            <Button
+              asChild
+              variant="secondary"
+              size="lg"
+              className="h-12 px-8 text-base font-semibold bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:text-white hover:scale-[1.02] transition-all duration-200"
+            >
+              <Link to="/events">Discover Events</Link>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
       {/* VALUE PROPOSITION */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
-                    <Palette className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold">Curated Excellence</h3>
-                <p className="text-muted-foreground">Hand-picked artworks from emerging and established talents worldwide.</p>
+          <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
+              <Palette className="w-6 h-6" />
             </div>
-            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-               <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
-                    <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold">Secure Collections</h3>
-                <p className="text-muted-foreground">Certified authenticity and secure transactions powered by Stripe.</p>
+            <h3 className="text-xl font-bold">Curated Excellence</h3>
+            <p className="text-muted-foreground">
+              Hand-picked artworks from emerging and established talents
+              worldwide.
+            </p>
+          </div>
+          <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
+              <ShieldCheck className="w-6 h-6" />
             </div>
-            <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-               <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
-                    <Users className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold">Vibrant Community</h3>
-                <p className="text-muted-foreground">Join exclusive events, meet artists, and connect with fellow collectors.</p>
+            <h3 className="text-xl font-bold">Secure Collections</h3>
+            <p className="text-muted-foreground">
+              Certified authenticity and secure transactions powered by Stripe.
+            </p>
+          </div>
+          <div className="space-y-4 p-6 rounded-xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <div className="mx-auto w-12 h-12 bg-primary/10 dark:bg-white/10 rounded-full flex items-center justify-center text-primary dark:text-white">
+              <Users className="w-6 h-6" />
             </div>
+            <h3 className="text-xl font-bold">Vibrant Community</h3>
+            <p className="text-muted-foreground">
+              Join exclusive events, meet artists, and connect with fellow
+              collectors.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -159,16 +181,25 @@ const HomePage = () => {
         <section className="py-16 container mx-auto px-4">
           <div className="flex justify-between items-end mb-8">
             <div>
-                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Trending Now</h2>
-                 <p className="text-muted-foreground">Fresh from the studio to your collection.</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                Trending Now
+              </h2>
+              <p className="text-muted-foreground">
+                Fresh from the studio to your collection.
+              </p>
             </div>
-            <Button variant="ghost" asChild className="hidden md:inline-flex group">
-                <Link to="/gallery" className="flex items-center gap-2">
-                    View All <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+            <Button
+              variant="ghost"
+              asChild
+              className="hidden md:inline-flex group"
+            >
+              <Link to="/gallery" className="flex items-center gap-2">
+                View All{" "}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 max-w-7xl mx-auto">
             {featuredArtworks.map((artwork, i) => (
               <motion.div
@@ -180,15 +211,19 @@ const HomePage = () => {
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
                 className="h-full"
               >
-                  <ArtworkCard artwork={artwork} showActions={false} />
+                <ArtworkCard artwork={artwork} showActions={false} />
               </motion.div>
             ))}
           </div>
-          
+
           <div className="mt-12 text-center md:hidden">
-             <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
-                <Link to="/gallery">Explore Full Gallery</Link>
-             </Button>
+            <Button
+              asChild
+              size="lg"
+              className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+            >
+              <Link to="/gallery">Explore Full Gallery</Link>
+            </Button>
           </div>
         </section>
       )}
@@ -198,13 +233,22 @@ const HomePage = () => {
         <section className="py-16 container mx-auto px-4">
           <div className="flex justify-between items-end mb-8">
             <div>
-                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Trending Events</h2>
-                 <p className="text-muted-foreground">Discover exhibitions and art experiences near you.</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                Trending Events
+              </h2>
+              <p className="text-muted-foreground">
+                Discover exhibitions and art experiences near you.
+              </p>
             </div>
-            <Button variant="ghost" asChild className="hidden md:inline-flex group">
-                <Link to="/events" className="flex items-center gap-2">
-                    View All <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
+            <Button
+              variant="ghost"
+              asChild
+              className="hidden md:inline-flex group"
+            >
+              <Link to="/events" className="flex items-center gap-2">
+                View All{" "}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </Button>
           </div>
 
@@ -219,15 +263,19 @@ const HomePage = () => {
                 whileHover={{ y: -8, transition: { duration: 0.2 } }}
                 className="h-full"
               >
-                  <EventCard event={event} />
+                <EventCard event={event} />
               </motion.div>
             ))}
           </div>
 
           <div className="mt-12 text-center md:hidden">
-             <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
-                <Link to="/events">Explore All Events</Link>
-             </Button>
+            <Button
+              asChild
+              size="lg"
+              className="w-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+            >
+              <Link to="/events">Explore All Events</Link>
+            </Button>
           </div>
         </section>
       )}
@@ -235,142 +283,376 @@ const HomePage = () => {
       {/* CALL TO ACTION */}
       <section className="py-12 bg-muted/50 mt-auto">
         <div className="container mx-auto px-4 text-center space-y-6">
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">Ready to start your journey?</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Join thousands of artists and collectors shaping the modern art world.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-8">
-                {!isAuthenticated ? (
-                    <>
-                        <Card className="bg-card hover:bg-accent/50 transition-colors border shadow-sm">
-                            <CardHeader>
-                                <CardTitle>For Collectors</CardTitle>
-                                <CardDescription>Find the perfect piece</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button asChild size="lg" className="w-full font-bold">
-                                    <Link to="/signup">Join as Collector</Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-card hover:bg-accent/50 transition-colors border shadow-sm">
-                            <CardHeader>
-                                <CardTitle>For Artists</CardTitle>
-                                <CardDescription>Exhibit to the world</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button asChild size="lg" variant="outline" className="w-full">
-                                    <Link to="/signup?role=artist">Apply as Artist</Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </>
-                ) : (
-                    <div className="col-span-1 md:col-span-2">
-                        {user?.artistStatus === "none" && (
-                            <Card className="bg-card border-primary/20 shadow-sm">
-                                <CardHeader>
-                                    <CardTitle className="text-foreground">Become an Artist</CardTitle>
-                                    <CardDescription>Share your creations with our global audience.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button asChild size="lg" className="w-full dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200">
-                                        <Link to="/apply-artist">Submit Portfolio</Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )}
-                        {user?.artistStatus === "pending" && (
-                             <Card className="bg-yellow-500/10 border-yellow-500/50">
-                                <CardHeader>
-                                    <CardTitle className="text-yellow-600 dark:text-yellow-400">Application Pending</CardTitle>
-                                    <CardDescription>We are reviewing your portfolio. Stay tuned!</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        )}
-                         {user?.artistStatus === "verified" && (
-                             <Card className="bg-card border-primary/20 shadow-sm">
-                                <CardHeader>
-                                    <CardTitle className="text-foreground">Welcome Back, {user.firstName}</CardTitle>
-                                    <CardDescription>Ready to upload new masterpieces?</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button asChild size="lg" className="w-full dark:bg-gray-100 dark:text-black dark:hover:bg-gray-200">
-                                        <Link to="/upload-artwork">Upload Artwork</Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )}
-                        {user?.artistStatus === "incomplete" && (
-                             <Card className="bg-red-500/10 border-red-500/50">
-                                <CardHeader>
-                                    <CardTitle className="text-red-600 dark:text-red-400">Application Update Required</CardTitle>
-                                    <CardDescription>Your application was marked as incomplete. Please check your messages for feedback.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button asChild variant="outline" size="lg" className="w-full border-red-200 hover:bg-red-50 text-red-700">
-                                        <Link to="/messages">View Feedback</Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )}
-                        {user?.artistStatus === "suspended" && (
-                             <Card className="bg-destructive/10 border-destructive/50">
-                                <CardHeader>
-                                    <CardTitle className="text-destructive">Account Suspended</CardTitle>
-                                    <CardDescription>Your artist privileges have been suspended. Please contact support.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        )}
-                    </div>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+            Ready to start your journey?
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Join thousands of artists and collectors shaping the modern art
+            world.
+          </p>
+
+          <div className="pt-8">
+            {!isAuthenticated ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <Card className="bg-card hover:bg-accent/50 transition-all duration-300 border shadow-sm hover:shadow-md flex flex-col">
+                  <CardHeader>
+                    <CardTitle>For Collectors</CardTitle>
+                    <CardDescription>
+                      Find the perfect piece for your space.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                    >
+                      <Link to="/signup">Join as Collector</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card hover:bg-accent/50 transition-all duration-300 border shadow-sm hover:shadow-md flex flex-col">
+                  <CardHeader>
+                    <CardTitle>For Artists</CardTitle>
+                    <CardDescription>
+                      Exhibit your masterpieces to the world.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                    >
+                      <Link to="/signup?role=artist">Apply as Artist</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card hover:bg-accent/50 transition-all duration-300 border shadow-sm hover:shadow-md flex flex-col">
+                  <CardHeader>
+                    <CardTitle>For Gallerists</CardTitle>
+                    <CardDescription>
+                      Manage exhibitions and discover new talents.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                    >
+                      <Link to="/signup?role=gallerist">
+                        Apply as Gallerist
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-6 max-w-5xl mx-auto w-full">
+                {/* ROLE-SPECIFIC CARDS */}
+
+                {/* ADMIN CARD */}
+                {(user?.role === "admin" || user?.role === "superAdmin") && (
+                  <Card className="bg-primary/5 border-primary/20 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="flex flex-col items-center gap-4">
+                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <LayoutDashboard className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-foreground text-2xl font-bold">
+                          Platform Administration
+                        </CardTitle>
+                        <CardDescription className="text-lg">
+                          Manage users, content, and platform settings.
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                      >
+                        <Link to="/admin">Go to Control Panel</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 )}
-            </div>
+
+                {/* ARTIST STATUS CARDS */}
+                {user?.role === "user" && user?.artistStatus === "none" && (
+                  <Card className="bg-card border-primary/20 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="flex flex-col items-center gap-4">
+                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Palette className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-foreground text-xl font-bold">
+                          Become an Artist
+                        </CardTitle>
+                        <CardDescription>
+                          Share your creations with our global audience.
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                      >
+                        <Link to="/apply-artist">Submit Portfolio</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.artistStatus === "pending" && (
+                  <Card className="bg-amber-500/10 border-amber-500/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="flex flex-col items-center gap-4">
+                      <div className="h-12 w-12 bg-amber-500/10 rounded-full flex items-center justify-center">
+                        <Clock className="h-6 w-6 text-amber-600" />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-amber-600 dark:text-amber-400 font-bold text-xl">
+                          Artist Pending Approval
+                        </CardTitle>
+                        <CardDescription>
+                          Wait for our team to review your application.
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                )}
+                {user?.artistStatus === "verified" && (
+                  <Card className="bg-card border-primary/20 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-foreground text-xl font-bold">
+                        Artist Dashboard
+                      </CardTitle>
+                      <CardDescription>
+                        Welcome Back, {user.firstName || user.userName}. Ready
+                        to upload new masterpieces?
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                      >
+                        <Link to="/upload-artwork">Upload Artwork</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.artistStatus === "incomplete" && (
+                  <Card className="bg-red-500/10 border-red-500/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-red-600 dark:text-red-400 font-bold text-xl">
+                        Artist Application Incomplete
+                      </CardTitle>
+                      <CardDescription>
+                        Your application needs adjustments. Check feedback.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="outline"
+                        className="w-full border-red-200 hover:bg-red-50 text-red-700 dark:border-red-900 dark:hover:bg-red-950/30 dark:text-red-400"
+                      >
+                        <Link to="/messages">View Feedback</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.artistStatus === "suspended" && (
+                  <Card className="bg-destructive/10 border-destructive/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-destructive font-bold text-xl">
+                        Artist Account Suspended
+                      </CardTitle>
+                      <CardDescription>
+                        Please contact support for more information.
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                )}
+
+                {/* GALLERIST STATUS CARDS */}
+                {user?.role === "user" && user?.galleristStatus === "none" && (
+                  <Card className="bg-card border-primary/20 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="flex flex-col items-center gap-4">
+                      <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Building2 className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-foreground text-xl font-bold">
+                          Become a Gallerist
+                        </CardTitle>
+                        <CardDescription>
+                          Manage your gallery and discover new talents.
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                      >
+                        <Link to="/signup?role=gallerist">Apply Now</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.galleristStatus === "pending" && (
+                  <Card className="bg-amber-500/10 border-amber-500/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="flex flex-col items-center gap-4">
+                      <div className="h-12 w-12 bg-amber-500/10 rounded-full flex items-center justify-center">
+                        <Clock className="h-6 w-6 text-amber-600" />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-amber-600 dark:text-amber-400 font-bold text-xl">
+                          Gallerist Pending
+                        </CardTitle>
+                        <CardDescription>
+                          Application review in progress.
+                        </CardDescription>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                )}
+                {user?.galleristStatus === "verified" && (
+                  <Card className="bg-card border-primary/20 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-foreground text-xl font-bold">
+                        Gallerist Hub
+                      </CardTitle>
+                      <CardDescription>
+                        Access tools to manage exhibitions and represent
+                        artists.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        className="w-full font-bold bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-colors"
+                      >
+                        <Link to="/gallerist-dashboard">Go to Hub</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.galleristStatus === "incomplete" && (
+                  <Card className="bg-red-500/10 border-red-500/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-red-600 dark:text-red-400 font-bold text-xl">
+                        Gallerist Incomplete
+                      </CardTitle>
+                      <CardDescription>
+                        Check feedback for missing gallery details.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-full max-w-md pb-8">
+                      <Button
+                        asChild
+                        size="lg"
+                        variant="outline"
+                        className="w-full border-red-200 hover:bg-red-50 text-red-700 dark:border-red-900 dark:hover:bg-red-950/30 dark:text-red-400"
+                      >
+                        <Link to="/messages">Fix Profile</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {user?.galleristStatus === "suspended" && (
+                  <Card className="bg-destructive/10 border-destructive/50 shadow-sm flex flex-col w-full text-center items-center">
+                    <CardHeader className="space-y-1">
+                      <CardTitle className="text-destructive font-bold text-xl">
+                        Gallerist Suspended
+                      </CardTitle>
+                      <CardDescription>
+                        Please contact the administration.
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
       {/* FAQ SECTION */}
       <section className="py-16 bg-background container mx-auto px-4">
         <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-                Everything you need to know about collecting and exhibiting on our platform.
-            </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Everything you need to know about collecting and exhibiting on our
+            platform.
+          </p>
         </div>
 
         <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                    <AccordionTrigger className="text-lg font-bold">How do I purchase artwork?</AccordionTrigger>
-                    <AccordionContent>
-                        Browse our gallery, select the piece you love, and add it to your cart. We accept secure payments via Stripe. Once purchased, you'll receive a confirmation and shipping details (or instant access for digital assets).
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                    <AccordionTrigger className="text-lg font-bold">Is payment secure?</AccordionTrigger>
-                    <AccordionContent>
-                        Absolutely. We use Stripe, a globally trusted payment processor, to handle all transactions. Your financial data is encrypted and never stored on our servers.
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3">
-                    <AccordionTrigger className="text-lg font-bold">Can I return an artwork?</AccordionTrigger>
-                    <AccordionContent>
-                        Physical artworks can be returned within 14 days of delivery if they arrive damaged or significantly different from the description. Digital purchases (videos, music) are non-refundable once accessed.
-                    </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-4">
-                    <AccordionTrigger className="text-lg font-bold">How do I become a verified artist?</AccordionTrigger>
-                    <AccordionContent>
-                        Create an account and navigate to the "Apply as Artist" section. Submit your portfolio for review. Our curation team will evaluate your work and get back to you within 48 hours.
-                    </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-5">
-                    <AccordionTrigger className="text-lg font-bold">Do you offer international shipping?</AccordionTrigger>
-                    <AccordionContent>
-                        Yes! Our artists ship worldwide. Shipping costs are calculated at checkout based on your location and the artwork's dimensions.
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger className="text-lg font-bold">
+                How do I purchase artwork?
+              </AccordionTrigger>
+              <AccordionContent>
+                Browse our gallery, select the piece you love, and add it to
+                your cart. We accept secure payments via Stripe. Once purchased,
+                you'll receive a confirmation and shipping details (or instant
+                access for digital assets).
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger className="text-lg font-bold">
+                Is payment secure?
+              </AccordionTrigger>
+              <AccordionContent>
+                Absolutely. We use Stripe, a globally trusted payment processor,
+                to handle all transactions. Your financial data is encrypted and
+                never stored on our servers.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger className="text-lg font-bold">
+                Can I return an artwork?
+              </AccordionTrigger>
+              <AccordionContent>
+                Physical artworks can be returned within 14 days of delivery if
+                they arrive damaged or significantly different from the
+                description. Digital purchases (videos, music) are
+                non-refundable once accessed.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-4">
+              <AccordionTrigger className="text-lg font-bold">
+                How do I become a verified artist?
+              </AccordionTrigger>
+              <AccordionContent>
+                Create an account and navigate to the "Apply as Artist" section.
+                Submit your portfolio for review. Our curation team will
+                evaluate your work and get back to you within 48 hours.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-5">
+              <AccordionTrigger className="text-lg font-bold">
+                Do you offer international shipping?
+              </AccordionTrigger>
+              <AccordionContent>
+                Yes! Our artists ship worldwide. Shipping costs are calculated
+                at checkout based on your location and the artwork's dimensions.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
     </div>

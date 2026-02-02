@@ -15,7 +15,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle2, User, Palette, Loader2, Eye, EyeOff } from "lucide-react";
+import {
+  CheckCircle2,
+  User,
+  Palette,
+  Loader2,
+  Eye,
+  EyeOff,
+  Building2,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SignupPage = () => {
@@ -34,8 +42,9 @@ const SignupPage = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   const isArtistSignup = searchParams.get("role") === "artist";
+  const isGalleristSignup = searchParams.get("role") === "gallerist";
   const next = searchParams.get("next");
 
   // Scroll to top on mount
@@ -95,12 +104,14 @@ const SignupPage = () => {
     try {
       const { confirmPassword, ...userData } = formData;
       if (isArtistSignup) {
-          userData.intent = 'apply_artist';
+        userData.intent = "apply_artist";
+      } else if (isGalleristSignup) {
+        userData.intent = "apply_gallerist";
       }
       await signup(userData);
       setSignupSuccess(true);
       toast.success(
-        "Account created! Check your email to verify your address."
+        "Account created! Check your email to verify your address.",
       );
       // Redirect to login after 5 seconds
       setTimeout(() => {
@@ -121,40 +132,58 @@ const SignupPage = () => {
     return (
       <div className="flex flex-1 items-center justify-center py-8 md:py-12 px-4 bg-muted/30">
         <Card className="w-full max-w-md shadow-lg border-0 bg-card text-center">
-            <CardHeader>
-                <div className="mx-auto bg-green-100 text-green-600 rounded-full p-3 w-16 h-16 flex items-center justify-center mb-4">
-                    <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <CardTitle className="text-2xl">Account Created!</CardTitle>
-                <CardDescription>
-                    We've sent a verification email to <strong>{formData.email}</strong>
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <p className="text-muted-foreground text-sm">
-                    Please check your inbox and click the verification link to confirm your email address.
-                </p>
-                {isArtistSignup && (
-                    <Alert className="bg-blue-50 text-blue-900 border-blue-200 text-left">
-                        <Palette className="h-4 w-4" />
-                        <AlertTitle>Next Step: Artist Application</AlertTitle>
-                        <AlertDescription className="text-xs">
-                            Once verified and logged in, you can complete your artist profile application.
-                        </AlertDescription>
-                    </Alert>
+          <CardHeader>
+            <div className="mx-auto bg-green-100 text-green-600 rounded-full p-3 w-16 h-16 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <CardTitle className="text-2xl">Account Created!</CardTitle>
+            <CardDescription>
+              We've sent a verification email to{" "}
+              <strong>{formData.email}</strong>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              Please check your inbox and click the verification link to confirm
+              your email address.
+            </p>
+            {(isArtistSignup || isGalleristSignup) && (
+              <Alert className="bg-blue-50 text-blue-900 border-blue-200 text-left">
+                {isArtistSignup ? (
+                  <Palette className="h-4 w-4" />
+                ) : (
+                  <Building2 className="h-4 w-4" />
                 )}
-                <p className="text-xs text-muted-foreground">
-                    Redirecting to login in 5 seconds...
-                </p>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-2">
-                <Button asChild className="w-full">
-                    <Link to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>Go to Login</Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full">
-                    <Link to={`/resend-email${next ? `?next=${encodeURIComponent(next)}` : ""}`}>Resend Email</Link>
-                </Button>
-            </CardFooter>
+                <AlertTitle>
+                  Next Step: {isArtistSignup ? "Artist" : "Gallerist"}{" "}
+                  Application
+                </AlertTitle>
+                <AlertDescription className="text-xs">
+                  Once verified and logged in, you can complete your{" "}
+                  {isArtistSignup ? "artist" : "gallerist"} profile application.
+                </AlertDescription>
+              </Alert>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Redirecting to login in 5 seconds...
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-2">
+            <Button asChild className="w-full">
+              <Link
+                to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+              >
+                Go to Login
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link
+                to={`/resend-email${next ? `?next=${encodeURIComponent(next)}` : ""}`}
+              >
+                Resend Email
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     );
@@ -165,171 +194,225 @@ const SignupPage = () => {
       <Card className="w-full max-w-lg shadow-lg border-0 bg-card">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-2">
-             {isArtistSignup ? (
-                 <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Palette className="h-6 w-6 text-primary" />
-                 </div>
-             ) : (
-                <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="h-6 w-6 text-primary" />
-                 </div>
-             )}
+            {isArtistSignup ? (
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Palette className="h-6 w-6 text-primary" />
+              </div>
+            ) : isGalleristSignup ? (
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+            ) : (
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-primary" />
+              </div>
+            )}
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-              {isArtistSignup ? "Create Artist Account" : "Create an account"}
+            {isArtistSignup
+              ? "Create Artist Account"
+              : isGalleristSignup
+                ? "Create Gallerist Account"
+                : "Create an account"}
           </CardTitle>
           <CardDescription className="text-center">
-            {isArtistSignup 
-                ? "Step 1: Create your account to start your artist application" 
+            {isArtistSignup
+              ? "Step 1: Create your account to start your artist application"
+              : isGalleristSignup
+                ? "Step 1: Create your account to start your gallerist application"
                 : "Enter your email below to create your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                        id="firstName"
-                        name="firstName"
-                        placeholder="John"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        required
-                        autoComplete="given-name"
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                        id="lastName"
-                        name="lastName"
-                        placeholder="Doe"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        required
-                        autoComplete="family-name"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="userName">Username</Label>
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                    id="userName"
-                    name="userName"
-                    placeholder="johndoe"
-                    value={formData.userName}
-                    onChange={handleChange}
-                    required
-                    autoComplete="username"
+                  id="firstName"
+                  name="firstName"
+                  placeholder="John"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  autoComplete="given-name"
                 />
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
                 <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    autoComplete="email"
+                  id="lastName"
+                  name="lastName"
+                  placeholder="Doe"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  autoComplete="family-name"
                 />
+              </div>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    autoComplete="new-password"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                
-                {/* Password Strength Indicator */}
-                {formData.password && (
-                  <div className="space-y-2 pt-1 transition-all">
-                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${getStrengthColor()} transition-all duration-300`} 
-                        style={{ width: `${(getStrengthScore() / 5) * 100}%` }} 
-                      />
-                    </div>
-                    <ul className="text-xs space-y-1 text-muted-foreground">
-                      <li className={`flex items-center gap-2 ${passwordCriteria.length ? "text-green-600" : ""}`}>
-                        {passwordCriteria.length ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
-                        At least 8 characters
-                      </li>
-                       <li className={`flex items-center gap-2 ${passwordCriteria.uppercase ? "text-green-600" : ""}`}>
-                        {passwordCriteria.uppercase ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
-                        At least one uppercase letter
-                      </li>
-                      <li className={`flex items-center gap-2 ${passwordCriteria.lowercase ? "text-green-600" : ""}`}>
-                        {passwordCriteria.lowercase ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
-                         At least one lowercase letter
-                      </li>
-                      <li className={`flex items-center gap-2 ${passwordCriteria.number ? "text-green-600" : ""}`}>
-                        {passwordCriteria.number ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
-                        At least one number
-                      </li>
-                      <li className={`flex items-center gap-2 ${passwordCriteria.specialChar ? "text-green-600" : ""}`}>
-                        {passwordCriteria.specialChar ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border border-current" />}
-                        At least one special character
-                      </li>
-                    </ul>
+              <Label htmlFor="userName">Username</Label>
+              <Input
+                id="userName"
+                name="userName"
+                placeholder="johndoe"
+                value={formData.userName}
+                onChange={handleChange}
+                required
+                autoComplete="username"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="m@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Password Strength Indicator */}
+              {formData.password && (
+                <div className="space-y-2 pt-1 transition-all">
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${getStrengthColor()} transition-all duration-300`}
+                      style={{ width: `${(getStrengthScore() / 5) * 100}%` }}
+                    />
                   </div>
-                )}
+                  <ul className="text-xs space-y-1 text-muted-foreground">
+                    <li
+                      className={`flex items-center gap-2 ${passwordCriteria.length ? "text-green-600" : ""}`}
+                    >
+                      {passwordCriteria.length ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-current" />
+                      )}
+                      At least 8 characters
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${passwordCriteria.uppercase ? "text-green-600" : ""}`}
+                    >
+                      {passwordCriteria.uppercase ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-current" />
+                      )}
+                      At least one uppercase letter
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${passwordCriteria.lowercase ? "text-green-600" : ""}`}
+                    >
+                      {passwordCriteria.lowercase ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-current" />
+                      )}
+                      At least one lowercase letter
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${passwordCriteria.number ? "text-green-600" : ""}`}
+                    >
+                      {passwordCriteria.number ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-current" />
+                      )}
+                      At least one number
+                    </li>
+                    <li
+                      className={`flex items-center gap-2 ${passwordCriteria.specialChar ? "text-green-600" : ""}`}
+                    >
+                      {passwordCriteria.specialChar ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-current" />
+                      )}
+                      At least one special character
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    autoComplete="new-password"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  autoComplete="new-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            <Button className="w-full dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-500 dark:hover:text-gray-200" type="submit" disabled={isSubmitting}>
+            <Button
+              className="w-full dark:bg-gray-200 dark:text-gray-800 dark:hover:bg-gray-500 dark:hover:text-gray-200"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...
                 </>
+              ) : isArtistSignup || isGalleristSignup ? (
+                "Continue to Step 2"
               ) : (
-                isArtistSignup ? "Continue to Step 2" : "Sign Up"
+                "Sign Up"
               )}
             </Button>
           </form>
@@ -343,25 +426,25 @@ const SignupPage = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-             <Button variant="outline" type="button">
-               <FaGoogle className="mr-2 h-4 w-4" /> Google
+            <Button variant="outline" type="button">
+              <FaGoogle className="mr-2 h-4 w-4" /> Google
             </Button>
             <Button variant="outline" type="button">
-               <FaGithub className="mr-2 h-4 w-4" /> Github
+              <FaGithub className="mr-2 h-4 w-4" /> Github
             </Button>
             <Button variant="outline" type="button" disabled>
-               <FaMicrosoft className="mr-2 h-4 w-4" /> Microsoft
+              <FaMicrosoft className="mr-2 h-4 w-4" /> Microsoft
             </Button>
-             <Button variant="outline" type="button" disabled>
-               <FaApple className="mr-2 h-4 w-4" /> Apple
+            <Button variant="outline" type="button" disabled>
+              <FaApple className="mr-2 h-4 w-4" /> Apple
             </Button>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
           <div>
             Already have an account?{" "}
-            <Link 
-              to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} 
+            <Link
+              to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
               className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline"
             >
               Login

@@ -146,7 +146,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["user", "artist", "admin", "superAdmin"],
+      enum: ["user", "artist", "gallerist", "admin", "superAdmin"],
       default: "user",
     },
     favorites: [
@@ -187,6 +187,12 @@ const userSchema = new Schema(
     artistInfo: {
       type: artistInfoSchema,
       default: () => ({}),
+    },
+    // Gallerist-specific fields
+    galleristStatus: {
+      type: String,
+      enum: ["none", "pending", "incomplete", "verified", "suspended"],
+      default: "none",
     },
     // Storage tracking for artists
     storage: {

@@ -54,9 +54,7 @@ import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
 import ScrollManager from "./components/common/ScrollManager";
-
-// App css removed
-
+import CookieBanner from "./components/common/CookieBanner";
 
 // Helper to wrap a page element with route-level error boundary
 const withEB = (element) => <RouteErrorBoundary>{element}</RouteErrorBoundary>;
@@ -67,150 +65,220 @@ function App() {
       <BrowserRouter>
         <ScrollManager />
         <NavigationProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <MessagingProvider>
-            <CartProvider>
-              <div className="app min-h-screen flex flex-col">
-              <Navbar />
-              <main className="main-content flex-1 flex flex-col pt-16">
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={withEB(<HomePage />)} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-                  <Route path="/resend-email" element={<ResendEmailPage />} />
-                  <Route path="/gallery" element={withEB(<GalleryPage />)} />
-                  <Route path="/artworks/:id" element={withEB(<ArtworkDetailPage />)} />
-                  <Route path="/videos" element={withEB(<VideoPage />)} />
-                  <Route path="/video-library" element={withEB(<VideoLibraryPage />)} />
-                  <Route path="/videos/:id" element={withEB(<VideoDetailPage />)} />
-                  <Route path="/events" element={withEB(<EventsPage />)} />
-                  <Route path="/events/:id" element={withEB(<EventDetailPage />)} />
-                  <Route path="/events/:id/confirm-attendance/:token" element={withEB(<ConfirmAttendancePage />)} />
-                  <Route path="/artists/:id" element={withEB(<ArtistProfilePage />)} />
+          <ThemeProvider>
+            <AuthProvider>
+              <MessagingProvider>
+                <CartProvider>
+                  <div className="app min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="main-content flex-1 flex flex-col pt-16">
+                      <Routes>
+                        {/* Public Routes */}
+                        <Route path="/" element={withEB(<HomePage />)} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="/signup" element={<SignupPage />} />
+                        <Route
+                          path="/verify-email/:token"
+                          element={<VerifyEmailPage />}
+                        />
+                        <Route
+                          path="/forgot-password"
+                          element={<ForgotPasswordPage />}
+                        />
+                        <Route
+                          path="/reset-password/:token"
+                          element={<ResetPasswordPage />}
+                        />
+                        <Route
+                          path="/resend-email"
+                          element={<ResendEmailPage />}
+                        />
+                        <Route
+                          path="/gallery"
+                          element={withEB(<GalleryPage />)}
+                        />
+                        <Route
+                          path="/artworks/:id"
+                          element={withEB(<ArtworkDetailPage />)}
+                        />
+                        <Route path="/videos" element={withEB(<VideoPage />)} />
+                        <Route
+                          path="/video-library"
+                          element={withEB(<VideoLibraryPage />)}
+                        />
+                        <Route
+                          path="/videos/:id"
+                          element={withEB(<VideoDetailPage />)}
+                        />
+                        <Route
+                          path="/events"
+                          element={withEB(<EventsPage />)}
+                        />
+                        <Route
+                          path="/events/:id"
+                          element={withEB(<EventDetailPage />)}
+                        />
+                        <Route
+                          path="/events/:id/confirm-attendance/:token"
+                          element={withEB(<ConfirmAttendancePage />)}
+                        />
+                        <Route
+                          path="/artists/:id"
+                          element={withEB(<ArtistProfilePage />)}
+                        />
 
-                  {/* Protected Routes (any logged-in user) */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/favorites"
-                    element={
-                      <ProtectedRoute>{withEB(<FavoritesPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/apply-artist"
-                    element={
-                      <ProtectedRoute>{withEB(<ApplyArtistPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/cart"
-                    element={
-                      <ProtectedRoute>{withEB(<CartPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute>{withEB(<CheckoutPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/my-orders"
-                    element={
-                      <ProtectedRoute>{withEB(<DashboardPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/orders/:id"
-                    element={
-                      <ProtectedRoute>{withEB(<OrderDetailPage />)}</ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/messages"
-                    element={
-                      <ProtectedRoute>{withEB(<MessagesPage />)}</ProtectedRoute>
-                    }
-                  />
+                        {/* Protected Routes (any logged-in user) */}
+                        <Route
+                          path="/dashboard"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<DashboardPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/profile"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<DashboardPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/favorites"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<FavoritesPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/apply-artist"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<ApplyArtistPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/cart"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<CartPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/checkout"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<CheckoutPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/my-orders"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<DashboardPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/orders/:id"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<OrderDetailPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/messages"
+                          element={
+                            <ProtectedRoute>
+                              {withEB(<MessagesPage />)}
+                            </ProtectedRoute>
+                          }
+                        />
 
-                  {/* Artist Routes (verified artists only) */}
+                        {/* Artist Routes (verified artists only) */}
 
-                  <Route
-                    path="/artworks/new"
-                    element={
-                      <ArtistRoute>{withEB(<ArtworkFormPage />)}</ArtistRoute>
-                    }
-                  />
-                  <Route
-                    path="/artworks/:id/edit"
-                    element={
-                      <ArtistRoute>{withEB(<ArtworkFormPage />)}</ArtistRoute>
-                    }
-                  />
-                  <Route
-                    path="/events/new"
-                    element={
-                      <ArtistRoute>{withEB(<EventFormPage />)}</ArtistRoute>
-                    }
-                  />
-                  <Route
-                    path="/events/:id/edit"
-                    element={
-                      <ArtistRoute>{withEB(<EventFormPage />)}</ArtistRoute>
-                    }
-                  />
+                        <Route
+                          path="/artworks/new"
+                          element={
+                            <ArtistRoute>
+                              {withEB(<ArtworkFormPage />)}
+                            </ArtistRoute>
+                          }
+                        />
+                        <Route
+                          path="/artworks/:id/edit"
+                          element={
+                            <ArtistRoute>
+                              {withEB(<ArtworkFormPage />)}
+                            </ArtistRoute>
+                          }
+                        />
+                        <Route
+                          path="/events/new"
+                          element={
+                            <ArtistRoute>
+                              {withEB(<EventFormPage />)}
+                            </ArtistRoute>
+                          }
+                        />
+                        <Route
+                          path="/events/:id/edit"
+                          element={
+                            <ArtistRoute>
+                              {withEB(<EventFormPage />)}
+                            </ArtistRoute>
+                          }
+                        />
 
-                  {/* Admin Routes */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>{withEB(<AdminPage />)}</AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin/user/:userId"
-                    element={
-                      <SuperAdminRoute>{withEB(<UserModalPage />)}</SuperAdminRoute>
-                    }
-                  />
+                        {/* Admin Routes */}
+                        <Route
+                          path="/admin"
+                          element={
+                            <AdminRoute>{withEB(<AdminPage />)}</AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/user/:userId"
+                          element={
+                            <SuperAdminRoute>
+                              {withEB(<UserModalPage />)}
+                            </SuperAdminRoute>
+                          }
+                        />
 
-                  {/* SuperAdmin Routes */}
-                  <Route
-                    path="/superadmin"
-                    element={
-                      <SuperAdminRoute>{withEB(<SuperAdminPage />)}</SuperAdminRoute>
-                    }
-                  />
+                        {/* SuperAdmin Routes */}
+                        <Route
+                          path="/superadmin"
+                          element={
+                            <SuperAdminRoute>
+                              {withEB(<SuperAdminPage />)}
+                            </SuperAdminRoute>
+                          }
+                        />
 
-                  <Route path="/pricing" element={withEB(<PricingPage />)} />
+                        <Route
+                          path="/pricing"
+                          element={withEB(<PricingPage />)}
+                        />
 
-                  {/* 404 */}
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-            <Toaster position="top-center" closeButton />
-            </CartProvider>
-            </MessagingProvider>
-          </AuthProvider>
-        </ThemeProvider>
+                        {/* 404 */}
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Routes>
+                    </main>
+                    <Footer />
+                  </div>
+                  <CookieBanner />
+                  <Toaster position="top-center" closeButton />
+                </CartProvider>
+              </MessagingProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </NavigationProvider>
       </BrowserRouter>
     </ErrorBoundary>

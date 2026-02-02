@@ -61,6 +61,8 @@ const validateCsrf = (req, res, next) => {
 
   // Public auth routes that don't have CSRF token yet (landing from email)
   const excludedPaths = [
+    "/auth/login",
+    "/auth/signup",
     "/auth/verify-email",
     "/auth/resend-verification-email",
     "/auth/forgot-password",

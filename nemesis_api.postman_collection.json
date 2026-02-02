@@ -1,0 +1,888 @@
+{
+  "info": {
+    "_postman_id": "nemesis-api-postman-collection",
+    "name": "Nemesis Art Platform API",
+    "description": "API collection for Nemesis - Art marketplace and community platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Test\",\n    \"lastName\": \"User\",\n    \"userName\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"Password123!\",\n    \"intent\": \"user\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Signup (Artist)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Test\",\n    \"lastName\": \"Artist\",\n    \"userName\": \"testartist\",\n    \"email\": \"artist@example.com\",\n    \"password\": \"Password123!\",\n    \"intent\": \"apply_artist\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Signup (Gallerist)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Test\",\n    \"lastName\": \"Gallerist\",\n    \"userName\": \"testgallerist\",\n    \"email\": \"gallerist@example.com\",\n    \"password\": \"Password123!\",\n    \"intent\": \"apply_gallerist\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"verification_token_here\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "Resend Verification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"test@example.com\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-verification-email"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"test@example.com\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"reset_token_here\",\n    \"password\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Updated\",\n    \"lastName\": \"Name\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Apply Artist",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "companyName", "value": "My Studio", "type": "text" },
+                {
+                  "key": "description",
+                  "value": "Artistic creations",
+                  "type": "text"
+                },
+                { "key": "profilePicture", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/apply-artist",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "apply-artist"]
+            }
+          }
+        },
+        {
+          "name": "Favorites",
+          "item": [
+            {
+              "name": "Get Favorites",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/favorites",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "favorites"]
+                }
+              }
+            },
+            {
+              "name": "Add Favorite",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/favorites/:artworkId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "favorites", ":artworkId"]
+                }
+              }
+            },
+            {
+              "name": "Remove Favorite",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/favorites/:artworkId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "favorites", ":artworkId"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "User Management",
+          "item": [
+            {
+              "name": "Get All Users",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users?page=1&limit=20&role=user",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" },
+                    { "key": "role", "value": "user" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get User Detail",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/:id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", ":id"]
+                }
+              }
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"role\": \"artist\",\n    \"artistStatus\": \"verified\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/:id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", ":id"]
+                }
+              }
+            },
+            {
+              "name": "Update Artist Status",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"verified\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/:id/artist-status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", ":id", "artist-status"]
+                }
+              }
+            },
+            {
+              "name": "Update User Role",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"role\": \"admin\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/:id/role",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", ":id", "role"]
+                }
+              }
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/:id",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", ":id"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Platform Control",
+          "item": [
+            {
+              "name": "Get Settings",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/settings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "settings"]
+                }
+              }
+            },
+            {
+              "name": "Get Platform Stats",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/stats?period=month",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "stats"],
+                  "query": [{ "key": "period", "value": "month" }]
+                }
+              }
+            },
+            {
+              "name": "List Storage Usage",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/storage?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "storage"]
+                }
+              }
+            },
+            {
+              "name": "Update Storage Quota",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"quotaBytes\": 10737418240,\n    \"subscriptionTier\": \"pro\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/storage/:userId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "storage", ":userId"]
+                }
+              }
+            },
+            {
+              "name": "List User Files",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/storage/:userId/files",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "storage", ":userId", "files"]
+                }
+              }
+            },
+            {
+              "name": "Toggle Maintenance",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"enabled\": true,\n    \"message\": \"Maintenance in progress\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/platform/maintenance",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "platform", "maintenance"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Artworks",
+      "item": [
+        {
+          "name": "Get All Artworks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks?page=1&limit=12&category=painting",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "12" },
+                { "key": "category", "value": "painting" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Artwork Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Get Artist Artworks (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/artist/:artistId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks", "artist", ":artistId"]
+            }
+          }
+        },
+        {
+          "name": "List Verified Artists (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/artists/all?page=1&limit=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "artists", "all"]
+            }
+          }
+        },
+        {
+          "name": "Create Artwork",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"New Masterpiece\",\n    \"price\": 500,\n    \"category\": \"sculpture\",\n    \"isForSale\": true\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks"]
+            }
+          }
+        },
+        {
+          "name": "Update Artwork",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"price\": 450\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Artwork",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Artist Stats (Owner)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/artworks/artist/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "artworks", "artist", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart"]
+            }
+          }
+        },
+        {
+          "name": "Add Item",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"artworkId\": \"art_id_here\",\n    \"quantity\": 1\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart", "add"]
+            }
+          }
+        },
+        {
+          "name": "Update Quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"artworkId\": \"art_id_here\",\n    \"quantity\": 2\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart", "update"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cart", "clear"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "My Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/mine",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "mine"]
+            }
+          }
+        },
+        {
+          "name": "Artist Sales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "sales"]
+            }
+          }
+        },
+        {
+          "name": "Create Order (Checkout)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shippingAddress\": \"123 Art Lane\",\n    \"paymentId\": \"pi_mock\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get All Orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/all?status=paid",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "all"],
+              "query": [{ "key": "status", "value": "paid" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "item": [
+        {
+          "name": "Reviews",
+          "item": [
+            {
+              "name": "Get Artwork Reviews",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/artworks/:artworkId/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "artworks", ":artworkId", "reviews"]
+                }
+              }
+            },
+            {
+              "name": "Post Review",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"title\": \"Great artwork!\",\n    \"comment\": \"I really love the colors and technical execution.\",\n    \"rating\": 5\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/artworks/:artworkId/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "artworks", ":artworkId", "reviews"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conversations",
+          "item": [
+            {
+              "name": "List My Conversations",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/conversations?status=active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "conversations"],
+                  "query": [{ "key": "status", "value": "active" }]
+                }
+              }
+            },
+            {
+              "name": "Start Conversation",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"participantId\": \"user_id_here\",\n    \"artworkId\": \"art_id_here\",\n    \"initialMessage\": \"Hello, I'm interested in this piece!\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/conversations",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "conversations"]
+                }
+              }
+            },
+            {
+              "name": "Get Messages",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/conversations/:id/messages?limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "conversations", ":id", "messages"],
+                  "query": [{ "key": "limit", "value": "50" }]
+                }
+              }
+            },
+            {
+              "name": "Send Message",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"content\": \"How are you today?\",\n    \"type\": \"text\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/conversations/:id/messages",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "conversations", ":id", "messages"]
+                }
+              }
+            },
+            {
+              "name": "Make Price Offer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"amount\": 400,\n    \"artworkId\": \"art_id_here\"\n}",
+                  "options": {
+                    "raw": { "language": "json" }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/conversations/:id/offer",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "conversations", ":id", "offer"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5005",
+      "type": "string"
+    }
+  ]
+}
