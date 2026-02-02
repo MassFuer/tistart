@@ -36,6 +36,7 @@ const SignupPage = () => {
   const [searchParams] = useSearchParams();
   
   const isArtistSignup = searchParams.get("role") === "artist";
+  const next = searchParams.get("next");
 
   // Scroll to top on mount
   useEffect(() => {
@@ -103,7 +104,7 @@ const SignupPage = () => {
       );
       // Redirect to login after 5 seconds
       setTimeout(() => {
-        navigate("/login");
+        navigate(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
       }, 5000);
     } catch (error) {
       const message =
@@ -148,10 +149,10 @@ const SignupPage = () => {
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
                 <Button asChild className="w-full">
-                    <Link to="/login">Go to Login</Link>
+                    <Link to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>Go to Login</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
-                    <Link to="/resend-email">Resend Email</Link>
+                    <Link to={`/resend-email${next ? `?next=${encodeURIComponent(next)}` : ""}`}>Resend Email</Link>
                 </Button>
             </CardFooter>
         </Card>
@@ -359,7 +360,10 @@ const SignupPage = () => {
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
           <div>
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline">
+            <Link 
+              to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} 
+              className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline"
+            >
               Login
             </Link>
           </div>

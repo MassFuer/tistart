@@ -14,7 +14,7 @@ Nemesis connects artists with collectors through a modern e-commerce platform, e
 
 ## Features
 
-- **E-Commerce** -- Shopping cart, Stripe checkout, order management, and pay-per-view video purchases
+- **E-Commerce** -- Shopping cart, Stripe checkout, specialized order/ticket confirmations, and pay-per-view video purchases
 - **Gallery & Search** -- N-gram search, category/medium/price filters, pagination with configurable page sizes
 - **Events** -- Calendar view, interactive maps, attendance with email confirmation flow, capacity tracking
 - **Messaging** -- Real-time internal chat (Socket.io) between collectors and artists with offer negotiation
@@ -23,21 +23,22 @@ Nemesis connects artists with collectors through a modern e-commerce platform, e
 - **Admin Dashboard** -- User management, platform statistics, artist application review
 - **SuperAdmin** -- Platform settings, VideoHero customization (assets/text), theme editor, and appearance configuration
 - **Security** -- JWT (HTTP-only cookies), CSRF protection (double-submit cookie), rate limiting, XSS/NoSQL sanitization, Helmet headers
+- **UI/UX Refinements** -- High-contrast dark mode designs and optimized sticky navigation
 - **Geolocation** -- Leaflet cluster maps, address geocoding, event location display
 
 ## Tech Stack
 
-| Layer | Technologies |
-|-------|-------------|
-| Frontend | React 19, Vite, Tailwind CSS, Shadcn/UI, Framer Motion |
-| Backend | Node.js, Express 5, MongoDB (Mongoose 9) |
-| Auth | JWT, HTTP-only cookies, CSRF double-submit cookie |
-| Payments | Stripe (Elements, Webhooks) |
-| Storage | Cloudflare R2 (S3-compatible), Cloudinary |
-| Email | Resend (Handlebars templates) |
-| Real-time | Socket.io |
-| Maps | Leaflet, FullCalendar |
-| Deploy | Docker, Nginx, docker-compose |
+| Layer     | Technologies                                           |
+| --------- | ------------------------------------------------------ |
+| Frontend  | React 19, Vite, Tailwind CSS, Shadcn/UI, Framer Motion |
+| Backend   | Node.js, Express 5, MongoDB (Mongoose 9)               |
+| Auth      | JWT, HTTP-only cookies, CSRF double-submit cookie      |
+| Payments  | Stripe (Elements, Webhooks)                            |
+| Storage   | Cloudflare R2 (S3-compatible), Cloudinary              |
+| Email     | Resend (Handlebars templates)                          |
+| Real-time | Socket.io                                              |
+| Maps      | Leaflet, FullCalendar                                  |
+| Deploy    | Docker, Nginx, docker-compose                          |
 
 ## Quick Start
 

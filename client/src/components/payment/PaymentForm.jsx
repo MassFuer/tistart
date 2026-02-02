@@ -44,7 +44,9 @@ const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
         if (onSuccess) onSuccess(paymentIntent);
       } else if (paymentIntent && paymentIntent.status === "processing") {
         // Payment is processing
-        setErrorMessage("Payment is processing. You will be notified when complete.");
+        setErrorMessage(
+          "Payment is processing. You will be notified when complete.",
+        );
       } else {
         // Handle other statuses
         setErrorMessage("Something went wrong. Please try again.");
@@ -70,33 +72,34 @@ const PaymentForm = ({ orderId, totalAmount, onSuccess, onError }) => {
 
       {errorMessage && (
         <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
 
       <div className="pt-2">
-          <Button 
-            type="submit" 
-            disabled={!stripe || isProcessing} 
-            className="w-full" 
-            size="lg"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing Payment...
-              </>
-            ) : (
-              <>
-                <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(totalAmount)}
-              </>
-            )}
-          </Button>
+        <Button
+          type="submit"
+          disabled={!stripe || isProcessing}
+          className="w-full dark:bg-white dark:text-black dark:hover:bg-white/90"
+          size="lg"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing
+              Payment...
+            </>
+          ) : (
+            <>
+              <Lock className="mr-2 h-4 w-4" /> Pay {formatPrice(totalAmount)}
+            </>
+          )}
+        </Button>
 
-          <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
-            <Lock className="h-3 w-3" /> Your payment is secured by Stripe
-          </p>
+        <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
+          <Lock className="h-3 w-3" /> Your payment is secured by Stripe
+        </p>
       </div>
     </form>
   );

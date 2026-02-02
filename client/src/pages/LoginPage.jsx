@@ -149,7 +149,10 @@ const LoginPage = () => {
         <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
           <div>
              Don&apos;t have an account?{" "}
-            <Link to="/signup" className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline">
+            <Link 
+              to={`/signup${window.location.search}`} 
+              className="font-semibold text-primary dark:text-blue-400 dark:hover:text-white hover:underline"
+            >
               Sign up
             </Link>
           </div>

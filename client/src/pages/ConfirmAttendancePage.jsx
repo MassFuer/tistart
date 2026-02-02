@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { eventsAPI } from "../services/api";
 import { CheckCircle2, XCircle, Loader2, Calendar } from "lucide-react";
@@ -10,14 +10,22 @@ const ConfirmAttendancePage = () => {
   const [status, setStatus] = useState("loading"); // loading | success | error
   const [message, setMessage] = useState("");
 
+  const hasCalled = useRef(false);
+
   useEffect(() => {
+    if (hasCalled.current) return;
+    hasCalled.current = true;
+
     const confirm = async () => {
       try {
         const res = await eventsAPI.confirmAttendance(id, token);
         setMessage(res.data.message || "Your attendance has been confirmed!");
         setStatus("success");
       } catch (err) {
-        setMessage(err.response?.data?.error || "Failed to confirm attendance. The link may be invalid or expired.");
+        setMessage(
+          err.response?.data?.error ||
+            "Failed to confirm attendance. The link may be invalid or expired.",
+        );
         setStatus("error");
       }
     };
@@ -31,7 +39,9 @@ const ConfirmAttendancePage = () => {
           {status === "loading" && (
             <>
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-muted-foreground" />
-              <p className="text-muted-foreground">Confirming your attendance...</p>
+              <p className="text-muted-foreground">
+                Confirming your attendance...
+              </p>
             </>
           )}
           {status === "success" && (

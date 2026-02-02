@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Plus, Minus, Trash2, Loader2 } from "lucide-react";
@@ -10,6 +10,7 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
   const { cart, addToCart, updateQuantity, removeFromCart, loading: cartLoading } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   // Find if this artwork is already in cart
@@ -39,7 +40,7 @@ const AddToCartButton = ({ artwork, className = "", compact = false }) => {
       toast("Interested by this artwork?", {
         action: {
           label: "Log in here",
-          onClick: () => navigate("/login"),
+          onClick: () => navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`),
         },
       });
       return;

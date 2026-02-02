@@ -188,7 +188,7 @@ router.post(
       // Sign token
       const authToken = jwt.sign(payload, process.env.TOKEN_SECRET, {
         algorithm: "HS256",
-        expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+        expiresIn: process.env.JWT_EXPIRES_IN || "6h",
       });
 
       // Set HTTP-only cookie

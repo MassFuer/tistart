@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const bcryptjs = require("bcryptjs");
 
 const User = require("../models/User.model");
 const Artwork = require("../models/Artwork.model");
@@ -351,6 +352,74 @@ router.get("/", isAuthenticated, isAdmin, async (req, res, next) => {
   }
 });
 
+// POST /api/users - Create new user (admin only)
+router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      userName,
+      email,
+      password,
+      role,
+      artistStatus,
+      isEmailVerified,
+    } = req.body;
+
+    // Basic validation
+    if (!firstName || !lastName || !userName || !email || !password) {
+      return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [
+        { email: email.toLowerCase() },
+        { userName: userName.toLowerCase() },
+      ],
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email.toLowerCase()) {
+        return res.status(400).json({ error: "Email already registered." });
+      }
+      return res.status(400).json({ error: "Username already taken." });
+    }
+
+    // Role verification: only superAdmin can create admins/superAdmins
+    if (
+      (role === "admin" || role === "superAdmin") &&
+      req.user.role !== "superAdmin"
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Only superAdmins can create admin accounts." });
+    }
+
+    // Hash password
+    const hashedPassword = await bcryptjs.hash(password, 12);
+
+    // Create user
+    const newUser = await User.create({
+      firstName,
+      lastName,
+      userName: userName.toLowerCase(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: role || "user",
+      artistStatus: artistStatus || "none",
+      isEmailVerified: isEmailVerified || false,
+    });
+
+    const userResponse = newUser.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({ data: userResponse });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/users/:id - Get single user (admin only)
 router.get("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
   try {
@@ -640,14 +709,16 @@ router.patch("/:id/role", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // ==================== PUBLIC ARTIST PROFILE ====================
 
-// GET /api/users/artist/:id - Get public artist profile
+// GET /api/users/artist/:id - Get public profile (artists or admins)
 router.get("/artist/:id", async (req, res, next) => {
   try {
     const user = await User.findOne({
       _id: req.params.id,
-      role: "artist",
-      artistStatus: "verified",
-    }).select("firstName lastName userName profilePicture artistInfo createdAt");
+      $or: [
+        { role: "artist", artistStatus: "verified" },
+        { role: { $in: ["admin", "superAdmin"] } }
+      ]
+    }).select("firstName lastName userName profilePicture artistInfo createdAt role");
 
     if (!user) {
       return res.status(404).json({ error: "Artist not found." });

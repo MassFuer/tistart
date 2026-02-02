@@ -444,6 +444,30 @@
                   },
                   "isPublic": {
                     "example": "any"
+                  },
+                  "firstName": {
+                    "example": "any"
+                  },
+                  "lastName": {
+                    "example": "any"
+                  },
+                  "userName": {
+                    "example": "any"
+                  },
+                  "email": {
+                    "example": "any"
+                  },
+                  "password": {
+                    "example": "any"
+                  },
+                  "role": {
+                    "example": "any"
+                  },
+                  "artistStatus": {
+                    "example": "any"
+                  },
+                  "isEmailVerified": {
+                    "example": "any"
                   }
                 }
               }
@@ -888,8 +912,34 @@
         }
       }
     },
-    "/{id}/confirm-attendance/{token}": {
+    "/{id}/resend-confirmation": {
       "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/{id}/confirm-attendance/{token}": {
+      "get": {
         "description": "",
         "parameters": [
           {

@@ -71,7 +71,7 @@ const Navbar = () => {
     try {
       await logout();
       toast.success("Logged out successfully");
-      navigate("/");
+      // Stay on same page - ProtectedRoute will naturally redirect if needed
       setIsSheetOpen(false);
     } catch (error) {
       toast.error("Error logging out");

@@ -27,9 +27,9 @@ if (process.env.CLIENT_URL) {
  */
 const setCsrfCookie = (req, res, next) => {
   // Production detection (handles Render/Netlify)
-  const isProd = 
-    process.env.NODE_ENV === "production" || 
-    process.env.RENDER === "true" || 
+  const isProd =
+    process.env.NODE_ENV === "production" ||
+    process.env.RENDER === "true" ||
     !!process.env.RENDER_EXTERNAL_URL;
 
   // Use existing token if the browser sent one, otherwise create new
@@ -55,19 +55,22 @@ const setCsrfCookie = (req, res, next) => {
  */
 const validateCsrf = (req, res, next) => {
   const safeMethods = ["GET", "HEAD", "OPTIONS"];
+  console.log(`[CSRF] Checking ${req.method} ${req.path}`);
   if (safeMethods.includes(req.method)) return next();
   if (req.path.includes("/webhook")) return next();
-  
+
   // Public auth routes that don't have CSRF token yet (landing from email)
   const excludedPaths = [
     "/auth/verify-email",
     "/auth/resend-verification-email",
     "/auth/forgot-password",
     "/auth/reset-password",
-    "/auth/logout" // Allow logout even if CSRF fails (fix "still connected")
+    "/auth/logout", // Allow logout even if CSRF fails (fix "still connected")
+    "/confirm-attendance", // Event attendance confirmation
   ];
-  
-  if (excludedPaths.some(path => req.path.includes(path))) {
+
+  if (excludedPaths.some((path) => req.path.includes(path))) {
+    console.log(`[CSRF] Skipping validation for excluded path: ${req.path}`);
     return next();
   }
 
@@ -85,12 +88,12 @@ const validateCsrf = (req, res, next) => {
   // - It's production
   // - The Origin is our trusted frontend (e.g., Netlify)
   // - The x-csrf-token header is present (Browsers don't allow cross-site custom headers without CORS approval)
-  const isProd = 
-    process.env.NODE_ENV === "production" || 
-    process.env.RENDER === "true" || 
+  const isProd =
+    process.env.NODE_ENV === "production" ||
+    process.env.RENDER === "true" ||
     !!process.env.RENDER_EXTERNAL_URL;
   const origin = (req.get("origin") || req.get("referer") || "").toLowerCase();
-  
+
   const trustedOrigins = [
     "https://tistart.netlify.app",
     "https://www.tistart.netlify.app",
@@ -100,17 +103,20 @@ const validateCsrf = (req, res, next) => {
     "https://www.tistart.vercel.app",
     "https://tistart-38lwv03lr-massfuers-projects.vercel.app",
     "http://localhost:5173",
-    "http://localhost:3000"
+    "http://localhost:3000",
   ];
-  
+
   if (process.env.CLIENT_URL) {
     trustedOrigins.push(process.env.CLIENT_URL.replace(/\/$/, "").toLowerCase());
   }
 
   const normalizedOrigin = origin.toLowerCase().replace(/\/$/, "");
-  const isTrustedOrigin = trustedOrigins.some(trusted => normalizedOrigin.startsWith(trusted.toLowerCase().replace(/\/$/, ""))) || 
-                          normalizedOrigin.endsWith(".vercel.app") ||
-                          normalizedOrigin.endsWith(".netlify.app");
+  const isTrustedOrigin =
+    trustedOrigins.some((trusted) =>
+      normalizedOrigin.startsWith(trusted.toLowerCase().replace(/\/$/, ""))
+    ) ||
+    normalizedOrigin.endsWith(".vercel.app") ||
+    normalizedOrigin.endsWith(".netlify.app");
 
   if (isProd && isTrustedOrigin && headerToken) {
     // If the match failed but we have a trusted origin and a header token,
@@ -119,7 +125,9 @@ const validateCsrf = (req, res, next) => {
   }
 
   // Log details for debugging
-  console.error(`CSRF FAIL - CookieMismatch: ${cookieToken !== headerToken}, TrustedOrigin: ${!!isTrustedOrigin}`);
+  console.error(
+    `CSRF FAIL - CookieMismatch: ${cookieToken !== headerToken}, TrustedOrigin: ${!!isTrustedOrigin}`
+  );
   return res.status(403).json({ error: "Invalid CSRF token" });
 };
 

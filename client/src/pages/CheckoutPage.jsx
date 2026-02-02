@@ -10,20 +10,16 @@ import Loading from "../components/common/Loading";
 import PaymentForm from "../components/payment/PaymentForm";
 import AddressForm from "../components/map/AddressForm";
 import LocationMap from "../components/map/LocationMap";
-import {
-  MapPin,
-  CreditCard,
-  ArrowLeft,
-} from "lucide-react";
+import { MapPin, CreditCard, ArrowLeft } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { 
-  FaCcVisa, 
-  FaCcMastercard, 
-  FaCcAmex, 
-  FaPaypal, 
+import {
+  FaCcVisa,
+  FaCcMastercard,
+  FaCcAmex,
+  FaPaypal,
   FaApplePay,
   FaLock,
-  FaStripe
+  FaStripe,
 } from "react-icons/fa";
 
 import { formatPrice } from "@/lib/formatters";
@@ -79,7 +75,7 @@ const CheckoutPage = () => {
           setExistingOrder(order);
           // Pre-fill address if order has one and it's valid
           if (order.shippingAddress && order.shippingAddress.street) {
-             setShippingAddress(order.shippingAddress);
+            setShippingAddress(order.shippingAddress);
           }
         } catch (err) {
           console.error("Failed to load order:", err);
@@ -89,10 +85,10 @@ const CheckoutPage = () => {
         }
       }
     };
-    
+
     // Only fetch if we haven't already loaded it (or if ID changed)
     if (orderId && !existingOrder) {
-        fetchOrder();
+      fetchOrder();
     }
   }, [orderId]);
 
@@ -121,11 +117,11 @@ const CheckoutPage = () => {
   // Determine items and total to display
   // If existingOrder, use its items. If not, use cart.
   const displayItems = existingOrder ? existingOrder.items : cart;
-  
-  const totalPrice = existingOrder 
-      ? existingOrder.totalAmount 
-      : cart.reduce((total, item) => {
-        const product = item.itemType === 'ticket' ? item.event : item.artwork;
+
+  const totalPrice = existingOrder
+    ? existingOrder.totalAmount
+    : cart.reduce((total, item) => {
+        const product = item.itemType === "ticket" ? item.event : item.artwork;
         return total + (product?.price || 0) * item.quantity;
       }, 0);
 
@@ -138,11 +134,16 @@ const CheckoutPage = () => {
       navigate("/cart");
       return;
     }
-    
+
     // Address validation
-    if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode || !shippingAddress.country) {
-        toast.error("Please complete the shipping address.");
-        return;
+    if (
+      !shippingAddress.street ||
+      !shippingAddress.city ||
+      !shippingAddress.zipCode ||
+      !shippingAddress.country
+    ) {
+      toast.error("Please complete the shipping address.");
+      return;
     }
 
     // Check if Stripe is configured
@@ -157,17 +158,17 @@ const CheckoutPage = () => {
       let activeOrderId = orderId;
 
       if (existingOrder) {
-          // UPDATE existing order address logic
-          // Make sure we have the ID
-          if (!activeOrderId) throw new Error("Order ID missing for update");
-          await api.orders.updateAddress(activeOrderId, shippingAddress);
+        // UPDATE existing order address logic
+        // Make sure we have the ID
+        if (!activeOrderId) throw new Error("Order ID missing for update");
+        await api.orders.updateAddress(activeOrderId, shippingAddress);
       } else {
-          // CREATE new order
-          const orderResponse = await api.orders.create({
-            shippingAddress,
-          });
-          activeOrderId = orderResponse.data.data._id;
-          setOrderId(activeOrderId);
+        // CREATE new order
+        const orderResponse = await api.orders.create({
+          shippingAddress,
+        });
+        activeOrderId = orderResponse.data.data._id;
+        setOrderId(activeOrderId);
       }
 
       // Create PaymentIntent
@@ -180,7 +181,7 @@ const CheckoutPage = () => {
       const errorMessage =
         error.response?.data?.error || "Failed to process checkout";
 
-      // If order was created/updated but payment failed, still refresh 
+      // If order was created/updated but payment failed, still refresh
       if (error.response?.status === 402 || errorMessage.includes("payment")) {
         if (!existingOrder) await fetchCart();
       }
@@ -198,14 +199,14 @@ const CheckoutPage = () => {
       let activeOrderId = orderId;
 
       if (existingOrder) {
-          // Update address first
-           await api.orders.updateAddress(activeOrderId, shippingAddress);
+        // Update address first
+        await api.orders.updateAddress(activeOrderId, shippingAddress);
       } else {
-           const orderResponse = await api.orders.create({
-            shippingAddress,
-            paymentId: "MOCK_PAYMENT_" + Date.now(),
-          });
-          activeOrderId = orderResponse.data.data._id;
+        const orderResponse = await api.orders.create({
+          shippingAddress,
+          paymentId: "MOCK_PAYMENT_" + Date.now(),
+        });
+        activeOrderId = orderResponse.data.data._id;
       }
 
       // Confirm payment and clear cart
@@ -246,15 +247,16 @@ const CheckoutPage = () => {
     toast.error(error.message || "Payment failed. Please try again.");
   };
 
-  if (loading && !existingOrder && !cart.length) return <Loading message="Loading checkout..." />;
+  if (loading && !existingOrder && !cart.length)
+    return <Loading message="Loading checkout..." />;
 
   // Stripe Elements appearance options
   const appearance = {
-    theme: isDarkMode ? 'night' : 'stripe',
+    theme: isDarkMode ? "night" : "stripe",
     variables: {
-      colorPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
-      colorBackground: isDarkMode ? '#020817' : '#ffffff',
-      colorText: isDarkMode ? '#f8fafc' : '#1e293b',
+      colorPrimary: isDarkMode ? "#f8fafc" : "#0f172a",
+      colorBackground: isDarkMode ? "#020817" : "#ffffff",
+      colorText: isDarkMode ? "#f8fafc" : "#1e293b",
     },
   };
 
@@ -265,196 +267,247 @@ const CheckoutPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen max-w-6xl">
-       <div className="flex items-center mb-8">
-            <Button variant="ghost" className="pl-0 gap-2" onClick={() => step === "payment" ? setStep("shipping") : navigate("/cart")}>
-                <ArrowLeft className="h-4 w-4" /> 
-                {step === "payment" ? "Back to Address" : "Back to Cart"}
-            </Button>
-            <h1 className="text-3xl font-bold tracking-tight ml-4">Checkout {existingOrder ? "(Pending Order)" : ""}</h1>
-       </div>
+      <div className="flex items-center mb-8">
+        <Button
+          variant="ghost"
+          className="pl-0 gap-2"
+          onClick={() =>
+            step === "payment" ? setStep("shipping") : navigate("/cart")
+          }
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {step === "payment" ? "Back to Address" : "Back to Cart"}
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight ml-4">
+          Checkout {existingOrder ? "(Pending Order)" : ""}
+        </h1>
+      </div>
 
-       {/* Steps Indicator - Centered at top */}
-        <div className="flex justify-center items-center space-x-4 mb-10">
-            <div className={`flex items-center gap-2 ${step === "shipping" ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "shipping" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}>
-                    1
+      {/* Steps Indicator - Centered at top */}
+      <div className="flex justify-center items-center space-x-4 mb-10">
+        <div
+          className={`flex items-center gap-2 ${step === "shipping" ? "text-primary font-bold" : "text-muted-foreground"}`}
+        >
+          <div
+            className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "shipping" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}
+          >
+            1
+          </div>
+          <span>Shipping</span>
+        </div>
+        <div className="w-24 h-[1px] bg-border"></div>
+        <div
+          className={`flex items-center gap-2 ${step === "payment" ? "text-primary font-bold" : "text-muted-foreground"}`}
+        >
+          <div
+            className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "payment" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}
+          >
+            2
+          </div>
+          <span>Payment</span>
+        </div>
+      </div>
+
+      <div
+        className={
+          step === "shipping"
+            ? "flex flex-col-reverse gap-8 w-full"
+            : "flex flex-col-reverse lg:flex-row gap-8 w-full lg:items-start"
+        }
+      >
+        {/* MAIN FORM AREA */}
+        <div className="flex-1 space-y-6">
+          {step === "shipping" ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" /> Shipping Address
+                </CardTitle>
+                <CardDescription>
+                  Enter your delivery address for shipping and billing.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Address Form Column */}
+                  <div className="space-y-6">
+                    <AddressForm
+                      address={shippingAddress}
+                      onChange={(newAddress) =>
+                        setShippingAddress((prev) => ({
+                          ...prev,
+                          ...newAddress,
+                        }))
+                      }
+                      onGeocode={(location) => {
+                        setShippingAddress((prev) => ({
+                          ...prev,
+                          country: location.address
+                            ? location.address.split(",").pop().trim()
+                            : prev.country,
+                          coordinates: [location.lng, location.lat],
+                        }));
+                      }}
+                      showVenue={false}
+                    />
+                  </div>
+
+                  {/* Map Column */}
+                  <div className="h-[400px] w-full rounded-md overflow-hidden border">
+                    <LocationMap
+                      coordinates={
+                        shippingAddress.coordinates &&
+                        shippingAddress.coordinates.length === 2
+                          ? {
+                              lat: shippingAddress.coordinates[1],
+                              lng: shippingAddress.coordinates[0],
+                            }
+                          : null
+                      }
+                      interactive={true}
+                      editable={true}
+                      showSearch={true}
+                      onLocationChange={(location) => {
+                        setShippingAddress((prev) => ({
+                          ...prev,
+                          coordinates: [location.lng, location.lat],
+                        }));
+                        if (location.address) {
+                          // Optional: try to populate address fields from map search result
+                          // This is a rough approximation as we get a full string
+                          // For now, updating coordinates is the primary goal
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-                <span>Shipping</span>
-            </div>
-            <div className="w-24 h-[1px] bg-border"></div>
-            <div className={`flex items-center gap-2 ${step === "payment" ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 ${step === "payment" ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground"}`}>
-                    2
-                </div>
-                <span>Payment</span>
-            </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  onClick={handleShippingSubmit}
+                  className="w-full dark:bg-white dark:text-black dark:hover:bg-white/90"
+                  size="lg"
+                >
+                  Continue to Payment
+                </Button>
+              </CardFooter>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" /> Payment Method
+                </CardTitle>
+                <CardDescription>
+                  Secure checkout powered by Stripe
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {clientSecret && stripePromise && (
+                  <Elements stripe={stripePromise} options={elementsOptions}>
+                    <PaymentForm
+                      orderId={orderId}
+                      totalAmount={totalPrice}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                    />
+                  </Elements>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-       <div className={step === "shipping" ? "flex flex-col-reverse gap-8 w-full" : "flex flex-col-reverse lg:flex-row gap-8 w-full lg:items-start"}>
-            {/* MAIN FORM AREA */}
-            <div className="flex-1 space-y-6">
-                {step === "shipping" ? (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <MapPin className="h-5 w-5" /> Shipping Address
-                            </CardTitle>
-                            <CardDescription>
-                                Enter your delivery address for shipping and billing.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Address Form Column */}
-                                <div className="space-y-6">
-                                    <AddressForm
-                                        address={shippingAddress}
-                                        onChange={(newAddress) => setShippingAddress(prev => ({...prev, ...newAddress}))}
-                                        onGeocode={(location) => {
-                                            setShippingAddress(prev => ({
-                                                ...prev,
-                                                country: location.address ? location.address.split(",").pop().trim() : prev.country,
-                                                coordinates: [location.lng, location.lat]
-                                            }));
-                                        }}
-                                        showVenue={false}
-                                    />
-                                </div>
+        {/* SIDEBAR SUMMARY */}
+        <div className="w-full lg:w-96 space-y-6">
+          <Card className="sticky top-24">
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {displayItems.map((item) => {
+                // Logic to unify item structure between Order items and Cart items
+                // Order Item: { title, price, quantity, artwork, ... }
+                // Cart Item: { quantity, artwork: { title, price ... } }
 
-                                {/* Map Column */}
-                                <div className="h-[400px] w-full rounded-md overflow-hidden border">
-                                    <LocationMap 
-                                        coordinates={
-                                            shippingAddress.coordinates && shippingAddress.coordinates.length === 2
-                                            ? { lat: shippingAddress.coordinates[1], lng: shippingAddress.coordinates[0] }
-                                            : null
-                                        } 
-                                        interactive={true}
-                                        editable={true}
-                                        showSearch={true}
-                                        onLocationChange={(location) => {
-                                            setShippingAddress(prev => ({
-                                                ...prev,
-                                                coordinates: [location.lng, location.lat]
-                                            }));
-                                            if (location.address) {
-                                                // Optional: try to populate address fields from map search result
-                                                // This is a rough approximation as we get a full string
-                                                // For now, updating coordinates is the primary goal
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button onClick={handleShippingSubmit} className="w-full" size="lg">
-                                Continue to Payment
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                ) : (
-                    <Card>
-                        <CardHeader>
-                             <CardTitle className="flex items-center gap-2">
-                               <CreditCard className="h-5 w-5" /> Payment Method
-                           </CardTitle>
-                           <CardDescription>
-                               Secure checkout powered by Stripe
-                           </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {clientSecret && stripePromise && (
-                                <Elements stripe={stripePromise} options={elementsOptions}>
-                                    <PaymentForm
-                                        orderId={orderId}
-                                        totalAmount={totalPrice}
-                                        onSuccess={handlePaymentSuccess}
-                                        onError={handlePaymentError}
-                                    />
-                                </Elements>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
+                let title, price, quantity, subtitle;
 
-            {/* SIDEBAR SUMMARY */}
-            <div className="w-full lg:w-96 space-y-6">
-                <Card className="sticky top-24">
-                  <CardHeader>
-                      <CardTitle>Order Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                      {displayItems.map((item) => {
-                           // Logic to unify item structure between Order items and Cart items
-                           // Order Item: { title, price, quantity, artwork, ... }
-                           // Cart Item: { quantity, artwork: { title, price ... } }
-                           
-                           let title, price, quantity, subtitle;
-                           
-                           if (existingOrder) {
-                               // It's an Order Item
-                               title = item.title;
-                               price = item.price;
-                               quantity = item.quantity;
-                               subtitle = "Pending Order Item"; 
-                           } else {
-                               // It's a Cart Item
-                               const product = item.itemType === 'ticket' ? item.event : item.artwork;
-                               if (!product) return null;
-                               title = product.title;
-                               price = product.price;
-                               quantity = item.quantity;
-                               subtitle = product.artist?.artistInfo?.companyName || product.artist?.lastName;
-                           }
+                if (existingOrder) {
+                  // It's an Order Item
+                  title = item.title;
+                  price = item.price;
+                  quantity = item.quantity;
+                  subtitle = "Pending Order Item";
+                } else {
+                  // It's a Cart Item
+                  const product =
+                    item.itemType === "ticket" ? item.event : item.artwork;
+                  if (!product) return null;
+                  title = product.title;
+                  price = product.price;
+                  quantity = item.quantity;
+                  subtitle =
+                    product.artist?.artistInfo?.companyName ||
+                    product.artist?.lastName;
+                }
 
-                           return (
-                           <div key={item._id || Math.random()} className="flex justify-between items-start text-sm">
-                                <div>
-                                    <p className="font-medium">{title} <span className="text-muted-foreground">x{quantity}</span></p>
-                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{subtitle}</p>
-                                </div>
-                                <p className="font-medium">
-                                    {formatPrice((price || 0) * quantity)}
-                                </p>
-                           </div>
-                           );
-                      })}
-                      
-                      <Separator />
-                      
-                      <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Subtotal</span>
-                          <span>{formatPrice(totalPrice)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Shipping</span>
-                          <span className="text-green-600 font-medium">Free</span>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div className="flex justify-between font-bold text-lg">
-                          <span>Total</span>
-                          <span>{formatPrice(totalPrice)}</span>
-                      </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/30 p-4 flex flex-col gap-4">
-                       <div className="flex items-center gap-2 text-xs text-muted-foreground w-full justify-center">
-                           <FaLock className="h-3 w-3" /> Secure 256-bit SSL Encrypted Payment
-                       </div>
-                       <div className="flex justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
-                           <FaStripe className="h-8 w-8 text-[#635BFF]" title="Stripe" />
-                           <FaCcVisa className="h-6 w-6" title="Visa" />
-                           <FaCcMastercard className="h-6 w-6" title="Mastercard" />
-                           <FaCcAmex className="h-6 w-6" title="American Express" />
-                           <FaPaypal className="h-6 w-6" title="PayPal" />
-                       </div>
-                  </CardFooter>
-                </Card>
-            </div>
-       </div>
+                return (
+                  <div
+                    key={item._id || Math.random()}
+                    className="flex justify-between items-start text-sm"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {title}{" "}
+                        <span className="text-muted-foreground">
+                          x{quantity}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                        {subtitle}
+                      </p>
+                    </div>
+                    <p className="font-medium">
+                      {formatPrice((price || 0) * quantity)}
+                    </p>
+                  </div>
+                );
+              })}
+
+              <Separator />
+
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Shipping</span>
+                <span className="text-green-600 font-medium">Free</span>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/30 p-4 flex flex-col gap-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground w-full justify-center">
+                <FaLock className="h-3 w-3" /> Secure 256-bit SSL Encrypted
+                Payment
+              </div>
+              <div className="flex justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
+                <FaStripe className="h-8 w-8 text-[#635BFF]" title="Stripe" />
+                <FaCcVisa className="h-6 w-6" title="Visa" />
+                <FaCcMastercard className="h-6 w-6" title="Mastercard" />
+                <FaCcAmex className="h-6 w-6" title="American Express" />
+                <FaPaypal className="h-6 w-6" title="PayPal" />
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

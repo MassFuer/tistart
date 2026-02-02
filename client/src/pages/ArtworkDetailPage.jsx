@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { artworksAPI, usersAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Loading from "../components/common/Loading";
@@ -43,6 +43,7 @@ const ArtworkDetailPage = () => {
   const { id } = useParams();
   const { isAuthenticated, user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [artwork, setArtwork] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,7 +89,12 @@ const ArtworkDetailPage = () => {
 
   const handleFavorite = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to add favorites");
+      toast("Sign in to add favorites", {
+        action: {
+          label: "Log in",
+          onClick: () => navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`),
+        },
+      });
       return;
     }
 

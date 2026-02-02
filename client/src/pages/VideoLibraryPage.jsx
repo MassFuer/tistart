@@ -5,7 +5,6 @@ import VideoLibraryCard from "../components/video/VideoLibraryCard";
 import VideoFilters from "../components/video/VideoFilters";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useScrollRestore } from "../hooks/useScrollRestore";
 import Loading from "../components/common/Loading";
 import ErrorMessage from "../components/common/ErrorMessage";
 import EmptyState from "../components/common/EmptyState";
@@ -66,9 +65,6 @@ const VideoLibraryPage = () => {
     initialSort: "-createdAt",
     syncWithUrl: true,
   });
-
-  // Restore scroll position after data loads
-  useScrollRestore(!isLoading);
 
   const [artists, setArtists] = useState([]);
   const [directors, setDirectors] = useState([]);

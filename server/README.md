@@ -29,36 +29,36 @@ cp .env.example .env
 
 **Required:**
 
-| Variable | Description |
-|----------|-------------|
-| `MONGODB_URI` | MongoDB connection string |
+| Variable       | Description                       |
+| -------------- | --------------------------------- |
+| `MONGODB_URI`  | MongoDB connection string         |
 | `TOKEN_SECRET` | JWT signing secret (min 32 chars) |
 
 **Server:**
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `5005` | Server port |
-| `NODE_ENV` | `development` | Environment (`development` / `production`) |
-| `CLIENT_URL` | `http://localhost:5173` | Frontend URL for CORS and email links |
-| `JWT_EXPIRES_IN` | `7d` | JWT token expiry |
+| Variable         | Default                 | Description                                |
+| ---------------- | ----------------------- | ------------------------------------------ |
+| `PORT`           | `5005`                  | Server port                                |
+| `NODE_ENV`       | `development`           | Environment (`development` / `production`) |
+| `CLIENT_URL`     | `http://localhost:5173` | Frontend URL for CORS and email links      |
+| `JWT_EXPIRES_IN` | `6h`                    | JWT token expiry                           |
 
 **Services:**
 
-| Variable | Description |
-|----------|-------------|
-| `RESEND_API_KEY` | Resend API key for transactional emails |
-| `EMAIL_FROM` | Sender email address |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `R2_ENDPOINT` | Cloudflare R2 endpoint URL |
-| `R2_ACCESS_KEY_ID` | R2 access key |
-| `R2_SECRET_ACCESS_KEY` | R2 secret key |
-| `R2_BUCKET_NAME` | R2 bucket name |
-| `R2_PUBLIC_URL` | R2 public URL for serving files |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
-| `CLOUDINARY_API_KEY` | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| Variable                | Description                             |
+| ----------------------- | --------------------------------------- |
+| `RESEND_API_KEY`        | Resend API key for transactional emails |
+| `EMAIL_FROM`            | Sender email address                    |
+| `STRIPE_SECRET_KEY`     | Stripe secret key                       |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret           |
+| `R2_ENDPOINT`           | Cloudflare R2 endpoint URL              |
+| `R2_ACCESS_KEY_ID`      | R2 access key                           |
+| `R2_SECRET_ACCESS_KEY`  | R2 secret key                           |
+| `R2_BUCKET_NAME`        | R2 bucket name                          |
+| `R2_PUBLIC_URL`         | R2 public URL for serving files         |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                   |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                      |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                   |
 
 Environment variables are validated on startup via `utils/validateEnv.js`. Missing required variables will prevent the server from starting.
 
@@ -149,7 +149,8 @@ Handlebars templates in `templates/emails/` with shared partials (header, footer
 - `verification` -- Email address verification
 - `welcome` -- Post-verification welcome
 - `password-reset` -- Password reset link
-- `order-confirmation` -- Order receipt
+- `order-confirmation` -- Order receipt for artworks
+- `ticket-confirmation` -- Specialized receipt for event registrations
 - `artist-application` -- Application received
 - `artist-status` -- Application approved/suspended
 - `event-attendance` -- Event attendance confirmation
@@ -170,11 +171,11 @@ The server supports graceful shutdown (SIGTERM/SIGINT) -- closes HTTP connection
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start with nodemon (auto-restart) |
-| `npm start` | Production start |
-| `npm run seed` | Seed database with test data |
-| `npm run swagger` | Generate Swagger API docs |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Run Prettier |
+| Command           | Description                       |
+| ----------------- | --------------------------------- |
+| `npm run dev`     | Start with nodemon (auto-restart) |
+| `npm start`       | Production start                  |
+| `npm run seed`    | Seed database with test data      |
+| `npm run swagger` | Generate Swagger API docs         |
+| `npm run lint`    | Run ESLint                        |
+| `npm run format`  | Run Prettier                      |

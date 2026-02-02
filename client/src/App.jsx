@@ -53,7 +53,7 @@ import SuperAdminRoute from "./components/auth/SuperAdminRoute";
 // Error Boundaries
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import RouteErrorBoundary from "./components/common/RouteErrorBoundary";
-import ScrollToTop from "./components/common/ScrollToTop";
+import ScrollManager from "./components/common/ScrollManager";
 
 // App css removed
 
@@ -65,7 +65,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <ScrollToTop />
+        <ScrollManager />
         <NavigationProvider>
         <ThemeProvider>
           <AuthProvider>

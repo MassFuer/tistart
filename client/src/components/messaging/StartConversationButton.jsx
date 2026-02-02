@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMessaging } from "../../context/MessagingContext";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../ui/button";
@@ -15,6 +15,7 @@ const StartConversationButton = ({
   className = "",
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { startConversation } = useMessaging();
   const { isAuthenticated, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +28,7 @@ const StartConversationButton = ({
       toast("Interested by this artwork?", {
         action: {
           label: "Log in here",
-          onClick: () => navigate("/login"),
+          onClick: () => navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`),
         },
       });
       return;

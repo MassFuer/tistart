@@ -113,7 +113,7 @@ client/src/
 ## Features
 
 - **Responsive Design** -- Mobile-first layouts with sticky action bars and adaptive grids
-- **Dark Mode** -- Theme toggle with mode-specific CSS variables managed via SuperAdmin
+- **Dark Mode** -- Theme toggle with mode-specific CSS variables and high-contrast accessibility for critical checkout actions
 - **Route Error Boundaries** -- Errors in individual pages don't crash the entire app
 - **Dynamic Page Sizes** -- Configurable items-per-page via PageSizeSelector component
 - **CSRF Protection** -- Automatic CSRF token injection via axios request interceptor

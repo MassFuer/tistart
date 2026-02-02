@@ -56,7 +56,11 @@ const sendVerificationEmail = async (email, firstName, verificationLink, userId 
   });
 
   if (userId) {
-      await logSystemMessage(userId, "Verify Your Email Address", `Welcome ${firstName}! Please verify your email using this link: ${verificationLink}`);
+    await logSystemMessage(
+      userId,
+      "Verify Your Email Address",
+      `Welcome ${firstName}! Please verify your email using this link: ${verificationLink}`
+    );
   }
   return result;
 };
@@ -73,26 +77,42 @@ const sendWelcomeEmail = async (email, firstName, userId = null) => {
   });
 
   if (userId) {
-      await logSystemMessage(userId, "Welcome to Nemesis", "Welcome to the platform! We're excited to have you.");
+    await logSystemMessage(
+      userId,
+      "Welcome to Nemesis",
+      "Welcome to the platform! We're excited to have you."
+    );
   }
   return result;
 };
 
 const sendOrderConfirmationEmail = async (email, firstName, order, userId = null) => {
   try {
-    const html = renderTemplate("order-confirmation", {
+    const hasTickets = order.items.some((item) => item.itemType === "ticket");
+    const hasArtworks = order.items.some((item) => item.itemType === "artwork");
+
+    // Choose template based on content
+    let templateName = "order-confirmation";
+    let subject = `Order Confirmation #${order._id.toString().slice(-6).toUpperCase()} - Nemesis`;
+
+    if (hasTickets && !hasArtworks) {
+      templateName = "ticket-confirmation";
+      subject = `Ticket Confirmation #${order._id.toString().slice(-6).toUpperCase()} - Nemesis`;
+    }
+
+    const html = renderTemplate(templateName, {
       firstName,
       order,
     });
 
     const result = await sendEmail({
       to: email,
-      subject: `Order Confirmation #${order._id.toString().slice(-6).toUpperCase()} - Nemesis`,
+      subject,
       html,
     });
 
     if (userId) {
-        await logSystemMessage(userId, `Order Confirmation #${order._id.toString().slice(-6).toUpperCase()}`, "Your order has been confirmed.");
+      await logSystemMessage(userId, subject, "Your order has been confirmed.");
     }
     return result;
   } catch (error) {
@@ -112,23 +132,23 @@ const sendArtistApplicationEmail = async (email, firstName, userId = null) => {
       subject: "Application Received - Nemesis",
       html,
     });
-    
+
     // 2. Log System Message
     if (userId) {
-        await logSystemMessage(
-            userId, 
-            "Application Received", 
-            "We have received your artist application. Our team will review your profile and get back to you shortly."
-        );
+      await logSystemMessage(
+        userId,
+        "Application Received",
+        "We have received your artist application. Our team will review your profile and get back to you shortly."
+      );
     }
 
     // 3. Notify Admin
     const adminEmail = process.env.EMAIL_FROM || "mass@fuer.fr"; // Use configured sender or fallback
     // In a real app, you might loop through all SuperAdmins. For now, sending to the main service email is often configured to forward to admins.
     await sendEmail({
-        to: adminEmail,
-        subject: `[ADMIN] New Artist Application: ${firstName}`,
-        html: `<p>User <strong>${firstName}</strong> (${email}) has applied for artist status.</p>`
+      to: adminEmail,
+      subject: `[ADMIN] New Artist Application: ${firstName}`,
+      html: `<p>User <strong>${firstName}</strong> (${email}) has applied for artist status.</p>`,
     });
 
     return result;
@@ -138,9 +158,9 @@ const sendArtistApplicationEmail = async (email, firstName, userId = null) => {
 };
 
 const sendPasswordResetEmail = async (email, firstName, resetLink) => {
-    // Note: Logging password resets to DB might be sensitive or unnecessary noise, limiting valid use cases. 
-    // Usually we don't log "I forgot my password" details to the dashboard unless for security audit.
-    // Skipping logSystemMessage for now.
+  // Note: Logging password resets to DB might be sensitive or unnecessary noise, limiting valid use cases.
+  // Usually we don't log "I forgot my password" details to the dashboard unless for security audit.
+  // Skipping logSystemMessage for now.
   const html = renderTemplate("password-reset", {
     firstName,
     resetLink,
@@ -167,7 +187,7 @@ const sendArtistStatusEmail = async (email, firstName, status, reason = null, us
       pending: "Application Under Review - Nemesis",
       incomplete: "Action Required: Artist Application Update - Nemesis",
     };
-    
+
     const subject = subjects[status] || "Artist Status Update - Nemesis";
 
     const result = await sendEmail({
@@ -177,10 +197,10 @@ const sendArtistStatusEmail = async (email, firstName, status, reason = null, us
     });
 
     if (userId) {
-        let systemMessage = `Your artist status has been updated to: ${status}.`;
-        
-        if (status === 'verified') {
-            systemMessage = `Congratulations! You have been approved as an artist on Nemesis.
+      let systemMessage = `Your artist status has been updated to: ${status}.`;
+
+      if (status === "verified") {
+        systemMessage = `Congratulations! You have been approved as an artist on Nemesis.
             
 You can now:
 - Create and Manage Artworks
@@ -189,17 +209,17 @@ You can now:
 - Upload your Videos / Movies
 
 Welcome to the community!`;
-        } else if (status === 'incomplete') {
-            systemMessage = `Your artist application requires attention. Status set to: Incomplete.
+      } else if (status === "incomplete") {
+        systemMessage = `Your artist application requires attention. Status set to: Incomplete.
             
-Reason/Feedback: ${reason || 'Please review your profile details and ensure all information is accurate.'}
+Reason/Feedback: ${reason || "Please review your profile details and ensure all information is accurate."}
             
 Please update your profile and re-apply or contact support.`;
-        } else if (reason) {
-            systemMessage += ` Reason: ${reason}`;
-        }
+      } else if (reason) {
+        systemMessage += ` Reason: ${reason}`;
+      }
 
-        await logSystemMessage(userId, subject, systemMessage);
+      await logSystemMessage(userId, subject, systemMessage);
     }
     return result;
   } catch (error) {
@@ -207,7 +227,12 @@ Please update your profile and re-apply or contact support.`;
   }
 };
 
-const sendEventAttendanceEmail = async (email, firstName, { eventTitle, eventDate, eventLocation, confirmationLink }, userId = null) => {
+const sendEventAttendanceEmail = async (
+  email,
+  firstName,
+  { eventTitle, eventDate, eventLocation, confirmationLink },
+  userId = null
+) => {
   try {
     const html = renderTemplate("event-attendance", {
       firstName,
@@ -224,7 +249,11 @@ const sendEventAttendanceEmail = async (email, firstName, { eventTitle, eventDat
     });
 
     if (userId) {
-        await logSystemMessage(userId, `Attendance: ${eventTitle}`, `Please confirm your attendance. Event Date: ${new Date(eventDate).toLocaleDateString()}`);
+      await logSystemMessage(
+        userId,
+        `Attendance: ${eventTitle}`,
+        `Please confirm your attendance. Event Date: ${new Date(eventDate).toLocaleDateString()}`
+      );
     }
     return result;
   } catch (error) {
@@ -232,34 +261,45 @@ const sendEventAttendanceEmail = async (email, firstName, { eventTitle, eventDat
   }
 };
 
-const sendLowStorageAlert = async (email, firstName, usagePercent, totalUsed, limit, userId = null) => {
+const sendLowStorageAlert = async (
+  email,
+  firstName,
+  usagePercent,
+  totalUsed,
+  limit,
+  userId = null
+) => {
   try {
-     const html = `
+    const html = `
        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
          <h1 style="color: #ef4444;">Low Storage Alert</h1>
          <p>Hello ${firstName},</p>
          <p>The platform storage is reaching its capacity.</p>
          <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
            <p style="margin: 5px 0;"><strong>Current Usage:</strong> ${usagePercent.toFixed(1)}%</p>
-           <p style="margin: 5px 0;"><strong>Used:</strong> ${(totalUsed / (1024*1024*1024)).toFixed(2)} GB</p>
-           <p style="margin: 5px 0;"><strong>Limit:</strong> ${(limit / (1024*1024*1024)).toFixed(2)} GB</p>
+           <p style="margin: 5px 0;"><strong>Used:</strong> ${(totalUsed / (1024 * 1024 * 1024)).toFixed(2)} GB</p>
+           <p style="margin: 5px 0;"><strong>Limit:</strong> ${(limit / (1024 * 1024 * 1024)).toFixed(2)} GB</p>
          </div>
          <p>Please audit files or increase the platform limit in settings.</p>
        </div>
      `;
-     
-     const result = await sendEmail({
-       to: email,
-       subject: `URGENT: Platform Storage at ${usagePercent.toFixed(0)}% Capacity - Nemesis`,
-       html
-     });
 
-     if (userId) {
-         await logSystemMessage(userId, "Low Storage Alert", `Platform storage usage is at ${usagePercent.toFixed(0)}%.`);
-     }
-     return result;
+    const result = await sendEmail({
+      to: email,
+      subject: `URGENT: Platform Storage at ${usagePercent.toFixed(0)}% Capacity - Nemesis`,
+      html,
+    });
+
+    if (userId) {
+      await logSystemMessage(
+        userId,
+        "Low Storage Alert",
+        `Platform storage usage is at ${usagePercent.toFixed(0)}%.`
+      );
+    }
+    return result;
   } catch (error) {
-     console.error("Storage alert email error:", error);
+    console.error("Storage alert email error:", error);
   }
 };
 

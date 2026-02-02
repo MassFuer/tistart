@@ -86,6 +86,9 @@ const eventSchema = new Schema(
         confirmationToken: {
           type: String,
         },
+        confirmationTokenExpires: {
+          type: Date,
+        },
         ticketCode: {
           type: String,
         },
@@ -264,10 +267,7 @@ eventSchema.post("findOneAndDelete", async function (doc) {
       await User.findByIdAndUpdate(doc.artist, { $inc: { "stats.events": -1 } });
 
       // Update Platform Stats
-      await PlatformStats.updateOne(
-        { _id: "global" },
-        { $inc: { "events.total": -1 } }
-      );
+      await PlatformStats.updateOne({ _id: "global" }, { $inc: { "events.total": -1 } });
     } catch (err) {
       console.error("Error updating stats in Event post-delete hook:", err);
     }

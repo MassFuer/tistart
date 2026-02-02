@@ -72,15 +72,16 @@ const ArtistProfilePage = () => {
   if (!artist) {
     return (
         <div className="container mx-auto py-32 text-center text-muted-foreground">
-            <h2 className="text-2xl font-bold">Artist not found</h2>
-            <p>The artist you are looking for does not exist or has been removed.</p>
+            <h2 className="text-2xl font-bold">Profile not found</h2>
+            <p>The profile you are looking for does not exist or has been removed.</p>
         </div>
     );
   }
 
   const socialLinks = artist.artistInfo?.socialMedia;
   const companyName = artist.artistInfo?.companyName || `${artist.firstName} ${artist.lastName}`;
-  const isVerified = artist.artistStatus === "verified";
+  const isAdmin = ["admin", "superAdmin"].includes(artist.role);
+  const isVerified = artist.artistStatus === "verified" || isAdmin;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -101,7 +102,12 @@ const ArtistProfilePage = () => {
                 <div>
                      <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex items-center justify-center md:justify-start gap-2">
                         {companyName}
-                        {isVerified && <CheckCircle2 className="h-6 w-6 text-blue-500" />}
+                        {isVerified && (
+                          <CheckCircle2 
+                            className={`h-6 w-6 ${isAdmin ? "text-blue-600 dark:text-blue-400" : "text-blue-500"}`} 
+                            title={isAdmin ? "Platform Admin" : "Verified Artist"}
+                          />
+                        )}
                     </h1>
                      {artist.artistInfo?.tagline && (
                         <p className="text-xl text-muted-foreground font-medium mt-1">

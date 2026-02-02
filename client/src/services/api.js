@@ -136,7 +136,8 @@ export const eventsAPI = {
   getAttendees: (id, params) =>
     api.get(`/api/events/${id}/attendees`, { params }),
   confirmAttendance: (id, token) =>
-    api.post(`/api/events/${id}/confirm-attendance/${token}`),
+    api.get(`/api/events/${id}/confirm-attendance/${token}`),
+  resendConfirmation: (id) => api.post(`/api/events/${id}/resend-confirmation`),
 };
 
 // Users API
@@ -165,6 +166,7 @@ export const usersAPI = {
 // Admin API
 export const adminAPI = {
   getAllUsers: (params) => api.get("/api/users", { params }),
+  createUser: (userData) => api.post("/api/users", userData),
   getUser: (id) => api.get(`/api/users/${id}`),
   updateUser: (id, userData) => api.patch(`/api/users/${id}`, userData),
   deleteUser: (id) => api.delete(`/api/users/${id}`),

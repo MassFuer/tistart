@@ -20,27 +20,29 @@ const { sendEventAttendanceEmail } = require("../utils/email");
 // GET /api/events/filters-meta - Get metadata for filters (cities, companies, artists)
 router.get("/filters-meta", async (req, res, next) => {
   try {
-     const [cities, companies, artists] = await Promise.all([
-        Event.distinct("location.city", { isPublic: true }),
-        User.distinct("artistInfo.companyName", { role: "artist" }), // Only artists have company names relevant here
-        User.find({ role: "artist", artistStatus: "verified" }).select("firstName lastName artistInfo.companyName _id").lean()
-     ]);
+    const [cities, companies, artists] = await Promise.all([
+      Event.distinct("location.city", { isPublic: true }),
+      User.distinct("artistInfo.companyName", { role: "artist" }), // Only artists have company names relevant here
+      User.find({ role: "artist", artistStatus: "verified" })
+        .select("firstName lastName artistInfo.companyName _id")
+        .lean(),
+    ]);
 
-     // Filter out null/empty values
-     const cleanCities = cities.filter(c => c);
-     const cleanCompanies = companies.filter(c => c);
+    // Filter out null/empty values
+    const cleanCities = cities.filter((c) => c);
+    const cleanCompanies = companies.filter((c) => c);
 
-     res.status(200).json({
-         cities: cleanCities.sort(),
-         companies: cleanCompanies.sort(),
-         artists: artists.map(a => ({
-             _id: a._id,
-             name: `${a.firstName} ${a.lastName}`,
-             companyName: a.artistInfo?.companyName
-         }))
-     });
+    res.status(200).json({
+      cities: cleanCities.sort(),
+      companies: cleanCompanies.sort(),
+      artists: artists.map((a) => ({
+        _id: a._id,
+        name: `${a.firstName} ${a.lastName}`,
+        companyName: a.artistInfo?.companyName,
+      })),
+    });
   } catch (error) {
-      next(error);
+    next(error);
   }
 });
 
@@ -78,19 +80,19 @@ router.get("/", async (req, res, next) => {
       // Find artists with this company name
       const artists = await User.find({
         "artistInfo.companyName": { $regex: company, $options: "i" },
-        role: "artist" // Optional: ensure they are artists
+        role: "artist", // Optional: ensure they are artists
       }).select("_id");
-      
-      const artistIds = artists.map(a => a._id);
-      
-      // If artist filter is also present, intersect? 
+
+      const artistIds = artists.map((a) => a._id);
+
+      // If artist filter is also present, intersect?
       // Current logic: If artist param exists, it overrides specific company search or intersects?
       // Mongoose doesn't allow duplicate keys.
       // If 'artist' param is set, it's specific ID. 'company' finds multiple IDs.
       // If both present, maybe intersect. But frontend usually picks one.
       // We'll prioritize 'artist' param if set, else use company list.
       if (!artist) {
-         filter.artist = { $in: artistIds };
+        filter.artist = { $in: artistIds };
       }
     }
 
@@ -179,7 +181,8 @@ router.get("/calendar", async (req, res, next) => {
 
     const events = await Event.find(filter)
       .populate("artist", "firstName lastName userName artistInfo.companyName")
-      .select("title startDateTime endDateTime category location.isOnline").lean();
+      .select("title startDateTime endDateTime category location.isOnline")
+      .lean();
 
     // Format for FullCalendar
     const calendarEvents = events.map((event) => ({
@@ -452,7 +455,10 @@ router.post(
       }
 
       // Check if user is the owner OR admin/superAdmin
-      if (!isAdminRole(req.payload.role) && event.artist.toString() !== req.payload._id.toString()) {
+      if (
+        !isAdminRole(req.payload.role) &&
+        event.artist.toString() !== req.payload._id.toString()
+      ) {
         return res.status(403).json({ error: "You can only upload images to your own events." });
       }
 
@@ -517,12 +523,22 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
 
     // Generate confirmation token
     const confirmationToken = crypto.randomBytes(32).toString("hex");
+    const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     console.log("Adding user to attendees:", userId);
-    
+
     const updatedEvent = await Event.findOneAndUpdate(
       query,
-      { $addToSet: { attendees: { user: userId, status: "notConfirmed", confirmationToken } } },
+      {
+        $addToSet: {
+          attendees: {
+            user: userId,
+            status: "notConfirmed",
+            confirmationToken,
+            confirmationTokenExpires,
+          },
+        },
+      },
       { new: true }
     ).populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
 
@@ -536,9 +552,9 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
       ) {
         return res.status(400).json({ error: "Event is full." });
       }
-       if (currentEvent.attendees.some(a => a.user?.toString() === userId.toString())) {
-             return res.status(400).json({ error: "You have already joined this event." });
-       }
+      if (currentEvent.attendees.some((a) => a.user?.toString() === userId.toString())) {
+        return res.status(400).json({ error: "You have already joined this event." });
+      }
       return res.status(400).json({ error: "Could not join event. Please try again." });
     }
 
@@ -547,22 +563,101 @@ router.post("/:id/attend", isAuthenticated, async (req, res, next) => {
     // Send confirmation email (non-blocking)
     const user = await User.findById(userId).select("email firstName").lean();
     if (user?.email) {
-      console.log("Sending email to:", user.email);
+      console.log(
+        `[EVENT-JOIN] Sending confirmation email for event "${updatedEvent.title}" to user: ${user.email} (${user.firstName})`
+      );
       const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const confirmationLink = `${clientUrl}/events/${updatedEvent._id}/confirm-attendance/${confirmationToken}`;
+
       sendEventAttendanceEmail(user.email, user.firstName, {
         eventTitle: updatedEvent.title,
         eventDate: updatedEvent.startDateTime,
-        eventLocation: updatedEvent.location?.venue || updatedEvent.location?.city || "",
-        confirmationLink: `${clientUrl}/events/${updatedEvent._id}/confirm-attendance/${confirmationToken}`,
-      }).catch(err => console.error("Attendance email failed:", err));
+        eventLocation:
+          updatedEvent.formattedAddress ||
+          updatedEvent.location?.venue ||
+          updatedEvent.location?.city ||
+          "TBA",
+        confirmationLink: confirmationLink,
+      })
+        .then(() => {
+          console.log(`[EVENT-JOIN] Confirmation email sent successfully to ${user.email}`);
+        })
+        .catch((err) => {
+          console.error(`[EVENT-JOIN] Confirmation email failed for ${user.email}:`, err);
+        });
     } else {
-        console.warn("User has no email, skipping confirmation email");
+      console.warn(
+        `[EVENT-JOIN] User ${userId} has no email or not found, skipping confirmation email`
+      );
     }
 
-    res.status(200).json({ message: "Successfully registered. Check your email to confirm attendance.", data: updatedEvent });
+    res.status(200).json({
+      message: "Successfully registered. Check your email to confirm attendance.",
+      data: updatedEvent,
+    });
   } catch (error) {
     console.error("Error joining event:", error);
     console.error(error.stack);
+    next(error);
+  }
+});
+
+// POST /api/events/:id/resend-confirmation - Resend confirmation email
+router.post("/:id/resend-confirmation", isAuthenticated, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.payload._id;
+
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return res.status(404).json({ error: "Event not found." });
+    }
+
+    const attendee = event.attendees.find((a) => a.user?.toString() === userId.toString());
+
+    if (!attendee) {
+      return res.status(400).json({ error: "You are not registered for this event." });
+    }
+
+    if (attendee.status !== "notConfirmed") {
+      return res.status(400).json({ error: "Attendance already confirmed or cancelled." });
+    }
+
+    // Generate new token and expiration
+    const newToken = crypto.randomBytes(32).toString("hex");
+    const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Update attendee
+    attendee.confirmationToken = newToken;
+    attendee.confirmationTokenExpires = newExpiry;
+
+    event.markModified("attendees");
+    await event.save();
+
+    // Send confirmation email
+    const user = await User.findById(userId).select("email firstName").lean();
+    if (user?.email) {
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const confirmationLink = `${clientUrl}/events/${event._id}/confirm-attendance/${newToken}`;
+
+      sendEventAttendanceEmail(user.email, user.firstName, {
+        eventTitle: event.title,
+        eventDate: event.startDateTime,
+        eventLocation:
+          event.formattedAddress || event.location?.venue || event.location?.city || "TBA",
+        confirmationLink,
+      })
+        .then(() => console.log(`[EVENT-RESEND] Email sent to ${user.email}`))
+        .catch((err) => console.error(`[EVENT-RESEND] Email failed for ${user.email}:`, err));
+    }
+
+    res.status(200).json({
+      message: "Confirmation email resent successfully. Please check your inbox.",
+      data: event,
+    });
+  } catch (error) {
+    console.error("Error resending confirmation:", error);
     next(error);
   }
 });
@@ -582,18 +677,25 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
     }
 
     // Check if user is in attendees (robust comparison)
-    const isAttending = event.attendees.some((a) => a?.user?.toString() === req.payload._id.toString());
+    const isAttending = event.attendees.some(
+      (a) => a?.user?.toString() === req.payload._id.toString()
+    );
 
     if (!isAttending) {
       return res.status(400).json({ error: "You are not registered for this event." });
     }
 
     // Remove user
-    event.attendees = event.attendees.filter((a) => a?.user?.toString() !== req.payload._id.toString());
+    event.attendees = event.attendees.filter(
+      (a) => a?.user?.toString() !== req.payload._id.toString()
+    );
     await event.save();
 
     // Populate artist before sending response
-    await event.populate("artist", "firstName lastName userName artistInfo.companyName profilePicture");
+    await event.populate(
+      "artist",
+      "firstName lastName userName artistInfo.companyName profilePicture"
+    );
 
     res.status(200).json({ message: "Successfully left event.", data: event });
   } catch (error) {
@@ -603,26 +705,47 @@ router.delete("/:id/attend", isAuthenticated, async (req, res, next) => {
   }
 });
 
-// POST /api/events/:id/confirm-attendance/:token - Confirm attendance via email link
-router.post("/:id/confirm-attendance/:token", async (req, res, next) => {
+// GET /api/events/:id/confirm-attendance/:token - Confirm attendance via email link
+router.get("/:id/confirm-attendance/:token", async (req, res, next) => {
   try {
     const { id, token } = req.params;
+    const now = new Date();
+
+    console.log(
+      `[EVENT-CONFIRM] Attempting to confirm event ${id} with token ${token.substring(0, 8)}`
+    );
 
     const event = await Event.findOneAndUpdate(
-      { _id: id, "attendees.confirmationToken": token },
+      {
+        _id: id,
+        attendees: {
+          $elemMatch: {
+            confirmationToken: token,
+            confirmationTokenExpires: { $gt: now },
+          },
+        },
+      },
       {
         $set: {
           "attendees.$.status": "registered",
-          "attendees.$.confirmedAt": new Date(),
+          "attendees.$.confirmedAt": now,
         },
-        $unset: { "attendees.$.confirmationToken": "" },
+        $unset: {
+          "attendees.$.confirmationToken": "",
+          "attendees.$.confirmationTokenExpires": "",
+        },
       },
       { new: true }
     );
 
     if (!event) {
+      console.warn(
+        `[EVENT-CONFIRM] Failed to confirm. Token may be invalid, expired, or already used.`
+      );
       return res.status(404).json({ error: "Invalid or expired confirmation link." });
     }
+
+    console.log(`[EVENT-CONFIRM] Attendance confirmed for event ${id}`);
 
     res.status(200).json({ message: "Attendance confirmed successfully." });
   } catch (error) {
@@ -658,18 +781,18 @@ router.get("/:id/attendees", isAuthenticated, async (req, res, next) => {
       .slice(skip, skip + Number(limit));
 
     // Populate user details for the page
-    const userIds = paginatedIds
-      .map(a => a.user)
-      .filter(id => id); // Filter out null/undefined IDs
+    const userIds = paginatedIds.map((a) => a.user).filter((id) => id); // Filter out null/undefined IDs
 
     const users = await User.find({ _id: { $in: userIds } })
       .select("firstName lastName userName email profilePicture")
       .lean();
 
     const userMap = {};
-    users.forEach(u => { userMap[u._id.toString()] = u; });
+    users.forEach((u) => {
+      userMap[u._id.toString()] = u;
+    });
 
-    const attendees = paginatedIds.map(a => ({
+    const attendees = paginatedIds.map((a) => ({
       user: userMap[a.user?.toString()] || null,
       status: a.status,
       registeredAt: a.registeredAt,

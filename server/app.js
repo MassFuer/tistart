@@ -2,6 +2,10 @@
 // https://www.npmjs.com/package/dotenv
 require("dotenv").config();
 
+// Map environment-specific variables (e.g., SERVER_MONGODB_URI -> MONGODB_URI)
+const { mapEnvVariables } = require("./utils/envMapper");
+mapEnvVariables();
+
 // Validate environment variables before anything else
 const { validateEnv } = require("./utils/validateEnv");
 validateEnv();

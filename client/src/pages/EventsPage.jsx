@@ -6,7 +6,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { eventsAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigation } from "../context/NavigationContext";
-import { useScrollRestore } from "../hooks/useScrollRestore";
 import EventCard from "../components/event/EventCard";
 import EventsMap from "../components/map/EventsMap";
 import Loading from "../components/common/Loading";
@@ -81,9 +80,6 @@ const EventsPage = () => {
     },
     syncWithUrl: true,
   });
-
-  // Restore scroll position after data loads
-  useScrollRestore(!isLoading);
 
   const [allEventsForMap, setAllEventsForMap] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -198,7 +194,7 @@ const EventsPage = () => {
 
                             {(isVerifiedArtist || isAdmin) && (
                                <Button asChild size="icon" className="bg-green-700 hover:bg-green-800 text-white h-9 w-9 sm:w-auto sm:h-9 sm:px-4">
-                                  <Link to="/events/new" onClick={() => saveScrollPosition()}>
+                                  <Link to="/events/new">
                                     <Plus className="h-5 w-5 sm:mr-2" />
                                     <span className="hidden sm:inline">Create Event</span>
                                   </Link>
