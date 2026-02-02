@@ -232,7 +232,7 @@ const Navbar = () => {
                       <Link
                         to="/admin?tab=system"
                         onClick={handleNavClick}
-                        className="flex items-center font-semibold text-primary cursor-pointer"
+                        className="flex items-center font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
                       >
                         <Settings className="mr-2 h-4 w-4" /> System Settings
                       </Link>
