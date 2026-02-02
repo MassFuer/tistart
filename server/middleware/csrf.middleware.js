@@ -118,7 +118,8 @@ const validateCsrf = (req, res, next) => {
       normalizedOrigin.startsWith(trusted.toLowerCase().replace(/\/$/, ""))
     ) ||
     normalizedOrigin.endsWith(".vercel.app") ||
-    normalizedOrigin.endsWith(".netlify.app");
+    normalizedOrigin.endsWith(".netlify.app") ||
+    normalizedOrigin.includes(".ts.net"); // Allow Tailscale/Homelab subdomains
 
   if (isProd && isTrustedOrigin && headerToken) {
     // If the match failed but we have a trusted origin and a header token,

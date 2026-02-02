@@ -4,7 +4,8 @@
  */
 const mapEnvVariables = () => {
   const env = process.env.NODE_ENV || "development";
-  
+  console.log(`[ENV] System initializing in '${env}' mode`);
+
   // Define prefix based on environment
   let prefix = "";
   if (env === "server") prefix = "SERVER_";
@@ -20,10 +21,10 @@ const mapEnvVariables = () => {
     "PORT",
     "STRIPE_WEBHOOK_SECRET",
     "RESEND_API_KEY",
-    "EMAIL_FROM"
+    "EMAIL_FROM",
   ];
 
-  variablesToMap.forEach(v => {
+  variablesToMap.forEach((v) => {
     const envSpecificKey = `${prefix}${v}`;
     if (process.env[envSpecificKey]) {
       console.log(`[ENV] Overriding ${v} with ${envSpecificKey} for ${env} mode`);

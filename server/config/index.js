@@ -42,19 +42,27 @@ module.exports = (app) => {
       origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
+
         // Normalize origin: lowercase and remove trailing slash
         const normalizedOrigin = origin.toLowerCase().replace(/\/$/, "");
-        
-        const isAllowed = allowedOrigins.some(ao => ao.toLowerCase().replace(/\/$/, "") === normalizedOrigin) || 
-                         normalizedOrigin.endsWith(".vercel.app") ||
-                         normalizedOrigin.endsWith(".netlify.app");
-        
-        if (isAllowed) {
+
+        const isTrustedOrigin =
+          allowedOrigins.some((trusted) =>
+            normalizedOrigin.startsWith(trusted.toLowerCase().replace(/\/$/, ""))
+          ) ||
+          normalizedOrigin.endsWith(".vercel.app") ||
+          normalizedOrigin.endsWith(".netlify.app") ||
+          normalizedOrigin.includes(".ts.net"); // Allow Tailscale/Homelab subdomains
+
+        if (isTrustedOrigin) {
           callback(null, true);
         } else {
-          console.warn(`CORS blocked for origin: ${origin}`);
-          callback(new Error("Not allowed by CORS"));
+          console.warn(
+            `CORS blocked for origin: ${origin}. Expected one of: ${allowedOrigins.join(", ")}`
+          );
+          const corsError = new Error("Not allowed by CORS");
+          corsError.origin = origin;
+          callback(corsError);
         }
       },
       credentials: true, // Allow cookies to be sent

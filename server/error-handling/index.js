@@ -14,7 +14,15 @@ module.exports = (app) => {
       return next(err);
     }
 
-    // 2. Handle 401 Unauthorized (e.g. invalid JWT from express-jwt)
+    // 2. Handle CORS Errors (from config/index.js callback)
+    if (err.message === "Not allowed by CORS") {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: `CORS policy blocked this request. Origin: ${err.origin || "unknown"} is not in allowedOrigins.`,
+      });
+    }
+
+    // 3. Handle 401 Unauthorized (e.g. invalid JWT from express-jwt)
     if (err.status === 401) {
       return res.status(401).json({
         error: "Unauthorized",
