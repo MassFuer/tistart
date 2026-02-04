@@ -11,6 +11,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
 // POST /api/payments/webhook
 // Uses raw body for signature verification
 router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
+  // #swagger.tags = ['Payments']
   if (!stripe) {
     console.error("Stripe not configured - missing STRIPE_SECRET_KEY");
     return res.status(500).json({ error: "Stripe not configured" });

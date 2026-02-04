@@ -213,7 +213,6 @@ artworkSchema.index({ searchKeywords: 1 });
 artworkSchema.index({ title: "text", description: "text" });
 
 // Flag new document and check for status changes for post-save hook
-// Flag new document and check for status changes for post-save hook
 artworkSchema.pre("save", async function () {
   this.wasNew = this.isNew;
 

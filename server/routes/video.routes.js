@@ -8,6 +8,7 @@ const { purchaseLimiter } = require("../middleware/rateLimit.middleware");
 
 // GET /api/videos/:artworkId/access - Check if user has access to video
 router.get("/:artworkId/access", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Videos']
   try {
     const { artworkId } = req.params;
 
@@ -64,6 +65,7 @@ router.get("/:artworkId/access", isAuthenticated, attachUser, async (req, res, n
 
 // GET /api/videos/:artworkId/stream - Get signed URL for video streaming
 router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Videos']
   try {
     const { artworkId } = req.params;
 
@@ -124,9 +126,55 @@ router.get("/:artworkId/stream", isAuthenticated, attachUser, async (req, res, n
   }
 });
 
+// GET /api/videos - List all videos with filters
+router.get(
+  "/",
+  // #swagger.tags = ['Videos']
+  async (req, res, next) => {
+    try {
+      const { page = 1, limit = 12, category, artistId, isPaid, search } = req.query;
+      const query = { "video.url": { $exists: true, $ne: null } }; // Only artworks with videos
+
+      if (category) {
+        query.category = category;
+      }
+      if (artistId) {
+        query.artist = artistId;
+      }
+      if (isPaid !== undefined) {
+        query["video.isPaid"] = isPaid === "true";
+      }
+      if (search) {
+        query.title = { $regex: search, $options: "i" };
+      }
+
+      const videos = await Artwork.find(query)
+        .populate("artist", "firstName lastName userName")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit));
+
+      const total = await Artwork.countDocuments(query);
+
+      res.json({
+        data: videos,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // POST /api/videos/:artworkId/purchase - Instant purchase video access
 router.post(
   "/:artworkId/purchase",
+  // #swagger.tags = ['Videos']
   isAuthenticated,
   purchaseLimiter,
   attachUser,
@@ -212,6 +260,7 @@ router.post(
 
 // GET /api/videos/purchased - Get user's purchased videos
 router.get("/purchased", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Videos']
   try {
     const { page = 1, limit = 12 } = req.query;
 

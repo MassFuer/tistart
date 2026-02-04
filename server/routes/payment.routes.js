@@ -10,6 +10,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
 // Create PaymentIntent for an order
 // POST /api/payments/create-intent
 router.post("/create-intent", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Payments']
   try {
     if (!stripe) {
       return res.status(500).json({ error: "Payment processing not configured" });
@@ -101,6 +102,7 @@ router.post("/create-intent", isAuthenticated, async (req, res, next) => {
 // Get payment status for an order
 // GET /api/payments/:orderId
 router.get("/:orderId", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Payments']
   try {
     const { orderId } = req.params;
 

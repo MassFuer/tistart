@@ -5,6 +5,7 @@ const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // GET /api/conversations - List user's conversations
 router.get("/", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { status = "active", limit = 20, offset = 0 } = req.query;
@@ -50,6 +51,7 @@ router.get("/", isAuthenticated, async (req, res, next) => {
 
 // GET /api/conversations/:id - Get conversation details
 router.get("/:id", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id } = req.params;
@@ -76,59 +78,65 @@ router.get("/:id", isAuthenticated, async (req, res, next) => {
 });
 
 // POST /api/conversations - Start new conversation
-router.post("/", isAuthenticated, async (req, res, next) => {
-  try {
-    const userId = req.payload._id;
-    const { participantId, artworkId, initialMessage } = req.body;
+router.post(
+  "/",
+  // #swagger.tags = ['Conversations']
+  isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const userId = req.payload._id;
+      const { participantId, artworkId, initialMessage } = req.body;
 
-    if (!participantId) {
-      return res.status(400).json({ message: "Participant ID is required" });
-    }
+      if (!participantId) {
+        return res.status(400).json({ message: "Participant ID is required" });
+      }
 
-    /* if (participantId === userId) {
+      /* if (participantId === userId) {
       return res.status(400).json({ message: "Cannot start conversation with yourself" });
     } */
 
-    // Find or create conversation
-    const conversation = await Conversation.findOrCreateConversation(
-      [userId, participantId],
-      artworkId || null
-    );
+      // Find or create conversation
+      const conversation = await Conversation.findOrCreateConversation(
+        [userId, participantId],
+        artworkId || null
+      );
 
-    // Populate the conversation
-    await conversation.populate([
-      {
-        path: "participants",
-        select:
-          "firstName lastName userName profilePicture role artistStatus artistInfo.companyName",
-      },
-      { path: "artwork", select: "title images price artist" },
-    ]);
+      // Populate the conversation
+      await conversation.populate([
+        {
+          path: "participants",
+          select:
+            "firstName lastName userName profilePicture role artistStatus artistInfo.companyName",
+        },
+        { path: "artwork", select: "title images price artist" },
+      ]);
 
-    // If initial message provided, create it
-    if (initialMessage && initialMessage.trim()) {
-      const message = await Message.create({
-        conversation: conversation._id,
-        sender: userId,
-        content: initialMessage.trim(),
-        type: "text",
-      });
+      // If initial message provided, create it
+      if (initialMessage && initialMessage.trim()) {
+        const message = await Message.create({
+          conversation: conversation._id,
+          sender: userId,
+          content: initialMessage.trim(),
+          type: "text",
+        });
 
-      // Update conversation's last message
-      await conversation.updateLastMessage(message);
+        // Update conversation's last message
+        await conversation.updateLastMessage(message);
 
-      // Increment unread count for the other participant
-      await conversation.incrementUnread(participantId);
+        // Increment unread count for the other participant
+        await conversation.incrementUnread(participantId);
+      }
+
+      res.status(201).json(conversation);
+    } catch (error) {
+      next(error);
     }
-
-    res.status(201).json(conversation);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // DELETE /api/conversations/:id - Archive conversation
 router.delete("/:id", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id } = req.params;
@@ -151,6 +159,7 @@ router.delete("/:id", isAuthenticated, async (req, res, next) => {
 
 // GET /api/conversations/:id/messages - Get messages (paginated)
 router.get("/:id/messages", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id } = req.params;
@@ -182,68 +191,74 @@ router.get("/:id/messages", isAuthenticated, async (req, res, next) => {
 });
 
 // POST /api/conversations/:id/messages - Send message (REST fallback)
-router.post("/:id/messages", isAuthenticated, async (req, res, next) => {
-  try {
-    const userId = req.payload._id;
-    const { id } = req.params;
-    const { content, type = "text" } = req.body;
+router.post(
+  "/:id/messages",
+  // #swagger.tags = ['Conversations']
+  isAuthenticated,
+  async (req, res, next) => {
+    try {
+      const userId = req.payload._id;
+      const { id } = req.params;
+      const { content, type = "text" } = req.body;
 
-    // Verify user is participant
-    const conversation = await Conversation.findOne({
-      _id: id,
-      participants: userId,
-      status: "active",
-    });
-
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
-
-    if (!content || !content.trim()) {
-      return res.status(400).json({ message: "Message content is required" });
-    }
-
-    // Create message
-    const message = await Message.create({
-      conversation: id,
-      sender: userId,
-      content: content.trim(),
-      type,
-      readBy: [{ user: userId, readAt: new Date() }],
-    });
-
-    // Populate sender info
-    await message.populate(
-      "sender",
-      "firstName lastName userName profilePicture role artistStatus"
-    );
-
-    // Update conversation's last message
-    await conversation.updateLastMessage(message);
-
-    // Increment unread count for other participants
-    const otherParticipants = conversation.participants.filter((p) => p.toString() !== userId);
-    for (const participantId of otherParticipants) {
-      await conversation.incrementUnread(participantId);
-    }
-
-    // Emit socket event if io is available
-    const io = req.app.get("io");
-    if (io) {
-      io.to(`conversation:${id}`).emit("message:new", {
-        message,
-        conversationId: id,
+      // Verify user is participant
+      const conversation = await Conversation.findOne({
+        _id: id,
+        participants: userId,
+        status: "active",
       });
-    }
 
-    res.status(201).json(message);
-  } catch (error) {
-    next(error);
+      if (!conversation) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // Create message
+      const message = await Message.create({
+        conversation: id,
+        sender: userId,
+        content: content.trim(),
+        type,
+        readBy: [{ user: userId, readAt: new Date() }],
+      });
+
+      // Populate sender info
+      await message.populate(
+        "sender",
+        "firstName lastName userName profilePicture role artistStatus"
+      );
+
+      // Update conversation's last message
+      await conversation.updateLastMessage(message);
+
+      // Increment unread count for other participants
+      const otherParticipants = conversation.participants.filter((p) => p.toString() !== userId);
+      for (const participantId of otherParticipants) {
+        await conversation.incrementUnread(participantId);
+      }
+
+      // Emit socket event if io is available
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`conversation:${id}`).emit("message:new", {
+          message,
+          conversationId: id,
+        });
+      }
+
+      res.status(201).json(message);
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // PATCH /api/conversations/:id/read - Mark messages as read
 router.patch("/:id/read", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id } = req.params;
@@ -281,6 +296,7 @@ router.patch("/:id/read", isAuthenticated, async (req, res, next) => {
 
 // POST /api/conversations/:id/offer - Make price offer
 router.post("/:id/offer", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id } = req.params;
@@ -397,6 +413,7 @@ router.post("/:id/offer", isAuthenticated, async (req, res, next) => {
 
 // PATCH /api/conversations/:id/offer/:offerId - Respond to offer
 router.patch("/:id/offer/:offerId", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
     const { id, offerId } = req.params;
@@ -544,6 +561,7 @@ router.patch("/:id/offer/:offerId", isAuthenticated, async (req, res, next) => {
 
 // GET /api/conversations/unread/count - Get total unread count
 router.get("/unread/count", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Conversations']
   try {
     const userId = req.payload._id;
 

@@ -5,6 +5,7 @@ const { isAuthenticated } = require("../middleware/jwt.middleware");
 
 // POST /api/geocode - Geocode an address to coordinates
 router.post("/", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Geocode']
   try {
     const { street, streetNum, zipCode, city, country } = req.body;
 
@@ -43,6 +44,7 @@ router.post("/", isAuthenticated, async (req, res, next) => {
 
 // POST /api/geocode/reverse - Reverse geocode coordinates to address
 router.post("/reverse", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Geocode']
   try {
     const { lat, lng } = req.body;
 

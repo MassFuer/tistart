@@ -26,256 +26,275 @@ const { body } = require("express-validator");
 const { validate } = require("../middleware/validation.middleware");
 
 // GET /api/artworks - Get all artworks (public, but auth-aware for paywall)
-router.get("/", optionalAuth, async (req, res, next) => {
-  try {
-    const {
-      page = 1,
-      limit = 12,
-      category,
-      minPrice,
-      maxPrice,
-      artist,
-      materials,
-      colors,
-      isForSale,
-      director,
-      cast,
-      team,
-      sort = "-createdAt",
-      search,
-    } = req.query;
+router.get(
+  "/",
+  // #swagger.tags = ['Artworks']
+  optionalAuth,
+  async (req, res, next) => {
+    try {
+      const {
+        page = 1,
+        limit = 12,
+        category,
+        minPrice,
+        maxPrice,
+        artist,
+        materials,
+        colors,
+        isForSale,
+        director,
+        cast,
+        team,
+        sort = "-createdAt",
+        search,
+      } = req.query;
 
-    // Build filter object
-    const filter = {};
+      // Build filter object
+      const filter = {};
 
-    if (category) {
-      filter.category = category;
-    }
+      if (category) {
+        filter.category = category;
+      }
 
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
+      if (minPrice || maxPrice) {
+        filter.price = {};
+        if (minPrice) filter.price.$gte = Number(minPrice);
+        if (maxPrice) filter.price.$lte = Number(maxPrice);
+      }
 
-    if (artist) {
-      filter.artist = artist;
-    }
+      if (artist) {
+        filter.artist = artist;
+      }
 
-    if (materials) {
-      filter.materialsUsed = materials;
-    }
+      if (materials) {
+        filter.materialsUsed = materials;
+      }
 
-    if (colors) {
-      filter.colors = colors;
-    }
+      if (colors) {
+        filter.colors = colors;
+      }
 
-    // Video Filters
-    if (director) {
-      filter["video.director"] = director;
-    }
-    if (cast) {
-      filter["video.cast"] = cast;
-    }
-    if (team) {
-      filter["video.productionTeam.name"] = team;
-    }
+      // Video Filters
+      if (director) {
+        filter["video.director"] = director;
+      }
+      if (cast) {
+        filter["video.cast"] = cast;
+      }
+      if (team) {
+        filter["video.productionTeam.name"] = team;
+      }
 
-    if (isForSale !== undefined) {
-      filter.isForSale = isForSale === "true";
-    }
+      if (isForSale !== undefined) {
+        filter.isForSale = isForSale === "true";
+      }
 
-    if (search) {
-      // Optimized search using N-grams (handles substring matching efficiently)
-      const searchTokens = search
-        .toLowerCase()
-        .trim()
-        .split(/[\s\-_.,;?!]+/);
-      const validTokens = searchTokens.filter((t) => t.length > 0);
+      if (search) {
+        // Optimized search using N-grams (handles substring matching efficiently)
+        const searchTokens = search
+          .toLowerCase()
+          .trim()
+          .split(/[\s\-_.,;?!]+/);
+        const validTokens = searchTokens.filter((t) => t.length > 0);
 
-      if (validTokens.length > 0) {
-        // If query contains very short tokens (<3 chars), fallback to regex
-        // because we only index 3-grams and above for performance.
-        const hasSmallTokens = validTokens.some((t) => t.length < 3);
+        if (validTokens.length > 0) {
+          // If query contains very short tokens (<3 chars), fallback to regex
+          // because we only index 3-grams and above for performance.
+          const hasSmallTokens = validTokens.some((t) => t.length < 3);
 
-        if (hasSmallTokens) {
-          const searchRegex = new RegExp(search, "i");
-          // Use the pre-computed search string which includes title, desc, and artist
-          filter.searchString = { $regex: searchRegex };
-        } else {
-          // Use n-gram index for fast substring search
-          // $all ensures that for "blue sky", we find docs with "blue" AND "sky"
-          filter.searchKeywords = { $all: validTokens };
+          if (hasSmallTokens) {
+            const searchRegex = new RegExp(search, "i");
+            // Use the pre-computed search string which includes title, desc, and artist
+            filter.searchString = { $regex: searchRegex };
+          } else {
+            // Use n-gram index for fast substring search
+            // $all ensures that for "blue sky", we find docs with "blue" AND "sky"
+            filter.searchKeywords = { $all: validTokens };
+          }
         }
       }
+
+      // Calculate pagination
+      const skip = (Number(page) - 1) * Number(limit);
+
+      // Map sort parameters to database fields
+      // Support: revenue, sales, rating, price, title, createdAt
+      let sortField = sort;
+      let sortDirection = 1;
+
+      // Handle negative prefix for descending order
+      if (sort.startsWith("-")) {
+        sortDirection = -1;
+        sortField = sort.substring(1);
+      }
+
+      // Map frontend sort keys to actual database fields
+      const sortMapping = {
+        revenue: "stats.totalRevenue",
+        sales: "stats.totalSold",
+        rating: "averageRating",
+        price: "price",
+        title: "title",
+        createdAt: "createdAt",
+        stock: "stock",
+      };
+
+      const dbSortField = sortMapping[sortField] || sortField;
+      const sortObj = { [dbSortField]: sortDirection };
+
+      // Execute query
+      const [artworks, total] = await Promise.all([
+        Artwork.find(filter)
+          .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
+          .sort(sortObj)
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        Artwork.countDocuments(filter),
+      ]);
+
+      // Sanitize artworks to protect paid video content
+      const user = req.user || req.payload; // From optionalAuth
+      const sanitizedArtworks = await Promise.all(
+        artworks.map((art) => sanitizeArtwork(art, user))
+      );
+
+      res.status(200).json({
+        data: sanitizedArtworks,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (error) {
+      next(error);
     }
-
-    // Calculate pagination
-    const skip = (Number(page) - 1) * Number(limit);
-
-    // Map sort parameters to database fields
-    // Support: revenue, sales, rating, price, title, createdAt
-    let sortField = sort;
-    let sortDirection = 1;
-
-    // Handle negative prefix for descending order
-    if (sort.startsWith("-")) {
-      sortDirection = -1;
-      sortField = sort.substring(1);
-    }
-
-    // Map frontend sort keys to actual database fields
-    const sortMapping = {
-      revenue: "stats.totalRevenue",
-      sales: "stats.totalSold",
-      rating: "averageRating",
-      price: "price",
-      title: "title",
-      createdAt: "createdAt",
-      stock: "stock",
-    };
-
-    const dbSortField = sortMapping[sortField] || sortField;
-    const sortObj = { [dbSortField]: sortDirection };
-
-    // Execute query
-    const [artworks, total] = await Promise.all([
-      Artwork.find(filter)
-        .populate("artist", "firstName lastName userName artistInfo.companyName profilePicture")
-        .sort(sortObj)
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Artwork.countDocuments(filter),
-    ]);
-
-    // Sanitize artworks to protect paid video content
-    const user = req.user || req.payload; // From optionalAuth
-    const sanitizedArtworks = await Promise.all(artworks.map((art) => sanitizeArtwork(art, user)));
-
-    res.status(200).json({
-      data: sanitizedArtworks,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // GET /api/artworks/artist/stats - Get artist artworks with sales stats (verified artist)
-router.get("/artist/stats", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
-  try {
-    const artistId = req.user._id;
+router.get(
+  "/artist/stats",
+  // #swagger.tags = ['Artworks']
+  isAuthenticated,
+  isVerifiedArtist,
+  async (req, res, next) => {
+    try {
+      const artistId = req.user._id;
 
-    // 1. Aggregate Orders to get Sales & Revenue per Artwork
-    const orderStats = await Order.aggregate([
-      {
-        $match: {
-          "items.artist": artistId,
-          status: { $in: ["paid", "shipped", "delivered"] }, // Only count completed sales
+      // 1. Aggregate Orders to get Sales & Revenue per Artwork
+      const orderStats = await Order.aggregate([
+        {
+          $match: {
+            "items.artist": artistId,
+            status: { $in: ["paid", "shipped", "delivered"] }, // Only count completed sales
+          },
         },
-      },
-      { $unwind: "$items" },
-      {
-        $match: {
-          "items.artist": artistId,
-          "items.itemType": "artwork", // Filter only artworks
+        { $unwind: "$items" },
+        {
+          $match: {
+            "items.artist": artistId,
+            "items.itemType": "artwork", // Filter only artworks
+          },
         },
-      },
-      {
-        $group: {
-          _id: "$items.artwork",
-          totalSold: { $sum: "$items.quantity" },
-          totalRevenue: { $sum: "$items.artistEarnings" }, // Use pre-calculated earnings
+        {
+          $group: {
+            _id: "$items.artwork",
+            totalSold: { $sum: "$items.quantity" },
+            totalRevenue: { $sum: "$items.artistEarnings" }, // Use pre-calculated earnings
+          },
         },
-      },
-    ]);
+      ]);
 
-    // Create a map for easy lookup
-    const statsMap = {};
-    let totalArtistRevenue = 0;
-    let totalItemsSold = 0;
+      // Create a map for easy lookup
+      const statsMap = {};
+      let totalArtistRevenue = 0;
+      let totalItemsSold = 0;
 
-    orderStats.forEach((stat) => {
-      if (stat._id) {
-        statsMap[stat._id.toString()] = {
-          sold: stat.totalSold,
-          revenue: stat.totalRevenue,
+      orderStats.forEach((stat) => {
+        if (stat._id) {
+          statsMap[stat._id.toString()] = {
+            sold: stat.totalSold,
+            revenue: stat.totalRevenue,
+          };
+          totalArtistRevenue += stat.totalRevenue;
+          totalItemsSold += stat.totalSold;
+        }
+      });
+
+      // 2. Fetch all artworks by this artist
+      const artworks = await Artwork.find({ artist: artistId }).sort("-createdAt");
+
+      // 3. Merge stats
+      const artworksWithStats = artworks.map((artwork) => {
+        const stat = statsMap[artwork._id.toString()] || { sold: 0, revenue: 0 };
+        return {
+          ...artwork.toObject(),
+          stats: {
+            totalSold: stat.sold,
+            totalRevenue: stat.revenue,
+          },
         };
-        totalArtistRevenue += stat.totalRevenue;
-        totalItemsSold += stat.totalSold;
-      }
-    });
+      });
 
-    // 2. Fetch all artworks by this artist
-    const artworks = await Artwork.find({ artist: artistId }).sort("-createdAt");
+      // 4. Calculate Overall KPIs
+      const totalArtworks = artworks.length;
+      const totalReviews = artworks.reduce((acc, curr) => acc + (curr.numOfReviews || 0), 0);
+      // Weighted average rating
+      const totalRatingSum = artworks.reduce(
+        (acc, curr) => acc + (curr.averageRating || 0) * (curr.numOfReviews || 0),
+        0
+      );
+      const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
 
-    // 3. Merge stats
-    const artworksWithStats = artworks.map((artwork) => {
-      const stat = statsMap[artwork._id.toString()] || { sold: 0, revenue: 0 };
-      return {
-        ...artwork.toObject(),
-        stats: {
-          totalSold: stat.sold,
-          totalRevenue: stat.revenue,
+      res.status(200).json({
+        data: artworksWithStats,
+        kpis: {
+          totalRevenue: totalArtistRevenue,
+          totalSold: totalItemsSold,
+          totalArtworks,
+          totalReviews,
+          avgRating: Number(avgRating),
         },
-      };
-    });
-
-    // 4. Calculate Overall KPIs
-    const totalArtworks = artworks.length;
-    const totalReviews = artworks.reduce((acc, curr) => acc + (curr.numOfReviews || 0), 0);
-    // Weighted average rating
-    const totalRatingSum = artworks.reduce(
-      (acc, curr) => acc + (curr.averageRating || 0) * (curr.numOfReviews || 0),
-      0
-    );
-    const avgRating = totalReviews > 0 ? (totalRatingSum / totalReviews).toFixed(1) : 0;
-
-    res.status(200).json({
-      data: artworksWithStats,
-      kpis: {
-        totalRevenue: totalArtistRevenue,
-        totalSold: totalItemsSold,
-        totalArtworks,
-        totalReviews,
-        avgRating: Number(avgRating),
-      },
-    });
-  } catch (error) {
-    next(error);
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // GET /api/artworks/:id - Get single artwork (public, but auth-aware for paywall)
-router.get("/:id", optionalAuth, async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id).populate(
-      "artist",
-      "firstName lastName userName artistInfo profilePicture"
-    );
+router.get(
+  "/:id",
+  // #swagger.tags = ['Artworks']
+  optionalAuth,
+  async (req, res, next) => {
+    try {
+      const artwork = await Artwork.findById(req.params.id).populate(
+        "artist",
+        "firstName lastName userName artistInfo profilePicture"
+      );
 
-    if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
+      if (!artwork) {
+        return res.status(404).json({ error: "Artwork not found." });
+      }
+
+      const user = req.user || req.payload;
+      const sanitizedArtwork = await sanitizeArtwork(artwork.toObject(), user);
+
+      res.status(200).json({ data: sanitizedArtwork });
+    } catch (error) {
+      next(error);
     }
-
-    const user = req.user || req.payload;
-    const sanitizedArtwork = await sanitizeArtwork(artwork.toObject(), user);
-
-    res.status(200).json({ data: sanitizedArtwork });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // POST /api/artworks - Create artwork (verified artists only)
 router.post(
   "/",
+  // #swagger.tags = ['Artworks']
   isAuthenticated,
   isVerifiedArtist,
   [
@@ -345,164 +364,177 @@ router.post(
 );
 
 // PATCH /api/artworks/:id - Update artwork (owner only)
-router.patch("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id);
+router.patch(
+  "/:id",
+  // #swagger.tags = ['Artworks']
+  isAuthenticated,
+  isVerifiedArtist,
+  async (req, res, next) => {
+    try {
+      const artwork = await Artwork.findById(req.params.id);
 
-    if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
-    }
-
-    // Check if user is the owner OR admin
-    if (
-      !isAdminRole(req.payload.role) &&
-      artwork.artist.toString() !== req.payload._id.toString()
-    ) {
-      return res.status(403).json({ error: "You can only update your own artworks." });
-    }
-
-    const allowedFields = [
-      "title",
-      "description",
-      "originalPrice",
-      "price",
-      "isForSale",
-      "category",
-      "materialsUsed",
-      "colors",
-      "dimensions",
-      "totalInStock",
-      "images",
-    ];
-
-    const updateObj = {};
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updateObj[field] = req.body[field];
+      if (!artwork) {
+        return res.status(404).json({ error: "Artwork not found." });
       }
-    }
 
-    // Explicitly handle video metadata fields
-    const videoFields = [
-      "synopsis",
-      "director",
-      "coAuthor",
-      "cast",
-      "productionTeam",
-      "isPaid",
-      "quality",
-    ];
-    // Check if req.body has a nested 'video' object
-    if (req.body.video) {
-      for (const vField of videoFields) {
-        const value = req.body.video[vField];
-        // Only update if not undefined AND (not an empty string for fields with enums/strict requirements)
-        if (value !== undefined) {
-          if (vField === "quality" && value === "") {
-            // Skip empty quality to avoid enum validation error
-            continue;
-          }
-          updateObj[`video.${vField}`] = value;
+      // Check if user is the owner OR admin
+      if (
+        !isAdminRole(req.payload.role) &&
+        artwork.artist.toString() !== req.payload._id.toString()
+      ) {
+        return res.status(403).json({ error: "You can only update your own artworks." });
+      }
+
+      const allowedFields = [
+        "title",
+        "description",
+        "originalPrice",
+        "price",
+        "isForSale",
+        "category",
+        "materialsUsed",
+        "colors",
+        "dimensions",
+        "totalInStock",
+        "images",
+      ];
+
+      const updateObj = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateObj[field] = req.body[field];
         }
       }
-    }
-    // Also check flat fields if sent that way (e.g. video.synopsis)
-    // pass
 
-    // Handle image deletions - find images that were removed
-    if (req.body.images !== undefined) {
-      const oldImages = artwork.images || [];
-      const newImages = req.body.images || [];
-      const removedImages = oldImages.filter((img) => !newImages.includes(img));
-
-      // Delete removed images from R2
-      const artistId = artwork.artist.toString();
-      const BATCH_SIZE = 5;
-      for (let i = 0; i < removedImages.length; i += BATCH_SIZE) {
-        const chunk = removedImages.slice(i, i + BATCH_SIZE);
-        await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
+      // Explicitly handle video metadata fields
+      const videoFields = [
+        "synopsis",
+        "director",
+        "coAuthor",
+        "cast",
+        "productionTeam",
+        "isPaid",
+        "quality",
+      ];
+      // Check if req.body has a nested 'video' object
+      if (req.body.video) {
+        for (const vField of videoFields) {
+          const value = req.body.video[vField];
+          // Only update if not undefined AND (not an empty string for fields with enums/strict requirements)
+          if (value !== undefined) {
+            if (vField === "quality" && value === "") {
+              // Skip empty quality to avoid enum validation error
+              continue;
+            }
+            updateObj[`video.${vField}`] = value;
+          }
+        }
       }
-    }
+      // Also check flat fields if sent that way (e.g. video.synopsis)
+      // pass
 
-    // Handle video settings separately to avoid overwriting the video URL
-    // Only update isPaid if videoIsPaid is provided
-    if (req.body.videoIsPaid !== undefined && artwork.video?.url) {
-      updateObj["video.isPaid"] = req.body.videoIsPaid;
-    }
+      // Handle image deletions - find images that were removed
+      if (req.body.images !== undefined) {
+        const oldImages = artwork.images || [];
+        const newImages = req.body.images || [];
+        const removedImages = oldImages.filter((img) => !newImages.includes(img));
 
-    // Handle video removal (user clicked remove on existing video)
-    if (req.body.removeVideo === true && artwork.video?.url) {
-      // Delete video files from storage
-      const artistId = artwork.artist.toString();
-      await deleteFile(artwork.video.url, artistId);
-      if (artwork.video.thumbnailUrl) {
-        await deleteFile(artwork.video.thumbnailUrl, artistId);
+        // Delete removed images from R2
+        const artistId = artwork.artist.toString();
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < removedImages.length; i += BATCH_SIZE) {
+          const chunk = removedImages.slice(i, i + BATCH_SIZE);
+          await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
+        }
       }
-      if (artwork.video.previewUrl) {
-        await deleteFile(artwork.video.previewUrl, artistId);
+
+      // Handle video settings separately to avoid overwriting the video URL
+      // Only update isPaid if videoIsPaid is provided
+      if (req.body.videoIsPaid !== undefined && artwork.video?.url) {
+        updateObj["video.isPaid"] = req.body.videoIsPaid;
       }
-      // Remove video from artwork
-      updateObj.video = null;
+
+      // Handle video removal (user clicked remove on existing video)
+      if (req.body.removeVideo === true && artwork.video?.url) {
+        // Delete video files from storage
+        const artistId = artwork.artist.toString();
+        await deleteFile(artwork.video.url, artistId);
+        if (artwork.video.thumbnailUrl) {
+          await deleteFile(artwork.video.thumbnailUrl, artistId);
+        }
+        if (artwork.video.previewUrl) {
+          await deleteFile(artwork.video.previewUrl, artistId);
+        }
+        // Remove video from artwork
+        updateObj.video = null;
+      }
+
+      const updatedArtwork = await Artwork.findByIdAndUpdate(req.params.id, updateObj, {
+        new: true,
+        runValidators: true,
+      }).populate("artist", "firstName lastName userName artistInfo.companyName");
+
+      res.status(200).json({ data: updatedArtwork });
+    } catch (error) {
+      next(error);
     }
-
-    const updatedArtwork = await Artwork.findByIdAndUpdate(req.params.id, updateObj, {
-      new: true,
-      runValidators: true,
-    }).populate("artist", "firstName lastName userName artistInfo.companyName");
-
-    res.status(200).json({ data: updatedArtwork });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // DELETE /api/artworks/:id - Delete artwork (owner only)
-router.delete("/:id", isAuthenticated, isVerifiedArtist, async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id);
+router.delete(
+  "/:id",
+  // #swagger.tags = ['Artworks']
+  isAuthenticated,
+  isVerifiedArtist,
+  async (req, res, next) => {
+    try {
+      const artwork = await Artwork.findById(req.params.id);
 
-    if (!artwork) {
-      return res.status(404).json({ error: "Artwork not found." });
-    }
+      if (!artwork) {
+        return res.status(404).json({ error: "Artwork not found." });
+      }
 
-    // Check if user is the owner OR admin/superAdmin
-    if (
-      !isAdminRole(req.payload.role) &&
-      artwork.artist.toString() !== req.payload._id.toString()
-    ) {
-      return res.status(403).json({ error: "You can only delete your own artworks." });
-    }
+      // Check if user is the owner OR admin/superAdmin
+      if (
+        !isAdminRole(req.payload.role) &&
+        artwork.artist.toString() !== req.payload._id.toString()
+      ) {
+        return res.status(403).json({ error: "You can only delete your own artworks." });
+      }
 
-    // Delete associated files from R2 and update storage
-    const artistId = artwork.artist.toString();
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < artwork.images.length; i += BATCH_SIZE) {
-      const chunk = artwork.images.slice(i, i + BATCH_SIZE);
-      await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
-    }
+      // Delete associated files from R2 and update storage
+      const artistId = artwork.artist.toString();
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < artwork.images.length; i += BATCH_SIZE) {
+        const chunk = artwork.images.slice(i, i + BATCH_SIZE);
+        await Promise.all(chunk.map((imageUrl) => deleteFile(imageUrl, artistId)));
+      }
 
-    // Delete video files if any
-    if (artwork.video?.url) {
-      await deleteFile(artwork.video.url, artistId);
-    }
-    if (artwork.video?.thumbnailUrl) {
-      await deleteFile(artwork.video.thumbnailUrl, artistId);
-    }
-    if (artwork.video?.previewUrl) {
-      await deleteFile(artwork.video.previewUrl, artistId);
-    }
+      // Delete video files if any
+      if (artwork.video?.url) {
+        await deleteFile(artwork.video.url, artistId);
+      }
+      if (artwork.video?.thumbnailUrl) {
+        await deleteFile(artwork.video.thumbnailUrl, artistId);
+      }
+      if (artwork.video?.previewUrl) {
+        await deleteFile(artwork.video.previewUrl, artistId);
+      }
 
-    await Artwork.findByIdAndDelete(req.params.id);
+      await Artwork.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({ message: "Artwork deleted successfully." });
-  } catch (error) {
-    next(error);
+      res.status(200).json({ message: "Artwork deleted successfully." });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // POST /api/artworks/:id/images - Upload images (owner only)
 router.post(
   "/:id/images",
+  // #swagger.tags = ['Artworks']
   isAuthenticated,
   isVerifiedArtist,
   uploadArtwork.array("images", 5),
@@ -551,6 +583,7 @@ router.post(
 // POST /api/artworks/:id/video - Upload video (owner only)
 router.post(
   "/:id/video",
+  // #swagger.tags = ['Artworks']
   isAuthenticated,
   isVerifiedArtist,
   streamAndUploadVideo,
@@ -623,6 +656,7 @@ router.post(
 // POST /api/artworks/:id/video/thumbnail - Upload video thumbnail
 router.post(
   "/:id/video/thumbnail",
+  // #swagger.tags = ['Artworks']
   isAuthenticated,
   isVerifiedArtist,
   uploadArtwork.single("thumbnail"),
@@ -673,58 +707,73 @@ router.post(
 );
 
 // GET /api/artworks/artist/:artistId - Get artworks by artist (public, auth-aware)
-router.get("/artist/:artistId", optionalAuth, async (req, res, next) => {
-  try {
-    const { page = 1, limit = 12 } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+router.get(
+  "/artist/:artistId",
+  // #swagger.tags = ['Artworks']
+  optionalAuth,
+  async (req, res, next) => {
+    try {
+      const { page = 1, limit = 12 } = req.query;
+      const skip = (Number(page) - 1) * Number(limit);
 
-    const [artworks, total] = await Promise.all([
-      Artwork.find({ artist: req.params.artistId })
-        .sort("-createdAt")
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Artwork.countDocuments({ artist: req.params.artistId }),
-    ]);
+      const [artworks, total] = await Promise.all([
+        Artwork.find({ artist: req.params.artistId })
+          .sort("-createdAt")
+          .skip(skip)
+          .limit(Number(limit))
+          .lean(),
+        Artwork.countDocuments({ artist: req.params.artistId }),
+      ]);
 
-    // Sanitize artworks
-    const user = req.user || req.payload;
-    const sanitizedArtworks = await Promise.all(artworks.map((art) => sanitizeArtwork(art, user)));
+      // Sanitize artworks
+      const user = req.user || req.payload;
+      const sanitizedArtworks = await Promise.all(
+        artworks.map((art) => sanitizeArtwork(art, user))
+      );
 
-    res.status(200).json({
-      data: sanitizedArtworks,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
-  } catch (error) {
-    next(error);
+      res.status(200).json({
+        data: sanitizedArtworks,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // POST /api/artworks/:id/view - Increment view count
-router.post("/:id/view", async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    await Artwork.findByIdAndUpdate(id, { $inc: { views: 1 } });
-    res.status(200).json({ message: "View counted" });
-  } catch (error) {
-    next(error);
+router.post(
+  "/:id/view",
+  // #swagger.tags = ['Artworks']
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      await Artwork.findByIdAndUpdate(id, { $inc: { views: 1 } });
+      res.status(200).json({ message: "View counted" });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // POST /api/artworks/:id/play - Increment play count
-router.post("/:id/play", async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    await Artwork.findByIdAndUpdate(id, { $inc: { plays: 1 } });
-    res.status(200).json({ message: "Play counted" });
-  } catch (error) {
-    next(error);
+router.post(
+  "/:id/play",
+  // #swagger.tags = ['Artworks']
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      await Artwork.findByIdAndUpdate(id, { $inc: { plays: 1 } });
+      res.status(200).json({ message: "Play counted" });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 module.exports = router;

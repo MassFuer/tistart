@@ -35,6 +35,7 @@ app.use("/api", apiLimiter);
 
 // 🏥 Health check route
 app.get("/", (req, res) => {
+  // #swagger.tags = ['Health']
   res.json({
     status: "online",
     message: "Nemesis API is running",

@@ -14,35 +14,36 @@ const mongoose = require("mongoose");
 // Helper to update artwork stats
 const updateArtworkStats = async (artworkId) => {
   try {
-     const stats = await Review.aggregate([
-       { $match: { artwork: new mongoose.Types.ObjectId(artworkId) } },
-       {
-         $group: {
-           _id: "$artwork",
-           nRating: { $sum: 1 },
-           avgRating: { $avg: "$rating" }
-         }
-       }
-     ]);
+    const stats = await Review.aggregate([
+      { $match: { artwork: new mongoose.Types.ObjectId(artworkId) } },
+      {
+        $group: {
+          _id: "$artwork",
+          nRating: { $sum: 1 },
+          avgRating: { $avg: "$rating" },
+        },
+      },
+    ]);
 
-     if (stats.length > 0) {
-       await Artwork.findByIdAndUpdate(artworkId, {
-         numOfReviews: stats[0].nRating,
-         averageRating: stats[0].avgRating
-       });
-     } else {
-       await Artwork.findByIdAndUpdate(artworkId, {
-         numOfReviews: 0,
-         averageRating: 0
-       });
-     }
-  } catch(err) {
-      console.error("Error updating artwork stats:", err);
+    if (stats.length > 0) {
+      await Artwork.findByIdAndUpdate(artworkId, {
+        numOfReviews: stats[0].nRating,
+        averageRating: stats[0].avgRating,
+      });
+    } else {
+      await Artwork.findByIdAndUpdate(artworkId, {
+        numOfReviews: 0,
+        averageRating: 0,
+      });
+    }
+  } catch (err) {
+    console.error("Error updating artwork stats:", err);
   }
 };
 
 // GET /api/artworks/:artworkId/reviews - Get reviews for an artwork (public)
 router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
+  // #swagger.tags = ['Reviews']
   try {
     const { artworkId } = req.params;
     const { page = 1, limit = 10, sort = "-createdAt" } = req.query;
@@ -81,6 +82,7 @@ router.get("/artworks/:artworkId/reviews", async (req, res, next) => {
 // POST /api/artworks/:artworkId/reviews - Create a review (authenticated)
 router.post(
   "/artworks/:artworkId/reviews",
+  // #swagger.tags = ['Reviews']
   isAuthenticated,
   [
     body("comment")
@@ -156,6 +158,7 @@ router.post(
 // PATCH /api/reviews/:id - Update a review (Author, Admin, or Owner)
 router.patch(
   "/reviews/:id",
+  // #swagger.tags = ['Reviews']
   isAuthenticated,
   [
     body("comment")
@@ -222,6 +225,7 @@ router.patch(
 
 // DELETE /api/reviews/:id - Delete a review (owner or admin)
 router.delete("/reviews/:id", isAuthenticated, async (req, res, next) => {
+  // #swagger.tags = ['Reviews']
   try {
     const { id } = req.params;
     const userId = req.payload._id;

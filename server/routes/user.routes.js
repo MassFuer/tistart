@@ -22,54 +22,67 @@ const { sendArtistStatusEmail } = require("../utils/email");
 // ==================== USER ROUTES ====================
 
 // GET /api/users/profile - Get current user profile
-router.get("/profile", isAuthenticated, attachUser, (req, res) => {
-  const userResponse = { ...req.user.toObject() };
-  delete userResponse.password;
-  res.status(200).json({ data: userResponse });
-});
+router.get(
+  "/profile",
+  // #swagger.tags = ['Users']
+  isAuthenticated,
+  attachUser,
+  (req, res) => {
+    const userResponse = { ...req.user.toObject() };
+    delete userResponse.password;
+    res.status(200).json({ data: userResponse });
+  }
+);
 
 // PATCH /api/users/profile - Update current user profile
-router.patch("/profile", isAuthenticated, attachUser, async (req, res, next) => {
-  try {
-    const allowedFields = ["firstName", "lastName", "userName"];
-    const updateObj = {};
+router.put(
+  "/profile",
+  // #swagger.tags = ['Users']
+  isAuthenticated,
+  attachUser,
+  async (req, res, next) => {
+    try {
+      const allowedFields = ["firstName", "lastName", "userName"];
+      const updateObj = {};
 
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updateObj[field] = req.body[field];
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateObj[field] = req.body[field];
+        }
       }
-    }
 
-    if (Object.keys(updateObj).length === 0) {
-      return res.status(400).json({ error: "No valid fields to update." });
-    }
-
-    // Check if username is taken
-    if (updateObj.userName) {
-      const existingUser = await User.findOne({
-        userName: updateObj.userName.toLowerCase(),
-        _id: { $ne: req.user._id },
-      });
-      if (existingUser) {
-        return res.status(400).json({ error: "Username already taken." });
+      if (Object.keys(updateObj).length === 0) {
+        return res.status(400).json({ error: "No valid fields to update." });
       }
-      updateObj.userName = updateObj.userName.toLowerCase();
+
+      // Check if username is taken
+      if (updateObj.userName) {
+        const existingUser = await User.findOne({
+          userName: updateObj.userName.toLowerCase(),
+          _id: { $ne: req.user._id },
+        });
+        if (existingUser) {
+          return res.status(400).json({ error: "Username already taken." });
+        }
+        updateObj.userName = updateObj.userName.toLowerCase();
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(req.user._id, updateObj, {
+        new: true,
+        runValidators: true,
+      }).select("-password");
+
+      res.status(200).json({ data: updatedUser });
+    } catch (error) {
+      next(error);
     }
-
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, updateObj, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
-
-    res.status(200).json({ data: updatedUser });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // POST /api/users/profile/picture - Upload profile picture
 router.post(
   "/profile/picture",
+  // #swagger.tags = ['Users']
   isAuthenticated,
   attachUser,
   uploadProfile.single("profilePicture"),
@@ -105,6 +118,7 @@ router.post(
 // POST /api/users/profile/logo - Upload artist logo
 router.post(
   "/profile/logo",
+  // #swagger.tags = ['Users']
   isAuthenticated,
   attachUser,
   uploadLogo.single("logo"),
@@ -144,6 +158,7 @@ router.post(
 
 // GET /api/users/stats - Get user statistics for dashboard
 router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const user = req.user;
     const role = user.role;
@@ -248,26 +263,33 @@ router.get("/stats", isAuthenticated, attachUser, async (req, res, next) => {
 // ==================== FAVORITES ====================
 
 // GET /api/users/favorites - Get user's favorites
-router.get("/favorites", isAuthenticated, attachUser, async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id)
-      .populate({
-        path: "favorites",
-        populate: {
-          path: "artist",
-          select: "firstName lastName userName artistInfo.companyName",
-        },
-      })
-      .select("favorites");
+router.get(
+  "/favorites",
+  // #swagger.tags = ['Users']
+  isAuthenticated,
+  attachUser,
+  async (req, res, next) => {
+    try {
+      const user = await User.findById(req.user._id)
+        .populate({
+          path: "favorites",
+          populate: {
+            path: "artist",
+            select: "firstName lastName userName artistInfo.companyName",
+          },
+        })
+        .select("favorites");
 
-    res.status(200).json({ data: user.favorites });
-  } catch (error) {
-    next(error);
+      res.status(200).json({ data: user.favorites });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // POST /api/users/favorites/:artworkId - Add to favorites
 router.post("/favorites/:artworkId", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const artwork = await Artwork.findById(req.params.artworkId);
 
@@ -292,6 +314,7 @@ router.post("/favorites/:artworkId", isAuthenticated, attachUser, async (req, re
 
 // DELETE /api/users/favorites/:artworkId - Remove from favorites
 router.delete("/favorites/:artworkId", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { favorites: req.params.artworkId },
@@ -307,6 +330,7 @@ router.delete("/favorites/:artworkId", isAuthenticated, attachUser, async (req, 
 
 // GET /api/users - Get all users (admin only)
 router.get("/", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { page = 1, limit = 20, role, artistStatus, search, sort = "-createdAt" } = req.query;
 
@@ -353,6 +377,7 @@ router.get("/", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // POST /api/users - Create new user (admin only)
 router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const {
       firstName,
@@ -417,6 +442,7 @@ router.post("/", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // GET /api/users/:id - Get single user (admin only)
 router.get("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const user = await User.findById(req.params.id).select("-password").lean();
 
@@ -498,6 +524,7 @@ router.get("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // PATCH /api/users/:id - Update any user (admin only, superAdmin for admins)
 router.patch("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const targetUser = await User.findById(req.params.id);
 
@@ -598,6 +625,7 @@ router.patch("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // DELETE /api/users/:id - Delete user (admin only, superAdmin for admins)
 router.delete("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const targetUser = await User.findById(req.params.id);
 
@@ -658,6 +686,7 @@ router.delete("/:id", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // PATCH /api/users/:id/artist-status - Update artist status (admin only)
 router.patch("/:id/artist-status", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { status } = req.body;
 
@@ -719,6 +748,7 @@ router.patch("/:id/artist-status", isAuthenticated, isAdmin, async (req, res, ne
 
 // PATCH /api/users/:id/role - Update user role (admin only)
 router.patch("/:id/role", isAuthenticated, isAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { role } = req.body;
 
@@ -759,29 +789,34 @@ router.patch("/:id/role", isAuthenticated, isAdmin, async (req, res, next) => {
 
 // ==================== PUBLIC ARTIST PROFILE ====================
 
-// GET /api/users/artist/:id - Get public profile (artists or admins)
-router.get("/artist/:id", async (req, res, next) => {
-  try {
-    const user = await User.findOne({
-      _id: req.params.id,
-      $or: [
-        { role: "artist", artistStatus: "verified" },
-        { role: { $in: ["admin", "superAdmin"] } },
-      ],
-    }).select("firstName lastName userName profilePicture artistInfo createdAt role");
+// GET /api/users/artists/:id - Get publicly visible artist profile
+router.get(
+  "/artists/:id",
+  // #swagger.tags = ['Users']
+  async (req, res, next) => {
+    try {
+      const user = await User.findOne({
+        _id: req.params.id,
+        $or: [
+          { role: "artist", artistStatus: "verified" },
+          { role: { $in: ["admin", "superAdmin"] } },
+        ],
+      }).select("firstName lastName userName profilePicture artistInfo createdAt role");
 
-    if (!user) {
-      return res.status(404).json({ error: "Artist not found." });
+      if (!user) {
+        return res.status(404).json({ error: "Artist not found." });
+      }
+
+      res.status(200).json({ data: user });
+    } catch (error) {
+      next(error);
     }
-
-    res.status(200).json({ data: user });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 // GET /api/users/artists - Get all verified artists (public)
 router.get("/artists/all", async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { page = 1, limit = 12, search } = req.query;
 
@@ -826,6 +861,7 @@ router.get("/artists/all", async (req, res, next) => {
 
 // POST /api/users/storage/sync - Recalculate storage for current user or specific user (admin)
 router.post("/storage/sync", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { userId } = req.body; // Optional userId for admins
     const { listFolderContent } = require("../utils/r2");
@@ -923,6 +959,7 @@ router.post("/storage/sync", isAuthenticated, attachUser, async (req, res, next)
 
 // GET /api/users/storage/files - Get current user's files
 router.get("/storage/files", isAuthenticated, attachUser, async (req, res, next) => {
+  // #swagger.tags = ['Users']
   try {
     const { listFolderContent } = require("../utils/r2");
     const userId = req.user._id.toString();

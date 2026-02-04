@@ -103,6 +103,84 @@ server/
 | `PlatformStats`    | Cached platform-wide statistics                                                           |
 | `VideoPurchase`    | Pay-per-view video purchase records                                                       |
 
+
+### Diagram 
+
+erDiagram
+    USER ||--o{ ARTWORK : "creates/owns"
+    USER ||--o{ EVENT : "organizes"
+    USER ||--o{ MESSAGE : "sends/receives"
+    USER ||--o{ TICKET : "purchases"
+    
+    ARTWORK }|--o{ EVENT : "exhibited_at"
+    ARTWORK ||--o{ ORDER : "included_in"
+    
+    EVENT ||--o{ TICKET : "issues"
+    
+    ORDER ||--|| TRANSACTION : "records"
+    USER ||--o{ ORDER : "places"
+
+    USER {
+        string id PK
+        string username
+        string email
+        string password_hash
+        string role "artist | collector | admin"
+        string bio
+        string avatar_url
+        string stripe_account_id
+    }
+
+    ARTWORK {
+        string id PK
+        string artist_id FK
+        string title
+        string description
+        string type "physical | video | digital"
+        float price
+        string media_url "S3/Cloudflare_R2_link"
+        string thumbnail_url
+        boolean is_available
+    }
+
+    EVENT {
+        string id PK
+        string organizer_id FK
+        string title
+        string description
+        datetime date_start
+        datetime date_end
+        string location_name
+        float lat
+        float lng
+        float ticket_price
+    }
+
+    MESSAGE {
+        string id PK
+        string sender_id FK
+        string receiver_id FK
+        string content
+        datetime timestamp
+        boolean is_read
+    }
+
+    TICKET {
+        string id PK
+        string event_id FK
+        string user_id FK
+        string qr_code
+        string status "confirmed | used"
+    }
+
+    ORDER {
+        string id PK
+        string buyer_id FK
+        string artwork_id FK
+        float total_amount
+        string status "pending | completed"
+    }
+
 ### Middleware
 
 | Middleware              | Purpose                                                                     |

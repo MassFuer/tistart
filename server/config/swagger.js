@@ -78,13 +78,7 @@ const doc = {
 };
 
 const outputFile = "./swagger-output.json";
-const routes = [
-  "./routes/auth.routes.js",
-  "./routes/artwork.routes.js",
-  "./routes/event.routes.js",
-  "./routes/user.routes.js",
-  "./routes/index.routes.js",
-];
+const routes = ["./app.js"];
 
 // Export for generating
 module.exports = { swaggerAutogen, outputFile, routes, doc };

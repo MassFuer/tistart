@@ -18,6 +18,7 @@ const { r2Client, BUCKET_NAME, PUBLIC_URL, generateFilename, getFileInfo } = req
 
 // GET /api/platform/settings - Get platform settings
 router.get("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const settings = await PlatformSettings.getSettings();
     res.status(200).json({ data: settings });
@@ -28,6 +29,7 @@ router.get("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) =>
 
 // GET /api/platform/config - Get public platform config (Theme, etc.)
 router.get("/config", async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const settings = await PlatformSettings.getSettings();
     // Return only public fields
@@ -50,6 +52,7 @@ router.get("/config", async (req, res, next) => {
 
 // PATCH /api/platform/settings - Update platform settings
 router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const allowedFields = [
       "platformCommission",
@@ -85,6 +88,7 @@ router.patch("/settings", isAuthenticated, isSuperAdmin, async (req, res, next) 
 
 // POST /api/platform/assets - Upload platform assets (SuperAdmin Only)
 router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const bb = Busboy({ headers: req.headers });
     let uploadPromise = null;
@@ -148,6 +152,7 @@ router.post("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => 
 
 // GET /api/platform/assets - List platform assets (SuperAdmin Only)
 router.get("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const { folder = "platform/hero" } = req.query; // Default to hero folder
     // Security check: only allow listing platform subfolders
@@ -166,420 +171,427 @@ router.get("/assets", isAuthenticated, isSuperAdmin, async (req, res, next) => {
 // ==================== PLATFORM STATISTICS (Admin & SuperAdmin) ====================
 
 // GET /api/platform/stats - Get platform statistics
-router.get("/stats", isAuthenticated, isAdmin, async (req, res, next) => {
-  try {
-    const { period = "all" } = req.query;
+router.get(
+  "/stats",
+  // #swagger.tags = ['Platform']
+  isAuthenticated,
+  isAdmin,
+  async (req, res, next) => {
+    try {
+      const { period = "all" } = req.query;
 
-    // Build date filter based on period
-    let dateFilter = {};
-    const now = new Date();
+      // Build date filter based on period
+      let dateFilter = {};
+      const now = new Date();
 
-    switch (period) {
-      case "today":
-        dateFilter = { $gte: new Date(now.setHours(0, 0, 0, 0)) };
-        break;
-      case "week":
-        dateFilter = { $gte: new Date(now.setDate(now.getDate() - 7)) };
-        break;
-      case "month":
-        dateFilter = { $gte: new Date(now.setMonth(now.getMonth() - 1)) };
-        break;
-      case "year":
-        dateFilter = { $gte: new Date(now.setFullYear(now.getFullYear() - 1)) };
-        break;
-      default:
-        dateFilter = null;
-    }
+      switch (period) {
+        case "today":
+          dateFilter = { $gte: new Date(now.setHours(0, 0, 0, 0)) };
+          break;
+        case "week":
+          dateFilter = { $gte: new Date(now.setDate(now.getDate() - 7)) };
+          break;
+        case "month":
+          dateFilter = { $gte: new Date(now.setMonth(now.getMonth() - 1)) };
+          break;
+        case "year":
+          dateFilter = { $gte: new Date(now.setFullYear(now.getFullYear() - 1)) };
+          break;
+        default:
+          dateFilter = null;
+      }
 
-    // Fetch cached stats for 'all' period
-    let cachedStats = null;
-    if (period === "all") {
-      let stats = await PlatformStats.getStats();
+      // Fetch cached stats for 'all' period
+      let cachedStats = null;
+      if (period === "all") {
+        let stats = await PlatformStats.getStats();
 
-      // Lazy Initialization if not yet synced
-      if (!stats.initialized) {
-        try {
-          const [
-            usersTotal,
-            usersArtists,
-            artworksTotal,
-            artworksForSale,
-            eventsTotal,
-            orderStats,
-          ] = await Promise.all([
-            User.countDocuments(),
-            User.countDocuments({ role: "artist" }),
-            Artwork.countDocuments(),
-            Artwork.countDocuments({ isForSale: true }),
-            Event.countDocuments(),
-            Order.aggregate([
-              { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-              {
-                $group: {
-                  _id: null,
-                  total: { $sum: 1 },
-                  revenue: { $sum: "$totalAmount" },
-                  fees: { $sum: "$platformFeeTotal" },
+        // Lazy Initialization if not yet synced
+        if (!stats.initialized) {
+          try {
+            const [
+              usersTotal,
+              usersArtists,
+              artworksTotal,
+              artworksForSale,
+              eventsTotal,
+              orderStats,
+            ] = await Promise.all([
+              User.countDocuments(),
+              User.countDocuments({ role: "artist" }),
+              Artwork.countDocuments(),
+              Artwork.countDocuments({ isForSale: true }),
+              Event.countDocuments(),
+              Order.aggregate([
+                { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+                {
+                  $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    revenue: { $sum: "$totalAmount" },
+                    fees: { $sum: "$platformFeeTotal" },
+                  },
                 },
-              },
-            ]),
-          ]);
+              ]),
+            ]);
 
-          stats.users.total = usersTotal;
-          stats.users.artists = usersArtists;
-          stats.artworks.total = artworksTotal;
-          stats.artworks.forSale = artworksForSale;
-          stats.events.total = eventsTotal;
+            stats.users.total = usersTotal;
+            stats.users.artists = usersArtists;
+            stats.artworks.total = artworksTotal;
+            stats.artworks.forSale = artworksForSale;
+            stats.events.total = eventsTotal;
 
-          if (orderStats.length > 0) {
-            stats.orders.total = orderStats[0].total;
-            stats.orders.totalRevenue = orderStats[0].revenue;
-            stats.orders.totalPlatformFees = orderStats[0].fees;
+            if (orderStats.length > 0) {
+              stats.orders.total = orderStats[0].total;
+              stats.orders.totalRevenue = orderStats[0].revenue;
+              stats.orders.totalPlatformFees = orderStats[0].fees;
+            }
+
+            stats.initialized = true;
+            await stats.save();
+          } catch (err) {
+            console.error("Failed to lazy initialize PlatformStats:", err);
+            // Continue without cache
           }
+        }
 
-          stats.initialized = true;
-          await stats.save();
-        } catch (err) {
-          console.error("Failed to lazy initialize PlatformStats:", err);
-          // Continue without cache
+        if (stats.initialized) {
+          cachedStats = stats;
         }
       }
 
-      if (stats.initialized) {
-        cachedStats = stats;
-      }
-    }
-
-    // Aggregation pipelines
-    const userStats = await User.aggregate([
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          byRole: [{ $group: { _id: "$role", count: { $sum: 1 } } }],
-          byArtistStatus: [
-            { $match: { role: "artist" } },
-            { $group: { _id: "$artistStatus", count: { $sum: 1 } } },
-          ],
-          recentSignups: dateFilter
-            ? [{ $match: { createdAt: dateFilter } }, { $count: "count" }]
-            : [{ $count: "count" }],
-        },
-      },
-    ]);
-
-    const artworkStats = await Artwork.aggregate([
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          forSale: [{ $match: { isForSale: true } }, { $count: "count" }],
-          byCategory: [{ $group: { _id: "$category", count: { $sum: 1 } } }],
-          totalValue: [
-            { $match: { isForSale: true } },
-            { $group: { _id: null, total: { $sum: "$price" } } },
-          ],
-        },
-      },
-    ]);
-
-    const eventStats = await Event.aggregate([
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          upcoming: [{ $match: { startDateTime: { $gte: new Date() } } }, { $count: "count" }],
-          byCategory: [{ $group: { _id: "$category", count: { $sum: 1 } } }],
-          totalAttendees: [
-            { $project: { attendeeCount: { $size: { $ifNull: ["$attendees", []] } } } },
-            { $group: { _id: null, total: { $sum: "$attendeeCount" } } },
-          ],
-        },
-      },
-    ]);
-
-    const orderStats = await Order.aggregate([
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          byStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
-          totalRevenue: [
-            { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-            { $group: { _id: null, total: { $sum: "$totalAmount" } } },
-          ],
-          recentOrders: dateFilter
-            ? [{ $match: { createdAt: dateFilter } }, { $count: "count" }]
-            : [{ $count: "count" }],
-        },
-      },
-    ]);
-
-    // Top artists by sales
-    const topArtists = await Order.aggregate([
-      { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-      { $unwind: "$items" },
-      {
-        $lookup: {
-          from: "artworks",
-          localField: "items.artwork",
-          foreignField: "_id",
-          as: "artworkData",
-        },
-      },
-      { $unwind: "$artworkData" },
-      {
-        $group: {
-          _id: "$artworkData.artist",
-          totalSales: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
-          orderCount: { $sum: 1 },
-        },
-      },
-      { $sort: { totalSales: -1 } },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "_id",
-          foreignField: "_id",
-          as: "artist",
-        },
-      },
-      { $unwind: "$artist" },
-      {
-        $project: {
-          artistId: "$_id",
-          artistName: { $concat: ["$artist.firstName", " ", "$artist.lastName"] },
-          companyName: "$artist.artistInfo.companyName",
-          totalSales: 1,
-          orderCount: 1,
-        },
-      },
-    ]);
-
-    // Storage usage stats
-    const storageStats = await User.aggregate([
-      { $match: { role: { $in: ["artist", "admin", "superAdmin"] } } },
-      {
-        $group: {
-          _id: null,
-          totalStorageUsed: { $sum: "$storage.totalBytes" },
-          totalImageBytes: { $sum: "$storage.imageBytes" },
-          totalVideoBytes: { $sum: "$storage.videoBytes" },
-          totalFiles: { $sum: "$storage.fileCount" },
-          artistCount: { $sum: 1 },
-        },
-      },
-    ]);
-
-    // Platform commission earnings
-    const commissionStats = await Order.aggregate([
-      { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-      {
-        $group: {
-          _id: null,
-          totalPlatformFees: { $sum: "$platformFeeTotal" },
-          totalArtistEarnings: { $sum: { $subtract: ["$totalAmount", "$platformFeeTotal"] } },
-          totalRevenue: { $sum: "$totalAmount" },
-          orderCount: { $sum: 1 },
-        },
-      },
-    ]);
-
-    // Revenue by time period (last 12 months)
-    const revenueByMonth = await Order.aggregate([
-      { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
+      // Aggregation pipelines
+      const userStats = await User.aggregate([
+        {
+          $facet: {
+            total: [{ $count: "count" }],
+            byRole: [{ $group: { _id: "$role", count: { $sum: 1 } } }],
+            byArtistStatus: [
+              { $match: { role: "artist" } },
+              { $group: { _id: "$artistStatus", count: { $sum: 1 } } },
+            ],
+            recentSignups: dateFilter
+              ? [{ $match: { createdAt: dateFilter } }, { $count: "count" }]
+              : [{ $count: "count" }],
           },
-          revenue: { $sum: "$totalAmount" },
-          platformFees: { $sum: "$platformFeeTotal" },
-          orderCount: { $sum: 1 },
         },
-      },
-      { $sort: { "_id.year": -1, "_id.month": -1 } },
-      { $limit: 12 },
-    ]);
+      ]);
 
-    // Top selling artworks
-    const topArtworks = await Order.aggregate([
-      { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.artwork",
-          totalSales: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
-          unitsSold: { $sum: "$items.quantity" },
+      const artworkStats = await Artwork.aggregate([
+        {
+          $facet: {
+            total: [{ $count: "count" }],
+            forSale: [{ $match: { isForSale: true } }, { $count: "count" }],
+            byCategory: [{ $group: { _id: "$category", count: { $sum: 1 } } }],
+            totalValue: [
+              { $match: { isForSale: true } },
+              { $group: { _id: null, total: { $sum: "$price" } } },
+            ],
+          },
         },
-      },
-      { $sort: { totalSales: -1 } },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: "artworks",
-          localField: "_id",
-          foreignField: "_id",
-          as: "artwork",
-        },
-      },
-      { $unwind: "$artwork" },
-      {
-        $lookup: {
-          from: "users",
-          localField: "artwork.artist",
-          foreignField: "_id",
-          as: "artist",
-        },
-      },
-      { $unwind: "$artist" },
-      {
-        $project: {
-          artworkId: "$_id",
-          title: "$artwork.title",
-          category: "$artwork.category",
-          price: "$artwork.price",
-          artistName: { $concat: ["$artist.firstName", " ", "$artist.lastName"] },
-          totalSales: 1,
-          unitsSold: 1,
-        },
-      },
-    ]);
+      ]);
 
-    // Top Viewed Videos
-    const topViewedVideos = await Artwork.aggregate([
-      { $match: { category: "video", $or: [{ views: { $gt: 0 } }, { plays: { $gt: 0 } }] } },
-      { $sort: { views: -1, plays: -1 } },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "artist",
-          foreignField: "_id",
-          as: "artistData",
+      const eventStats = await Event.aggregate([
+        {
+          $facet: {
+            total: [{ $count: "count" }],
+            upcoming: [{ $match: { startDateTime: { $gte: new Date() } } }, { $count: "count" }],
+            byCategory: [{ $group: { _id: "$category", count: { $sum: 1 } } }],
+            totalAttendees: [
+              { $project: { attendeeCount: { $size: { $ifNull: ["$attendees", []] } } } },
+              { $group: { _id: null, total: { $sum: "$attendeeCount" } } },
+            ],
+          },
         },
-      },
-      { $unwind: "$artistData" },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          views: 1,
-          plays: 1,
-          duration: "$video.duration",
-          artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
-          companyName: "$artistData.artistInfo.companyName",
-        },
-      },
-    ]);
+      ]);
 
-    // Top Viewed Artworks (Non-Video)
-    const topViewedOther = await Artwork.aggregate([
-      { $match: { category: { $ne: "video" }, views: { $gt: 0 } } },
-      { $sort: { views: -1 } },
-      { $limit: 10 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "artist",
-          foreignField: "_id",
-          as: "artistData",
+      const orderStats = await Order.aggregate([
+        {
+          $facet: {
+            total: [{ $count: "count" }],
+            byStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+            totalRevenue: [
+              { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+              { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+            ],
+            recentOrders: dateFilter
+              ? [{ $match: { createdAt: dateFilter } }, { $count: "count" }]
+              : [{ $count: "count" }],
+          },
         },
-      },
-      { $unwind: "$artistData" },
-      {
-        $project: {
-          _id: 1,
-          title: 1,
-          views: 1,
-          category: 1,
-          artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
-        },
-      },
-    ]);
+      ]);
 
-    // Global totals for views and plays
-    const globalAnalytics = await Artwork.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalViews: { $sum: "$views" },
-          totalPlays: { $sum: "$plays" },
+      // Top artists by sales
+      const topArtists = await Order.aggregate([
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        { $unwind: "$items" },
+        {
+          $lookup: {
+            from: "artworks",
+            localField: "items.artwork",
+            foreignField: "_id",
+            as: "artworkData",
+          },
         },
-      },
-    ]);
+        { $unwind: "$artworkData" },
+        {
+          $group: {
+            _id: "$artworkData.artist",
+            totalSales: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+            orderCount: { $sum: 1 },
+          },
+        },
+        { $sort: { totalSales: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "artist",
+          },
+        },
+        { $unwind: "$artist" },
+        {
+          $project: {
+            artistId: "$_id",
+            artistName: { $concat: ["$artist.firstName", " ", "$artist.lastName"] },
+            companyName: "$artist.artistInfo.companyName",
+            totalSales: 1,
+            orderCount: 1,
+          },
+        },
+      ]);
 
-    res.status(200).json({
-      data: {
-        users: {
-          total: cachedStats ? cachedStats.users.total : userStats[0].total[0]?.count || 0,
-          byRole: userStats[0].byRole,
-          byArtistStatus: userStats[0].byArtistStatus,
-          recentSignups: userStats[0].recentSignups[0]?.count || 0,
+      // Storage usage stats
+      const storageStats = await User.aggregate([
+        { $match: { role: { $in: ["artist", "admin", "superAdmin"] } } },
+        {
+          $group: {
+            _id: null,
+            totalStorageUsed: { $sum: "$storage.totalBytes" },
+            totalImageBytes: { $sum: "$storage.imageBytes" },
+            totalVideoBytes: { $sum: "$storage.videoBytes" },
+            totalFiles: { $sum: "$storage.fileCount" },
+            artistCount: { $sum: 1 },
+          },
         },
-        artworks: {
-          total: cachedStats ? cachedStats.artworks.total : artworkStats[0].total[0]?.count || 0,
-          forSale: cachedStats
-            ? cachedStats.artworks.forSale
-            : artworkStats[0].forSale[0]?.count || 0,
-          byCategory: artworkStats[0].byCategory,
-          totalValue: artworkStats[0].totalValue[0]?.total || 0,
+      ]);
+
+      // Platform commission earnings
+      const commissionStats = await Order.aggregate([
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        {
+          $group: {
+            _id: null,
+            totalPlatformFees: { $sum: "$platformFeeTotal" },
+            totalArtistEarnings: { $sum: { $subtract: ["$totalAmount", "$platformFeeTotal"] } },
+            totalRevenue: { $sum: "$totalAmount" },
+            orderCount: { $sum: 1 },
+          },
         },
-        events: {
-          total: cachedStats ? cachedStats.events.total : eventStats[0].total[0]?.count || 0,
-          upcoming: eventStats[0].upcoming[0]?.count || 0,
-          byCategory: eventStats[0].byCategory,
-          totalAttendees: eventStats[0].totalAttendees[0]?.total || 0,
+      ]);
+
+      // Revenue by time period (last 12 months)
+      const revenueByMonth = await Order.aggregate([
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            revenue: { $sum: "$totalAmount" },
+            platformFees: { $sum: "$platformFeeTotal" },
+            orderCount: { $sum: 1 },
+          },
         },
-        orders: {
-          total: cachedStats ? cachedStats.orders.total : orderStats[0].total[0]?.count || 0,
-          byStatus: orderStats[0].byStatus,
-          totalRevenue: cachedStats
-            ? cachedStats.orders.totalRevenue
-            : orderStats[0].totalRevenue[0]?.total || 0,
-          recentOrders: orderStats[0].recentOrders[0]?.count || 0,
+        { $sort: { "_id.year": -1, "_id.month": -1 } },
+        { $limit: 12 },
+      ]);
+
+      // Top selling artworks
+      const topArtworks = await Order.aggregate([
+        { $match: { status: { $in: ["paid", "shipped", "delivered"] } } },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: "$items.artwork",
+            totalSales: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+            unitsSold: { $sum: "$items.quantity" },
+          },
         },
-        commission:
-          cachedStats && period === "all"
-            ? {
-                totalPlatformFees: cachedStats.orders.totalPlatformFees,
-                totalArtistEarnings:
-                  cachedStats.orders.totalRevenue - cachedStats.orders.totalPlatformFees,
-                totalRevenue: cachedStats.orders.totalRevenue,
-                orderCount: cachedStats.orders.total,
-              }
-            : commissionStats[0] || {
-                totalPlatformFees: 0,
-                totalArtistEarnings: 0,
-                totalRevenue: 0,
-                orderCount: 0,
-              },
-        revenueByMonth,
-        topArtists,
-        topArtworks,
-        topViewedVideos,
-        topViewedOther,
-        analytics: {
-          totalViews: globalAnalytics[0]?.totalViews || 0,
-          totalPlays: globalAnalytics[0]?.totalPlays || 0,
+        { $sort: { totalSales: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "artworks",
+            localField: "_id",
+            foreignField: "_id",
+            as: "artwork",
+          },
         },
-        storage: storageStats[0] || {
-          totalStorageUsed: 0,
-          totalImageBytes: 0,
-          totalVideoBytes: 0,
-          totalFiles: 0,
-          artistCount: 0,
+        { $unwind: "$artwork" },
+        {
+          $lookup: {
+            from: "users",
+            localField: "artwork.artist",
+            foreignField: "_id",
+            as: "artist",
+          },
         },
-        period,
-      },
-    });
-  } catch (error) {
-    next(error);
+        { $unwind: "$artist" },
+        {
+          $project: {
+            artworkId: "$_id",
+            title: "$artwork.title",
+            category: "$artwork.category",
+            price: "$artwork.price",
+            artistName: { $concat: ["$artist.firstName", " ", "$artist.lastName"] },
+            totalSales: 1,
+            unitsSold: 1,
+          },
+        },
+      ]);
+
+      // Top Viewed Videos
+      const topViewedVideos = await Artwork.aggregate([
+        { $match: { category: "video", $or: [{ views: { $gt: 0 } }, { plays: { $gt: 0 } }] } },
+        { $sort: { views: -1, plays: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "users",
+            localField: "artist",
+            foreignField: "_id",
+            as: "artistData",
+          },
+        },
+        { $unwind: "$artistData" },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            views: 1,
+            plays: 1,
+            duration: "$video.duration",
+            artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
+            companyName: "$artistData.artistInfo.companyName",
+          },
+        },
+      ]);
+
+      // Top Viewed Artworks (Non-Video)
+      const topViewedOther = await Artwork.aggregate([
+        { $match: { category: { $ne: "video" }, views: { $gt: 0 } } },
+        { $sort: { views: -1 } },
+        { $limit: 10 },
+        {
+          $lookup: {
+            from: "users",
+            localField: "artist",
+            foreignField: "_id",
+            as: "artistData",
+          },
+        },
+        { $unwind: "$artistData" },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            views: 1,
+            category: 1,
+            artistName: { $concat: ["$artistData.firstName", " ", "$artistData.lastName"] },
+          },
+        },
+      ]);
+
+      // Global totals for views and plays
+      const globalAnalytics = await Artwork.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalViews: { $sum: "$views" },
+            totalPlays: { $sum: "$plays" },
+          },
+        },
+      ]);
+
+      res.status(200).json({
+        data: {
+          users: {
+            total: cachedStats ? cachedStats.users.total : userStats[0].total[0]?.count || 0,
+            byRole: userStats[0].byRole,
+            byArtistStatus: userStats[0].byArtistStatus,
+            recentSignups: userStats[0].recentSignups[0]?.count || 0,
+          },
+          artworks: {
+            total: cachedStats ? cachedStats.artworks.total : artworkStats[0].total[0]?.count || 0,
+            forSale: cachedStats
+              ? cachedStats.artworks.forSale
+              : artworkStats[0].forSale[0]?.count || 0,
+            byCategory: artworkStats[0].byCategory,
+            totalValue: artworkStats[0].totalValue[0]?.total || 0,
+          },
+          events: {
+            total: cachedStats ? cachedStats.events.total : eventStats[0].total[0]?.count || 0,
+            upcoming: eventStats[0].upcoming[0]?.count || 0,
+            byCategory: eventStats[0].byCategory,
+            totalAttendees: eventStats[0].totalAttendees[0]?.total || 0,
+          },
+          orders: {
+            total: cachedStats ? cachedStats.orders.total : orderStats[0].total[0]?.count || 0,
+            byStatus: orderStats[0].byStatus,
+            totalRevenue: cachedStats
+              ? cachedStats.orders.totalRevenue
+              : orderStats[0].totalRevenue[0]?.total || 0,
+            recentOrders: orderStats[0].recentOrders[0]?.count || 0,
+          },
+          commission:
+            cachedStats && period === "all"
+              ? {
+                  totalPlatformFees: cachedStats.orders.totalPlatformFees,
+                  totalArtistEarnings:
+                    cachedStats.orders.totalRevenue - cachedStats.orders.totalPlatformFees,
+                  totalRevenue: cachedStats.orders.totalRevenue,
+                  orderCount: cachedStats.orders.total,
+                }
+              : commissionStats[0] || {
+                  totalPlatformFees: 0,
+                  totalArtistEarnings: 0,
+                  totalRevenue: 0,
+                  orderCount: 0,
+                },
+          revenueByMonth,
+          topArtists,
+          topArtworks,
+          topViewedVideos,
+          topViewedOther,
+          analytics: {
+            totalViews: globalAnalytics[0]?.totalViews || 0,
+            totalPlays: globalAnalytics[0]?.totalPlays || 0,
+          },
+          storage: storageStats[0] || {
+            totalStorageUsed: 0,
+            totalImageBytes: 0,
+            totalVideoBytes: 0,
+            totalFiles: 0,
+            artistCount: 0,
+          },
+          period,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 // ==================== USER STORAGE MANAGEMENT (SuperAdmin Only) ====================
 
 // GET /api/platform/storage - Get storage usage for all artists
 router.get("/storage", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const { page = 1, limit = 20, sort = "storage.totalBytes", order = "desc" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -691,6 +703,7 @@ router.get("/storage", isAuthenticated, isSuperAdmin, async (req, res, next) => 
 
 // PATCH /api/platform/storage/:userId - Update user storage quota
 router.patch("/storage/:userId", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const { quotaBytes, subscriptionTier } = req.body;
 
@@ -737,6 +750,7 @@ router.patch("/storage/:userId", isAuthenticated, isSuperAdmin, async (req, res,
 
 // GET /api/platform/storage/:userId/files - List all files for a user (SuperAdmin Only)
 router.get("/storage/:userId/files", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const { userId } = req.params;
     const { listFolderContent } = require("../utils/r2");
@@ -776,6 +790,7 @@ router.get("/storage/:userId/files", isAuthenticated, isSuperAdmin, async (req, 
 
 // POST /api/platform/maintenance - Toggle maintenance mode
 router.post("/maintenance", isAuthenticated, isSuperAdmin, async (req, res, next) => {
+  // #swagger.tags = ['Platform']
   try {
     const { enabled, message, allowedIPs } = req.body;
 
